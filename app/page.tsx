@@ -1,6 +1,9 @@
-import { redirect } from "next/navigation";
+import { MatterHero } from "@/components/MatterHero";
 
 export default function Home() {
-  // ログイン後、イベント一覧にリダイレクト
-  redirect("/events");
+  return (
+    <div className="-mx-4 -mt-8">
+      <MatterHero />
+    </div>
+  );
 }
