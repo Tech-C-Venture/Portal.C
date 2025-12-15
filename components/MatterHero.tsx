@@ -12,7 +12,10 @@ export function MatterHero() {
 
     const canvas = canvasRef.current;
     const cw = window.innerWidth;
-    const ch = Math.min(600, window.innerHeight * 0.7);
+    // モバイルでは適切な高さに調整
+    const ch = window.innerWidth < 768
+      ? Math.min(500, window.innerHeight * 0.6)
+      : Math.min(600, window.innerHeight * 0.7);
 
     canvas.width = cw;
     canvas.height = ch;
@@ -150,7 +153,10 @@ export function MatterHero() {
     // ウィンドウリサイズ対応
     const handleResize = () => {
       const newWidth = window.innerWidth;
-      const newHeight = Math.min(600, window.innerHeight * 0.7);
+      // モバイルでは適切な高さに調整
+      const newHeight = window.innerWidth < 768
+        ? Math.min(500, window.innerHeight * 0.6)
+        : Math.min(600, window.innerHeight * 0.7);
 
       canvas.width = newWidth;
       canvas.height = newHeight;
@@ -176,24 +182,24 @@ export function MatterHero() {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden">
+    <div className="relative w-full overflow-hidden rounded-lg shadow-lg">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50" />
       <canvas
         ref={canvasRef}
-        className="relative z-10"
-        style={{ display: "block", touchAction: "none" }}
+        className="relative z-10 w-full"
+        style={{ display: "block", touchAction: "none", maxWidth: "100%" }}
       />
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
-        <h1 className="text-6xl md:text-8xl font-bold text-gray-800 mb-4 drop-shadow-lg">
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-gray-800 mb-2 md:mb-4 drop-shadow-lg text-center">
           Portal.C
         </h1>
-        <p className="text-xl md:text-2xl text-gray-700 drop-shadow-md">
+        <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-700 drop-shadow-md text-center px-4">
           Tech.C Venture メンバー管理システム
         </p>
-        <div className="mt-8 pointer-events-auto">
+        <div className="mt-4 md:mt-8 pointer-events-auto">
           <a
             href="/events"
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 md:px-8 md:py-3 rounded-full text-sm md:text-base font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
             イベントを見る
           </a>
