@@ -1,3 +1,6 @@
+import { Button } from "@openameba/spindle-ui";
+import "@openameba/spindle-ui/Button/Button.css";
+
 export default async function ProfilePage() {
   return (
     <div>
@@ -9,9 +12,9 @@ export default async function ProfilePage() {
       <div className="max-w-2xl bg-white rounded-lg shadow-md p-8">
         <div className="mb-6 flex items-center">
           <div className="w-24 h-24 bg-gray-300 rounded-full mr-6"></div>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          <Button size="medium" variant="contained">
             写真を変更
-          </button>
+          </Button>
         </div>
 
         <form className="space-y-6">
@@ -91,12 +94,11 @@ export default async function ProfilePage() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            保存
-          </button>
+          <div className="w-full">
+            <Button type="submit" size="large" variant="contained">
+              保存
+            </Button>
+          </div>
         </form>
       </div>
     </div>

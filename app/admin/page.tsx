@@ -1,5 +1,7 @@
 import { isAdmin } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { Button } from "@openameba/spindle-ui";
+import "@openameba/spindle-ui/Button/Button.css";
 
 export default async function AdminPage() {
   const admin = await isAdmin();
@@ -76,12 +78,11 @@ export default async function AdminPage() {
               placeholder="30"
             />
           </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            イベントを作成
-          </button>
+          <div className="w-full">
+            <Button type="submit" size="large" variant="contained">
+              イベントを作成
+            </Button>
+          </div>
         </form>
       </div>
 
