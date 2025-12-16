@@ -104,17 +104,17 @@ jobs:
         with:
           script: |
             const deploymentUrl = '${{ steps.deploy.outputs.deployment_url }}';
-            const comment = `## 📚 Documentation Deployed Successfully!
+            const comment = `## 📚 ドキュメントのデプロイが完了しました！
 
-            ✅ **Build Status**: Success
-            🔗 **Preview URL**: ${deploymentUrl || 'https://portal-c-docs.pages.dev'}
+            ✅ **ビルド状態**: 成功
+            🔗 **プレビューURL**: ${deploymentUrl || 'https://portal-c-docs.pages.dev'}
 
-            ### Details
-            - **Commit**: \`${{ github.sha }}\`
-            - **Branch**: \`${{ github.head_ref || github.ref_name }}\`
-            - **Triggered by**: @${{ github.actor }}
+            ### 詳細
+            - **コミット**: \`${{ github.sha }}\`
+            - **ブランチ**: \`${{ github.head_ref || github.ref_name }}\`
+            - **実行者**: @${{ github.actor }}
 
-            The documentation has been built and deployed to Cloudflare Pages.
+            ドキュメントがビルドされ、Cloudflare Pagesにデプロイされました。
             `;
 
             github.rest.issues.createComment({
