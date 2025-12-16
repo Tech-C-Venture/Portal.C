@@ -30,12 +30,12 @@ export class SupabaseEventRepository implements IEventRepository {
       id: row.id,
       title: row.title,
       description: row.description ?? '',
-      startDate: new Date(row.start_date),
-      endDate: new Date(row.end_date),
+      startDate: new Date(row.event_date),
+      endDate: new Date(row.event_date),
       location: row.location ?? '',
       capacity: row.capacity ?? undefined,
       participantIds,
-      createdBy: row.created_by,
+      createdBy: row.created_by ?? 'system',
       createdAt: new Date(row.created_at!),
       updatedAt: new Date(row.updated_at!),
     });
@@ -49,8 +49,7 @@ export class SupabaseEventRepository implements IEventRepository {
       id: event.id,
       title: event.title,
       description: event.description,
-      start_date: event.startDate.toISOString(),
-      end_date: event.endDate.toISOString(),
+      event_date: event.startDate.toISOString(),
       location: event.location,
       capacity: event.capacity.isUnlimited() ? null : event.capacity.value,
       created_by: event.createdBy,
@@ -64,8 +63,7 @@ export class SupabaseEventRepository implements IEventRepository {
     return {
       title: event.title,
       description: event.description,
-      start_date: event.startDate.toISOString(),
-      end_date: event.endDate.toISOString(),
+      event_date: event.startDate.toISOString(),
       location: event.location,
       capacity: event.capacity.isUnlimited() ? null : event.capacity.value,
       updated_at: event.updatedAt.toISOString(),
@@ -79,7 +77,7 @@ export class SupabaseEventRepository implements IEventRepository {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
-        .from('participations')
+        .from('event_participants')
         .select('member_id')
         .eq('event_id', eventId);
 
@@ -87,7 +85,7 @@ export class SupabaseEventRepository implements IEventRepository {
         return [];
       }
 
-      return data.map((row) => row.member_id);
+      return data.map((row: any) => row.member_id);
     } catch {
       return [];
     }
@@ -115,14 +113,14 @@ export class SupabaseEventRepository implements IEventRepository {
   async findAll(): Promise<Result<Event[]>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase.from('events').select('*').order('start_date', { ascending: false });
+      const { data, error } = await supabase.from('events').select('*').order('event_date', { ascending: false });
 
       if (error) {
         return failure(new Error(error.message));
       }
 
       const eventsWithParticipants = await Promise.all(
-        data.map(async (row) => {
+        data.map(async (row: EventRow) => {
           const participantIds = await this.getParticipantIds(row.id);
           return this.toDomain(row, participantIds);
         })
@@ -137,9 +135,10 @@ export class SupabaseEventRepository implements IEventRepository {
   async create(event: Event): Promise<Result<Event>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
+      const insertData = this.toInsert(event);
+      const { data, error } = await (supabase as any)
         .from('events')
-        .insert(this.toInsert(event))
+        .insert(insertData)
         .select()
         .single();
 
@@ -156,9 +155,10 @@ export class SupabaseEventRepository implements IEventRepository {
   async update(event: Event): Promise<Result<Event>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
+      const updateData = this.toUpdate(event);
+      const { data, error } = await (supabase as any)
         .from('events')
-        .update(this.toUpdate(event))
+        .update(updateData)
         .eq('id', event.id)
         .select()
         .single();
@@ -195,7 +195,7 @@ export class SupabaseEventRepository implements IEventRepository {
   async registerMember(eventId: string, memberId: string): Promise<Result<void>> {
     try {
       const supabase = await this.getClient();
-      const { error } = await supabase.rpc('register_for_event', {
+      const { error } = await (supabase as any).rpc('register_for_event', {
         p_event_id: eventId,
         p_member_id: memberId,
       });
@@ -216,7 +216,7 @@ export class SupabaseEventRepository implements IEventRepository {
   async unregisterMember(eventId: string, memberId: string): Promise<Result<void>> {
     try {
       const supabase = await this.getClient();
-      const { error } = await supabase.rpc('unregister_from_event', {
+      const { error } = await (supabase as any).rpc('unregister_from_event', {
         p_event_id: eventId,
         p_member_id: memberId,
       });

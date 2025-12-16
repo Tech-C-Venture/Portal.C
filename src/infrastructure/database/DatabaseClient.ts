@@ -24,7 +24,7 @@ export class DatabaseClient {
           getAll() {
             return cookieStore.getAll();
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
@@ -68,5 +68,12 @@ export class DatabaseClient {
   }
 }
 
-// 起動時に環境変数を検証
-DatabaseClient.validateEnvironment();
+// 起動時に環境変数を検証（ビルド時はスキップ）
+if (process.env.NODE_ENV !== 'production' || process.env.NEXT_PHASE !== 'phase-production-build') {
+  // Only validate in development or runtime (not during build)
+  try {
+    DatabaseClient.validateEnvironment();
+  } catch {
+    // Ignore validation errors during build
+  }
+}

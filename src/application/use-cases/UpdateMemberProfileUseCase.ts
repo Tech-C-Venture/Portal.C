@@ -39,7 +39,16 @@ export class UpdateMemberProfileUseCase {
     const member = memberResult.value;
 
     // 更新データ準備
-    const updates: Parameters<typeof updateMember>[1] = {};
+    const updates: {
+      name?: string;
+      gmailAddress?: Email;
+      department?: string;
+      skills?: string[];
+      interests?: string[];
+      currentStatus?: CurrentStatus;
+      avatarUrl?: string;
+      isRepeating?: boolean;
+    } = {};
 
     if (input.name !== undefined) updates.name = input.name;
     if (input.gmailAddress !== undefined)

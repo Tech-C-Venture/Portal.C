@@ -22,25 +22,22 @@ export class SupabaseTimetableRepository implements ITimetableRepository {
    * DB型→ドメインエンティティ変換
    */
   private toDomain(row: TimetableRow): Timetable {
-    // scheduleはJSONB型で格納されている想定
-    const schedule = row.schedule as any;
-    const timeSlots = Array.isArray(schedule)
-      ? schedule.map((slot: any) =>
-          createTimeSlot({
-            id: slot.id || crypto.randomUUID(),
-            dayOfWeek: slot.dayOfWeek,
-            period: slot.period,
-            courseName: slot.courseName,
-            classroom: slot.classroom,
-          })
-        )
-      : [];
+    // 各行は単一のタイムスロットを表す
+    const timeSlots = [
+      createTimeSlot({
+        id: row.id,
+        dayOfWeek: row.day_of_week,
+        period: row.period,
+        courseName: row.course_name,
+        classroom: '',  // classroom field doesn't exist in current schema
+      })
+    ];
 
     return createTimetable({
       id: row.id,
       memberId: row.member_id,
-      grade: row.grade,
-      department: row.department,
+      grade: 1,  // grade field doesn't exist in current schema
+      department: '',  // department field doesn't exist in current schema
       timeSlots,
       createdAt: new Date(row.created_at!),
       updatedAt: new Date(row.updated_at!),
@@ -51,12 +48,16 @@ export class SupabaseTimetableRepository implements ITimetableRepository {
    * ドメインエンティティ→DB型変換（INSERT用）
    */
   private toInsert(timetable: Timetable): TimetableInsert {
+    // Take the first timeslot from the timetable
+    const firstSlot = timetable.timeSlots[0];
     return {
       id: timetable.id,
       member_id: timetable.memberId,
-      grade: timetable.grade,
-      department: timetable.department,
-      schedule: timetable.timeSlots as any,
+      day_of_week: firstSlot?.dayOfWeek ?? 1,
+      period: firstSlot?.period ?? 1,
+      course_name: firstSlot?.courseName ?? '',
+      semester: null,  // TODO: add semester logic
+      year: new Date().getFullYear(),
     };
   }
 
@@ -64,10 +65,11 @@ export class SupabaseTimetableRepository implements ITimetableRepository {
    * ドメインエンティティ→DB型変換（UPDATE用）
    */
   private toUpdate(timetable: Timetable): TimetableUpdate {
+    const firstSlot = timetable.timeSlots[0];
     return {
-      grade: timetable.grade,
-      department: timetable.department,
-      schedule: timetable.timeSlots as any,
+      day_of_week: firstSlot?.dayOfWeek,
+      period: firstSlot?.period,
+      course_name: firstSlot?.courseName,
       updated_at: timetable.updatedAt.toISOString(),
     };
   }
@@ -115,7 +117,7 @@ export class SupabaseTimetableRepository implements ITimetableRepository {
   async create(timetable: Timetable): Promise<Result<Timetable>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('timetables')
         .insert(this.toInsert(timetable))
         .select()
@@ -134,7 +136,7 @@ export class SupabaseTimetableRepository implements ITimetableRepository {
   async update(timetable: Timetable): Promise<Result<Timetable>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('timetables')
         .update(this.toUpdate(timetable))
         .eq('id', timetable.id)

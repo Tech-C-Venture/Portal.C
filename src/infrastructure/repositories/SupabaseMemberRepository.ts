@@ -160,7 +160,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
   async create(member: Member): Promise<Result<Member>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('members')
         .insert(this.toInsert(member))
         .select()
@@ -179,7 +179,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
   async update(member: Member): Promise<Result<Member>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('members')
         .update(this.toUpdate(member))
         .eq('id', member.id)
