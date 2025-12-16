@@ -20,6 +20,23 @@ on:
       - 'CLAUDE.md'
       - 'AGENTS.md'
       - 'GEMINI.md'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'book.toml'
+      - '.github/workflows/deploy-docs.yml'
+      # cc-sdd managed directories (dynamically updated)
+      - '.claude/commands/kiro/**'
+      - '.claude/agents/kiro/**'
+      - '.codex/prompts/**'
+      - '.cursor/commands/kiro/**'
+      - '.gemini/commands/kiro/**'
+      - '.github/prompts/**'
+      - '.kiro/**'
+      # Project memory files
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+      - 'GEMINI.md'
   workflow_dispatch:
 
 jobs:
