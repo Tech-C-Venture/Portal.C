@@ -143,6 +143,38 @@ Portal.C/
 - 学年、専攻
 - 時間割スケジュール（曜日・時限・授業名）
 
+## ドキュメント
+
+プロジェクトの詳細なドキュメントはmdbookで管理されており、Cloudflare Pagesでホストされています。
+
+### ドキュメントの閲覧
+
+オンラインドキュメント: （デプロイ後のURLを設定）
+
+### ローカルでドキュメントを閲覧
+
+```bash
+# mdbookをインストール（初回のみ）
+cargo install mdbook
+
+# ドキュメントをビルド
+mdbook build
+
+# ライブプレビューでドキュメントを表示
+mdbook serve
+```
+
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いてドキュメントを閲覧できます。
+
+### ドキュメントの構成
+
+- **Getting Started**: 開発環境セットアップとオンボーディングガイド
+- **Architecture**: Clean Architectureの設計詳細
+- **Development Guide**: AI開発支援の設定（AGENTS）
+- **Specification**: プロジェクトのSteeringとSpecs（SDD関連）
+
+詳細は `docs/` ディレクトリを参照してください。
+
 ## 開発
 
 ### ビルド
