@@ -40,7 +40,6 @@ Portal.Cは、Tech.C Ventureのメンバー管理とイベント管理を行うW
 ### Development Guide
 開発時のガイドライン
 
-- [SDD使用ガイド](development/cc-sdd-usage.md) - Spec-Driven Developmentの使い方
 - [AGENTS設定](development/agents.md) - AI開発支援の設定
 
 ### Specification (SDD)
@@ -55,7 +54,7 @@ Portal.Cは、Tech.C Ventureのメンバー管理とイベント管理を行うW
 
 1. [開発者向けオンボーディング](getting-started/onboarding.md)を読む
 2. [アーキテクチャ設計](architecture/architecture.md)でプロジェクト構造を理解
-3. [SDD使用ガイド](development/cc-sdd-usage.md)で開発フローを確認
+3. [AGENTS設定](development/agents.md)でAI開発支援を設定
 
 ## リンク
 

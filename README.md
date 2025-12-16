@@ -170,8 +170,8 @@ mdbook serve
 
 - **Getting Started**: 開発環境セットアップとオンボーディングガイド
 - **Architecture**: Clean Architectureの設計詳細
-- **Development Guide**: SDD（Spec-Driven Development）の使い方
-- **Specification**: プロジェクトのSteeringとSpecs
+- **Development Guide**: AI開発支援の設定（AGENTS）
+- **Specification**: プロジェクトのSteeringとSpecs（SDD関連）
 
 詳細は `docs/` ディレクトリを参照してください。
 

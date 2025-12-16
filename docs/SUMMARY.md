@@ -13,7 +13,6 @@
 
 # Development Guide
 
-- [SDD使用ガイド](development/cc-sdd-usage.md)
 - [AGENTS設定](development/agents.md)
 
 # Specification (SDD)
