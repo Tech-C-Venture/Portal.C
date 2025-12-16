@@ -3,7 +3,6 @@ title = "Portal.C Documentation"
 description = "Portal.C project documentation including architecture, onboarding, and SDD guides"
 authors = ["Tech.C Venture"]
 language = "ja"
-multilingual = false
 src = "docs"
 
 [build]
