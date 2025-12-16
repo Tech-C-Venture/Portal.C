@@ -1,46 +1,39 @@
-"use client";
+/**
+ * メンバー一覧ページ（Clean Architecture統合版）
+ */
 
-import type { Member } from "@/types";
-import { calculateGrade } from "@/types";
-import { useState } from "react";
+import { container } from '@/infrastructure/di/setup';
+import { USE_CASE_KEYS } from '@/infrastructure/di/keys';
+import { GetMemberProfileUseCase } from '@/application/use-cases';
+import { IMemberRepository } from '@/application/ports';
+import { REPOSITORY_KEYS } from '@/infrastructure/di/keys';
+import { MemberDTO } from '@/application/dtos';
+import { MemberList } from '@/components/members/MemberList';
 
-// ダミーデータ
-const mockMembers: Member[] = [
-  {
-    id: "1",
-    name: "山田太郎",
-    schoolEmail: "yamada@example.ed.jp",
-    enrollmentYear: 2022,
-    grade: calculateGrade(2022, false),
-    isRepeating: false,
-    department: "情報システム科",
-    skills: ["React", "TypeScript", "Next.js"],
-    interests: ["Web開発", "UI/UX"],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    name: "佐藤花子",
-    schoolEmail: "sato@example.ed.jp",
-    enrollmentYear: 2023,
-    grade: calculateGrade(2023, false),
-    isRepeating: false,
-    department: "AIシステム科",
-    skills: ["Python", "機械学習", "データ分析"],
-    interests: ["AI", "データサイエンス"],
-    currentStatus: {
-      message: "課題中...",
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+async function getMembers(): Promise<MemberDTO[]> {
+  try {
+    // DIコンテナからリポジトリを取得
+    const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
 
-export default function MembersPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+    // リポジトリから全メンバーを取得
+    const result = await memberRepository.findAll();
+
+    if (!result.success) {
+      console.error('Failed to fetch members:', result.error);
+      return [];
+    }
+
+    // エンティティをDTOに変換
+    const { MemberMapper } = await import('@/application/mappers/MemberMapper');
+    return MemberMapper.toDTOList(result.value);
+  } catch (error) {
+    console.error('Error fetching members:', error);
+    return [];
+  }
+}
+
+export default async function MembersPage() {
+  const members = await getMembers();
 
   return (
     <div>
@@ -49,65 +42,7 @@ export default function MembersPage() {
         <p className="text-gray-600">Tech.C Ventureのメンバー</p>
       </div>
 
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="スキルや興味で検索..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockMembers.map((member) => (
-          <div
-            key={member.id}
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
-              <div>
-                <h2 className="text-lg font-semibold">{member.name}</h2>
-                <p className="text-sm text-gray-500">
-                  {member.grade}年生 / {member.department}
-                </p>
-              </div>
-            </div>
-            {member.currentStatus && (
-              <div className="mb-3 p-2 bg-blue-50 rounded text-sm text-blue-700">
-                💬 {member.currentStatus.message}
-              </div>
-            )}
-            <div className="mb-3">
-              <p className="text-sm text-gray-600 mb-1">スキル:</p>
-              <div className="flex flex-wrap gap-1">
-                {member.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">興味:</p>
-              <div className="flex flex-wrap gap-1">
-                {member.interests.map((interest) => (
-                  <span
-                    key={interest}
-                    className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded"
-                  >
-                    {interest}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <MemberList members={members} />
     </div>
   );
 }

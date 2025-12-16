@@ -1,36 +1,34 @@
-import type { Event } from "@/types";
-import { Button } from "@openameba/spindle-ui";
-import "@openameba/spindle-ui/Button/Button.css";
+/**
+ * イベント一覧ページ（Clean Architecture統合版）
+ */
 
-// ダミーデータ（後でデータベースから取得）
-const mockEvents: Event[] = [
-  {
-    id: "1",
-    title: "技育プロジェクトVol.16 キックオフ",
-    description: "Portal.Cプロジェクトのキックオフミーティング",
-    date: new Date("2024-04-01T18:00:00"),
-    location: "オンライン",
-    capacity: 30,
-    participantIds: [],
-    createdBy: "admin",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    title: "ハッカソン準備会",
-    description: "次回のハッカソンに向けた準備とチーム編成",
-    date: new Date("2024-04-15T19:00:00"),
-    location: "東京工学院専門学校",
-    capacity: 50,
-    participantIds: [],
-    createdBy: "admin",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+import { container } from '@/infrastructure/di/setup';
+import { REPOSITORY_KEYS } from '@/infrastructure/di/keys';
+import { IEventRepository } from '@/application/ports';
+import { EventDTO } from '@/application/dtos';
+import { EventList } from '@/components/events/EventList';
 
-export default function EventsPage() {
+async function getEvents(): Promise<EventDTO[]> {
+  try {
+    const eventRepository = container.resolve<IEventRepository>(REPOSITORY_KEYS.EVENT);
+    const result = await eventRepository.findAll();
+
+    if (!result.success) {
+      console.error('Failed to fetch events:', result.error);
+      return [];
+    }
+
+    const { EventMapper } = await import('@/application/mappers/EventMapper');
+    return EventMapper.toDTOList(result.value);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    return [];
+  }
+}
+
+export default async function EventsPage() {
+  const events = await getEvents();
+
   return (
     <div>
       <div className="mb-8">
@@ -38,31 +36,7 @@ export default function EventsPage() {
         <p className="text-gray-600">Tech.C Ventureのイベントに参加しよう</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockEvents.map((event) => (
-          <div
-            key={event.id}
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-xl font-semibold mb-2">{event.title}</h2>
-            <p className="text-gray-600 mb-4">{event.description}</p>
-            <div className="space-y-2 text-sm text-gray-500">
-              <p>📅 {new Date(event.date).toLocaleString("ja-JP")}</p>
-              <p>📍 {event.location}</p>
-              {event.capacity && (
-                <p>
-                  👥 {event.participantIds.length} / {event.capacity}名
-                </p>
-              )}
-            </div>
-            <div className="mt-4 w-full">
-              <Button size="medium" variant="contained">
-                参加する
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <EventList events={events} />
     </div>
   );
 }
