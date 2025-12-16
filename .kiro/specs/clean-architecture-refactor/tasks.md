@@ -24,8 +24,8 @@
 
 ## 段階2: ドメイン層の構築
 
-- [ ] 2. ビジネスロジックとエンティティを定義する
-- [ ] 2.1 (P) Memberエンティティと値オブジェクトを実装する
+- [x] 2. ビジネスロジックとエンティティを定義する
+- [x] 2.1 (P) Memberエンティティと値オブジェクトを実装する
   - Memberエンティティをイミュータブルなインターフェースとして定義する（id, name, email, studentId, enrollmentYear, isActive, status, skills, interests）
   - Email値オブジェクトをバリデーションロジック付きで実装する（正規表現によるメールアドレス形式検証）
   - StudentId値オブジェクトをバリデーションロジック付きで実装する（学籍番号形式検証）
@@ -34,19 +34,19 @@
   - types/index.tsの既存ビジネスロジックをMemberエンティティに移行する
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.7_
 
-- [ ] 2.2 (P) Eventエンティティと値オブジェクトを実装する
+- [x] 2.2 (P) Eventエンティティと値オブジェクトを実装する
   - Eventエンティティをイミュータブルなインターフェースとして定義する（id, title, description, startDate, endDate, capacity, participantCount, location）
   - EventCapacity値オブジェクトを実装する（定員のバリデーション）
   - 定員チェックロジックをエンティティ内に実装する（participantCount ≤ capacity）
   - イベント日時のバリデーションを実装する（startDate < endDate）
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.7_
 
-- [ ] 2.3 (P) Timetableエンティティを実装する
+- [x] 2.3 (P) Timetableエンティティを実装する
   - Timetableエンティティをイミュータブルなインターフェースとして定義する（id, memberId, dayOfWeek, period, courseName, classroom）
   - 時間割データのバリデーションロジックを実装する（dayOfWeek: 1-7, period: 1-6）
   - _Requirements: 2.1, 2.2, 2.7_
 
-- [ ] 2.4 (P) ドメインレイヤーの独立性を検証する
+- [x] 2.4 (P) ドメインレイヤーの独立性を検証する
   - ドメインレイヤーが外部ライブラリやフレームワークに依存していないことを確認する
   - アプリケーション層、インフラストラクチャ層、プレゼンテーション層へのインポートが存在しないことを検証する
   - _Requirements: 2.2, 2.6, 6.1_
