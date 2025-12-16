@@ -39,6 +39,7 @@ Portal.Cは、Tech.C Ventureのメンバー管理とイベント管理を行うW
 
 - **フロントエンド**: Next.js 15 (App Router)
 - **バックエンド**: TypeScript
+- **データベース**: Supabase (PostgreSQL)
 - **認証基盤**: ZITADEL (NextAuth.js経由)
 - **スタイリング**: Tailwind CSS
 - **ホスティング**: Vercel
@@ -72,8 +73,26 @@ cp .env.example .env
 - `ZITADEL_ISSUER`: ZITADELインスタンスのURL
 - `ZITADEL_CLIENT_ID`: ZITADELクライアントID
 - `NEXTAUTH_SECRET`: ランダムな秘密鍵（`openssl rand -base64 32`で生成）
+- `NEXT_PUBLIC_SUPABASE_URL`: SupabaseプロジェクトのURL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabaseの匿名キー
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabaseのサービスロールキー（管理操作用）
 
-4. 開発サーバーを起動
+4. Supabaseのセットアップ
+
+Supabase ダッシュボード（https://app.supabase.com）でプロジェクトを作成し、以下の手順でデータベースをセットアップしてください：
+
+a. SQL Editorで`supabase/migrations/`内のマイグレーションファイルを順番に実行
+   - `20241216000001_create_members_table.sql`
+   - `20241216000002_create_tags_table.sql`
+   - `20241216000003_create_events_table.sql`
+   - `20241216000004_create_timetables_table.sql`
+
+b. （オプション）型定義を再生成する場合：
+```bash
+npx supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.types.ts
+```
+
+5. 開発サーバーを起動
 ```bash
 npm run dev
 ```
@@ -96,7 +115,11 @@ Portal.C/
 │   ├── layout/           # レイアウトコンポーネント
 │   └── ui/               # UIコンポーネント
 ├── lib/                   # ユーティリティ関数
+│   └── supabase/         # Supabaseクライアント
+├── supabase/             # Supabase設定
+│   └── migrations/       # データベースマイグレーション
 ├── types/                 # TypeScript型定義
+│   └── database.types.ts # Supabase型定義
 └── public/               # 静的ファイル
 ```
 
@@ -152,7 +175,8 @@ npm run lint
 
 ## 今後の予定
 
-- データベース統合（PostgreSQL / Supabase）
+- ~~データベース統合（PostgreSQL / Supabase）~~ ✅ 完了
+- ZITADEL認証基盤の統合
 - リアルタイム通知機能
 - カレンダー連携
 - モバイルアプリ対応
