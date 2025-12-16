@@ -1,0 +1,7 @@
+{
+  "lib/auth.ts": "@/infrastructure/auth",
+  "lib/auth-options.ts": "@/infrastructure/auth",
+  "lib/utils.ts": "@/application/common",
+  "types/index.ts": "@/domain",
+  "types/database.types.ts": "@/infrastructure/database"
+}

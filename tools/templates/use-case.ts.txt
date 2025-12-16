@@ -1,0 +1,16 @@
+// UseCase Template
+import { Result, success, failure } from '@/application/common/Result';
+import type { IMemberRepository } from '@/application/ports/IMemberRepository';
+
+export class SampleUseCase {
+  constructor(private repo: IMemberRepository) {}
+
+  async execute(input: unknown): Promise<Result<void, string>> {
+    try {
+      // TODO: implement
+      return success(undefined);
+    } catch (err) {
+      return failure((err as Error).message);
+    }
+  }
+}
