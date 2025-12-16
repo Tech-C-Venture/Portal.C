@@ -18,12 +18,26 @@ cc-sdd（Spec-Driven Development）は、AI開発エージェント向けの仕�
 ### Claude Code用 (11コマンド)
 `.claude/commands/kiro/` にコマンドを配置
 
+### Claude Code Subagents用 (12コマンド + 9サブエージェント)
+- コマンド: `.claude/commands/kiro/` (spec-quick.md追加)
+- サブエージェント: `.claude/agents/kiro/` に9エージェント配置
+
 ### Codex CLI用 (11プロンプト)
 `.codex/prompts/` にプロンプトを配置
 
+### Cursor IDE用 (11コマンド)
+`.cursor/commands/kiro/` にコマンドを配置
+
+### Gemini CLI用 (11コマンド)
+`.gemini/commands/kiro/` にコマンド（TOML形式）を配置
+
+### GitHub Copilot用 (11プロンプト)
+`.github/prompts/` にプロンプト（.prompt.md形式）を配置
+
 ### プロジェクトメモリ
 - `CLAUDE.md` - Claude Code用のプロジェクト知識
-- `AGENTS.md` - Codex CLI用のプロジェクト知識
+- `AGENTS.md` - Codex CLI / Cursor IDE用のプロジェクト知識
+- `GEMINI.md` - Gemini CLI用のプロジェクト知識
 
 ### 設定ファイル
 `.kiro/settings/` に25ファイル
@@ -36,7 +50,7 @@ cc-sdd（Spec-Driven Development）は、AI開発エージェント向けの仕�
 
 プロジェクト全体の知識をAIに記憶させます。
 
-**Claude Code:**
+**Claude Code / Claude Code Subagents:**
 ```bash
 /kiro:steering
 ```
@@ -46,6 +60,21 @@ cc-sdd（Spec-Driven Development）は、AI開発エージェント向けの仕�
 /prompts:kiro-steering
 ```
 
+**Cursor IDE:**
+```bash
+/kiro/steering
+```
+
+**Gemini CLI:**
+```bash
+/kiro:steering
+```
+
+**GitHub Copilot:**
+```bash
+/kiro-steering
+```
+
 これにより `.kiro/steering/` に以下が作成されます:
 - `product.md` - プロダクトの概要、目的、ユーザー
 - `tech.md` - 技術スタック、アーキテクチャ
@@ -53,11 +82,20 @@ cc-sdd（Spec-Driven Development）は、AI開発エージェント向けの仕�
 
 **カスタム設定の追加:**
 ```bash
-# Claude Code
+# Claude Code / Claude Code Subagents
 /kiro:steering-custom <設定名>
 
 # Codex CLI
 /prompts:kiro-steering-custom <設定名>
+
+# Cursor IDE
+/kiro/steering-custom <設定名>
+
+# Gemini CLI
+/kiro:steering-custom <設定名>
+
+# GitHub Copilot
+/kiro-steering-custom <設定名>
 ```
 
 例: `/kiro:steering-custom api-standards`
@@ -228,6 +266,27 @@ EARS形式で要件を定義します。
 | `/kiro:validate-impl` | 実装を検証 |
 | `/kiro:spec-status` | 進捗を確認 |
 
+### Claude Code Subagents用コマンド
+
+Claude Code Subagentsでは、通常のコマンド11個に加えて、クイックスタート用のコマンドが追加されています。
+
+| コマンド | 説明 |
+|---------|------|
+| `/kiro:spec-quick` | **新規**: 仕様を迅速に作成（サブエージェント使用） |
+| `/kiro:steering` | プロジェクト知識を作成・更新 |
+| `/kiro:steering-custom` | カスタム設定を作成 |
+| `/kiro:spec-init` | 新規仕様を初期化 |
+| `/kiro:spec-requirements` | 要件定義を作成 |
+| `/kiro:validate-gap` | ギャップ分析を実行 |
+| `/kiro:spec-design` | 設計書を作成 |
+| `/kiro:validate-design` | 設計をレビュー |
+| `/kiro:spec-tasks` | タスクを分解 |
+| `/kiro:spec-impl` | タスクを実装 |
+| `/kiro:validate-impl` | 実装を検証 |
+| `/kiro:spec-status` | 進捗を確認 |
+
+**サブエージェント**: `.claude/agents/kiro/` に9つのエージェントが配置されています。
+
 ### Codex CLI用コマンド
 
 Codex CLIでは、すべてのコマンドが `/prompts:kiro-*` 形式になります。
@@ -246,15 +305,89 @@ Codex CLIでは、すべてのコマンドが `/prompts:kiro-*` 形式になり�
 | `/prompts:kiro-validate-impl` | 実装を検証 |
 | `/prompts:kiro-spec-status` | 進捗を確認 |
 
+### Cursor IDE用コマンド
+
+Cursor IDEでは、すべてのコマンドが `/kiro/*` 形式になります。
+
+| コマンド | 説明 |
+|---------|------|
+| `/kiro/steering` | プロジェクト知識を作成・更新 |
+| `/kiro/steering-custom` | カスタム設定を作成 |
+| `/kiro/spec-init` | 新規仕様を初期化 |
+| `/kiro/spec-requirements` | 要件定義を作成 |
+| `/kiro/validate-gap` | ギャップ分析を実行 |
+| `/kiro/spec-design` | 設計書を作成 |
+| `/kiro/validate-design` | 設計をレビュー |
+| `/kiro/spec-tasks` | タスクを分解 |
+| `/kiro/spec-impl` | タスクを実装 |
+| `/kiro/validate-impl` | 実装を検証 |
+| `/kiro/spec-status` | 進捗を確認 |
+
+### Gemini CLI用コマンド
+
+Gemini CLIでは、すべてのコマンドが `/kiro:*` 形式になります（TOML設定ファイル使用）。
+
+| コマンド | 説明 |
+|---------|------|
+| `/kiro:steering` | プロジェクト知識を作成・更新 |
+| `/kiro:steering-custom` | カスタム設定を作成 |
+| `/kiro:spec-init` | 新規仕様を初期化 |
+| `/kiro:spec-requirements` | 要件定義を作成 |
+| `/kiro:validate-gap` | ギャップ分析を実行 |
+| `/kiro:spec-design` | 設計書を作成 |
+| `/kiro:validate-design` | 設計をレビュー |
+| `/kiro:spec-tasks` | タスクを分解 |
+| `/kiro:spec-impl` | タスクを実装 |
+| `/kiro:validate-impl` | 実装を検証 |
+| `/kiro:spec-status` | 進捗を確認 |
+
+### GitHub Copilot用コマンド
+
+GitHub Copilotでは、すべてのコマンドが `/kiro-*` 形式になります（.prompt.md形式）。
+
+| コマンド | 説明 |
+|---------|------|
+| `/kiro-steering` | プロジェクト知識を作成・更新 |
+| `/kiro-steering-custom` | カスタム設定を作成 |
+| `/kiro-spec-init` | 新規仕様を初期化 |
+| `/kiro-spec-requirements` | 要件定義を作成 |
+| `/kiro-validate-gap` | ギャップ分析を実行 |
+| `/kiro-spec-design` | 設計書を作成 |
+| `/kiro-validate-design` | 設計をレビュー |
+| `/kiro-spec-tasks` | タスクを分解 |
+| `/kiro-spec-impl` | タスクを実装 |
+| `/kiro-validate-impl` | 実装を検証 |
+| `/kiro-spec-status` | 進捗を確認 |
+
+## コマンドフォーマット対応表
+
+各AIツールでのコマンド形式の違い:
+
+| 機能 | Claude Code | Claude Code Subagents | Codex CLI | Cursor IDE | Gemini CLI | GitHub Copilot |
+|------|-------------|----------------------|-----------|------------|------------|----------------|
+| Steering | `/kiro:steering` | `/kiro:steering` | `/prompts:kiro-steering` | `/kiro/steering` | `/kiro:steering` | `/kiro-steering` |
+| Spec Init | `/kiro:spec-init` | `/kiro:spec-init` | `/prompts:kiro-spec-init` | `/kiro/spec-init` | `/kiro:spec-init` | `/kiro-spec-init` |
+| Quick Spec | - | `/kiro:spec-quick` | - | - | - | - |
+
 ## ディレクトリ構造
 
 ```
 .
 ├── .claude/
+│   ├── agents/
+│   │   └── kiro/          # Claude Code Subagents (9エージェント)
 │   └── commands/
-│       └── kiro/          # Claude Code用コマンド
+│       └── kiro/          # Claude Code用コマンド (12コマンド)
 ├── .codex/
-│   └── prompts/           # Codex CLI用プロンプト
+│   └── prompts/           # Codex CLI用プロンプト (11プロンプト)
+├── .cursor/
+│   └── commands/
+│       └── kiro/          # Cursor IDE用コマンド (11コマンド)
+├── .gemini/
+│   └── commands/
+│       └── kiro/          # Gemini CLI用コマンド (11 TOMLファイル)
+├── .github/
+│   └── prompts/           # GitHub Copilot用プロンプト (11 .prompt.mdファイル)
 ├── .kiro/
 │   ├── settings/
 │   │   ├── rules/         # 開発ルール
@@ -269,8 +402,11 @@ Codex CLIでは、すべてのコマンドが `/prompts:kiro-*` 形式になり�
 │           ├── requirements.md
 │           ├── design.md
 │           └── tasks.md
+├── docs/
+│   └── cc-sdd-usage.md    # このドキュメント
 ├── CLAUDE.md              # Claude Code用プロジェクトメモリ
-└── AGENTS.md              # Codex CLI用プロジェクトメモリ
+├── AGENTS.md              # Codex CLI / Cursor IDE用プロジェクトメモリ
+└── GEMINI.md              # Gemini CLI用プロジェクトメモリ
 ```
 
 ## 開発のベストプラクティス
@@ -329,6 +465,22 @@ npx cc-sdd@latest --codex --overwrite=force
 ### Claude Code
 - Claude 4.5 Sonnet 以降
 
+### Claude Code Subagents
+- Claude 4.5 Sonnet 以降
+
 ### Codex CLI
+- gpt-5.1-codex medium/high
+- gpt-5.1 medium/high
+
+### Cursor IDE
+- Claude 4.5 Sonnet thinking mode 以降
+- gpt-5.1-codex medium/high
+- gpt-5.1 medium/high
+
+### Gemini CLI
+- Gemini 2.5 Pro 以降
+
+### GitHub Copilot
+- Claude 4.5 Sonnet thinking mode 以降
 - gpt-5.1-codex medium/high
 - gpt-5.1 medium/high
