@@ -2,20 +2,20 @@
 
 ## 段階1: 基盤整備
 
-- [ ] 1. Clean Architectureの基盤構造を構築する
-- [ ] 1.1 (P) ディレクトリ構造を作成する
+- [x] 1. Clean Architectureの基盤構造を構築する
+- [x] 1.1 (P) ディレクトリ構造を作成する
   - プロジェクトルートに`src/`ディレクトリを作成し、4つのレイヤーディレクトリ（domain/, application/, infrastructure/, presentation/）を配置する
   - 各レイヤー内に機能別サブディレクトリを作成する（domain/entities/, domain/value-objects/, application/use-cases/, application/ports/, application/dtos/, infrastructure/repositories/, infrastructure/database/, infrastructure/auth/, infrastructure/di/）
   - 既存の`app/`と`components/`ディレクトリはプレゼンテーション層として保持する
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 1.2 (P) TypeScript設定とパスエイリアスを構成する
+- [x] 1.2 (P) TypeScript設定とパスエイリアスを構成する
   - `tsconfig.json`にレイヤー別パスエイリアスを追加する（@/domain/, @/application/, @/infrastructure/, @/presentation/）
   - TypeScript strict modeが有効であることを確認する
   - レイヤー依存ルールを強制するためのコンパイラオプションを設定する
   - _Requirements: 1.7, 6.6, 6.7_
 
-- [ ] 1.3 依存性注入メカニズムを実装する
+- [x] 1.3 依存性注入メカニズムを実装する
   - 軽量DIコンテナを実装する（ioctopus風のインターフェースバインディングパターン）
   - 型安全な依存性登録と解決機能を提供する
   - ドメインモジュールファクトリーパターンを実装する
