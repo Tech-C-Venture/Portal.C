@@ -4,9 +4,10 @@
 - レイヤー責務と依存ルールを理解したうえで、最短で開発を開始するためのガイド。
 
 ## 必須コマンド
-- 開発: `npm run dev`
-- 型・Lint: `npm run lint` / `npm run test:arch`
-- テスト: `npm test` / `npm run test:coverage`
+- 開発: `pnpm dev`
+- 型・Lint: `pnpm lint` / `pnpm run test:arch`
+- テスト: `pnpm test:unit` / `pnpm run test:coverage`
+- フルチェック: `pnpm test`（lint→unit test→build）※CI想定
 
 ## レイヤー概要
 - Domain: ビジネスルールのみ。外部依存なし。`@/domain/*`
