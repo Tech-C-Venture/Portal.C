@@ -2,6 +2,9 @@
  * メンバー一覧ページ（Clean Architecture統合版）
  */
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { getMemberListAction } from '@/app/actions/members';
 import { MemberList } from '@/components/members/MemberList';
 

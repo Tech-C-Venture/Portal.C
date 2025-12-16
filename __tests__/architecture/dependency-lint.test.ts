@@ -2,45 +2,68 @@ import path from 'path';
 import { spawnSync } from 'child_process';
 
 const projectRoot = path.resolve(__dirname, '..', '..');
-const fixturesDir = path.join(projectRoot, '__tests__', 'fixtures', 'deps');
-
-const runEslint = (file: string) =>
+const runEslint = (code: string, virtualPath: string) =>
   spawnSync(
     'npx',
     [
       '--yes',
       'eslint',
+      '--no-ignore',
       '--config',
       path.join(projectRoot, 'eslint.config.mjs'),
-      file,
+      '--stdin',
+      '--stdin-filename',
+      virtualPath,
     ],
-    { encoding: 'utf8' }
+    { encoding: 'utf8', input: code }
   );
 
 describe('Layer dependency lint rules', () => {
   test('flags domain -> application dependency', () => {
-    const result = runEslint(path.join(projectRoot, 'src/domain/__lint__/domain-bad.ts'));
+    const result = runEslint(
+      `import { GetMemberProfileUseCase } from '@/application/use-cases';
+       export const x = new GetMemberProfileUseCase({} as any);`,
+      'src/domain/example.ts'
+    );
     expect(result.status).not.toBe(0);
     expect(result.stderr + result.stdout).toContain('no-restricted-imports');
   });
 
   test('allows domain self imports', () => {
-    const result = runEslint(path.join(projectRoot, 'src/domain/__lint__/domain-good.ts'));
+    const result = runEslint(
+      `import { Email } from '@/domain/value-objects/Email';
+       export const mail = Email.create('a@example.ed.jp');`,
+      'src/domain/example.ts'
+    );
     expect(result.status).toBe(0);
   });
 
   test('flags application -> infrastructure dependency', () => {
-    const result = runEslint(path.join(projectRoot, 'src/application/__lint__/application-bad.ts'));
+    const result = runEslint(
+      `import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+       export const client = DatabaseClient;`,
+      'src/application/example.ts'
+    );
     expect(result.status).not.toBe(0);
   });
 
   test('flags presentation -> infrastructure dependency', () => {
-    const result = runEslint(path.join(projectRoot, 'src/presentation/__lint__/presentation-bad.ts'));
+    const result = runEslint(
+      `import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+       export const client = DatabaseClient;`,
+      'app/example.tsx'
+    );
     expect(result.status).not.toBe(0);
   });
 
   test('allows presentation to depend on application', () => {
-    const result = runEslint(path.join(projectRoot, 'src/presentation/__lint__/presentation-good.ts'));
+    const result = runEslint(
+      `import { MemberList } from '@/components/members/MemberList';
+       import { GetMemberProfileUseCase } from '@/application/use-cases';
+       export const list = MemberList;
+       export const usecase = GetMemberProfileUseCase;`,
+      'app/example.tsx'
+    );
     expect(result.status).toBe(0);
   });
 });

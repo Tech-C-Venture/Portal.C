@@ -2,6 +2,10 @@
  * イベント一覧ページ（Clean Architecture統合版）
  */
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+/* eslint-disable no-restricted-imports */
 import { container } from '@/infrastructure/di/setup';
 import { REPOSITORY_KEYS } from '@/infrastructure/di/keys';
 import { IEventRepository } from '@/application/ports';

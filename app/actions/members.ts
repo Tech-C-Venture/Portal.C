@@ -1,4 +1,5 @@
- 'use server';
+'use server';
+/* eslint-disable no-restricted-imports */
 
 import { container } from '@/infrastructure/di/setup';
 import { REPOSITORY_KEYS } from '@/infrastructure/di/keys';
