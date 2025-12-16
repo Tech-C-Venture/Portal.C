@@ -1,0 +1,16 @@
+# Cloudflare Pages configuration for mdBook documentation
+
+name = "portal-c-docs"
+compatibility_date = "2024-12-16"
+
+[env.production]
+name = "portal-c-docs"
+
+[build]
+command = "mdbook build"
+cwd = ""
+watch_dirs = ["docs"]
+
+[build.upload]
+format = "directory"
+dir = "book"
