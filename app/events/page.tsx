@@ -1,4 +1,6 @@
 import type { Event } from "@/types";
+import { Button } from "@openameba/spindle-ui";
+import "@openameba/spindle-ui/Button/Button.css";
 
 // ダミーデータ（後でデータベースから取得）
 const mockEvents: Event[] = [
@@ -53,9 +55,11 @@ export default function EventsPage() {
                 </p>
               )}
             </div>
-            <button className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors">
-              参加する
-            </button>
+            <div className="mt-4 w-full">
+              <Button size="medium" variant="contained">
+                参加する
+              </Button>
+            </div>
           </div>
         ))}
       </div>

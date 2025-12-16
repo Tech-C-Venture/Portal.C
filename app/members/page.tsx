@@ -1,5 +1,8 @@
+"use client";
+
 import type { Member } from "@/types";
 import { calculateGrade } from "@/types";
+import { useState } from "react";
 
 // ダミーデータ
 const mockMembers: Member[] = [
@@ -37,6 +40,8 @@ const mockMembers: Member[] = [
 ];
 
 export default function MembersPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <div>
       <div className="mb-8">
@@ -48,6 +53,8 @@ export default function MembersPage() {
         <input
           type="text"
           placeholder="スキルや興味で検索..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
