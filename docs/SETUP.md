@@ -51,7 +51,6 @@ docs/
 │   ├── architecture.md                 # アーキテクチャ設計
 │   └── migration-plan.md               # マイグレーション計画
 ├── development/
-│   ├── cc-sdd-usage.md                 # SDD使用ガイド
 │   └── agents.md                       # AGENTS設定
 └── specification/
     ├── steering/                       # プロジェクトガイドライン

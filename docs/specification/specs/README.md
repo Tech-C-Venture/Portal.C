@@ -35,7 +35,7 @@ Portal.CではKiro-style Spec-Driven Developmentを採用しています。こ�
 6. **検証** (`/kiro:validate-impl`) - オプション
    - 要件との整合性確認
 
-詳細は[SDD使用ガイド](../../development/cc-sdd-usage.md)を参照してください。
+詳細はルートディレクトリの`CLAUDE.md`や`AGENTS.md`を参照してください。
 
 ## 新しい仕様の作成
 

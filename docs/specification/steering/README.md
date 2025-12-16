@@ -28,4 +28,4 @@ Steeringファイルは、プロジェクトの成長に伴って更新されま
 /kiro:steering-custom
 ```
 
-詳細は[SDD使用ガイド](../../development/cc-sdd-usage.md)を参照してください。
+詳細はルートディレクトリの`CLAUDE.md`や`AGENTS.md`を参照してください。
