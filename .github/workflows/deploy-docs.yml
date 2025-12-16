@@ -66,6 +66,19 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
+      - name: Create Cloudflare Pages Project (if not exists)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Check if project exists, if not create it
+          if ! wrangler pages project list | grep -q "portal-c-docs"; then
+            echo "Creating new Cloudflare Pages project..."
+            wrangler pages project create portal-c-docs --production-branch=main
+          else
+            echo "Project already exists, skipping creation."
+          fi
+
       - name: Deploy to Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -75,4 +88,5 @@ jobs:
             --project-name=portal-c-docs \
             --branch=${{ github.head_ref || github.ref_name }} \
             --commit-hash=${{ github.sha }} \
-            --commit-message="${{ github.event.head_commit.message || 'Deploy from PR' }}"
+            --commit-message="${{ github.event.head_commit.message || 'Deploy from PR' }}" \
+            --commit-dirty=true
