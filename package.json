@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
+    "test": "pnpm run test:ci",
+    "test:unit": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:arch": "jest dependency-lint layer-aliases layer-mapping --runInBand"
+    "test:arch": "jest dependency-lint layer-aliases layer-mapping --runInBand",
+    "test:ci": "pnpm lint && pnpm run test:unit && pnpm run build"
   },
   "dependencies": {
     "@openameba/spindle-ui": "^3.1.4",
