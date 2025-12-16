@@ -42,17 +42,17 @@
     - [Tasks Generation](specification/settings/rules/tasks-generation.md)
     - [Tasks Parallel Analysis](specification/settings/rules/tasks-parallel-analysis.md)
   - [Templates](specification/settings/templates/README.md)
-    - Specs Templates
+    - [Specs Templates](specification/settings/templates/specs/README.md)
       - [Design](specification/settings/templates/specs/design.md)
       - [Requirements](specification/settings/templates/specs/requirements.md)
       - [Requirements Init](specification/settings/templates/specs/requirements-init.md)
       - [Research](specification/settings/templates/specs/research.md)
       - [Tasks](specification/settings/templates/specs/tasks.md)
-    - Steering Templates
+    - [Steering Templates](specification/settings/templates/steering/README.md)
       - [Product](specification/settings/templates/steering/product.md)
       - [Tech](specification/settings/templates/steering/tech.md)
       - [Structure](specification/settings/templates/steering/structure.md)
-    - Custom Steering Templates
+    - [Custom Steering Templates](specification/settings/templates/steering-custom/README.md)
       - [API Standards](specification/settings/templates/steering-custom/api-standards.md)
       - [Authentication](specification/settings/templates/steering-custom/authentication.md)
       - [Database](specification/settings/templates/steering-custom/database.md)
