@@ -1,0 +1,125 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'book.toml'
+      - '.github/workflows/deploy-docs.yml'
+      # cc-sdd managed directories (dynamically updated)
+      - '.claude/commands/kiro/**'
+      - '.claude/agents/kiro/**'
+      - '.codex/prompts/**'
+      - '.cursor/commands/kiro/**'
+      - '.gemini/commands/kiro/**'
+      - '.github/prompts/**'
+      - '.kiro/**'
+      # Project memory files
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+      - 'GEMINI.md'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'book.toml'
+      - '.github/workflows/deploy-docs.yml'
+      # cc-sdd managed directories (dynamically updated)
+      - '.claude/commands/kiro/**'
+      - '.claude/agents/kiro/**'
+      - '.codex/prompts/**'
+      - '.cursor/commands/kiro/**'
+      - '.gemini/commands/kiro/**'
+      - '.github/prompts/**'
+      - '.kiro/**'
+      # Project memory files
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+      - 'GEMINI.md'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: 'latest'
+
+      - name: Build documentation
+        run: mdbook build
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Create Cloudflare Pages Project (if not exists)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Check if project exists, if not create it
+          if ! wrangler pages project list | grep -q "portal-c-docs"; then
+            echo "Creating new Cloudflare Pages project..."
+            wrangler pages project create portal-c-docs --production-branch=main
+          else
+            echo "Project already exists, skipping creation."
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          output=$(wrangler pages deploy book \
+            --project-name=portal-c-docs \
+            --branch=${{ github.head_ref || github.ref_name }} \
+            --commit-hash=${{ github.sha }} \
+            --commit-message="${{ github.event.head_commit.message || 'Deploy from PR' }}" \
+            --commit-dirty=true 2>&1)
+          echo "$output"
+
+          # Extract URL from output
+          url=$(echo "$output" | grep -oP 'https://[^\s]+\.pages\.dev' | head -1)
+          echo "deployment_url=$url" >> $GITHUB_OUTPUT
+
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentUrl = '${{ steps.deploy.outputs.deployment_url }}';
+            const comment = `## 📚 ドキュメントのデプロイが完了しました！
+
+            ✅ **ビルド状態**: 成功
+            🔗 **プレビューURL**: ${deploymentUrl || 'https://portal-c-docs.pages.dev'}
+
+            ### 詳細
+            - **コミット**: \`${{ github.sha }}\`
+            - **ブランチ**: \`${{ github.head_ref || github.ref_name }}\`
+            - **実行者**: @${{ github.actor }}
+
+            ドキュメントがビルドされ、Cloudflare Pagesにデプロイされました。
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

@@ -1,0 +1,5 @@
+# Cloudflare Pages configuration for mdBook documentation
+
+name = "portal-c-docs"
+pages_build_output_dir = "book"
+compatibility_date = "2024-12-16"
