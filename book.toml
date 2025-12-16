@@ -13,7 +13,6 @@ create-missing = true
 default-theme = "light"
 preferred-dark-theme = "navy"
 git-repository-url = "https://github.com/Tech-C-Venture/Portal.C"
-git-repository-icon = "fa-github"
 edit-url-template = "https://github.com/Tech-C-Venture/Portal.C/edit/main/{path}"
 
 [output.html.search]
