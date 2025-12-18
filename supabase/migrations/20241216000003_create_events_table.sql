@@ -49,19 +49,13 @@ CREATE POLICY "Events are viewable by everyone"
 CREATE POLICY "Only admins can create events"
   ON public.events FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM auth.jwt() -> 'roles' AS roles
-      WHERE roles ? 'admin'
-    )
+    (auth.jwt() -> 'roles') ? 'admin'
   );
 
 CREATE POLICY "Only admins can update events"
   ON public.events FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM auth.jwt() -> 'roles' AS roles
-      WHERE roles ? 'admin'
-    )
+    (auth.jwt() -> 'roles') ? 'admin'
   );
 
 -- Policy: Anyone can read event participants
@@ -95,10 +89,7 @@ CREATE POLICY "Members can unregister from events"
 CREATE POLICY "Only admins can update participation"
   ON public.event_participants FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM auth.jwt() -> 'roles' AS roles
-      WHERE roles ? 'admin'
-    )
+    (auth.jwt() -> 'roles') ? 'admin'
   );
 
 -- Create view for event participation stats
