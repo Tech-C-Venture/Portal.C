@@ -4,7 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-export function Navigation() {
+type NavigationProps = {
+  isAdmin?: boolean;
+};
+
+export function Navigation({ isAdmin = false }: NavigationProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -14,7 +18,7 @@ export function Navigation() {
     { href: "/timetable", label: "時間割" },
     { href: "/profile", label: "プロフィール" },
     { href: "/admin", label: "管理画面" },
-  ];
+  ].filter((item) => item.href !== "/admin" || isAdmin);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
