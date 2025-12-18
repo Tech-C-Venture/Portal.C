@@ -1,11 +1,11 @@
 # Summary
 
 # About
-- [Introduction](about/README.md)
-- [ドキュメントセットアップ](about/SETUP.md)
-- [cc-sdd 使い方](about/cc-sdd-usage.md)
-- [移行・検証ガイド](about/migration-plan.md)
-- [Clean Architecture版オンボーディング](about/onboarding.md)
+- [cc-sdd 使い方ガイド](about/cc-sdd-usage.md)
+- [段階的移行とリグレッション検証ガイド](about/migration-plan.md)
+- [Portal.C 開発者オンボーディング（Clean Architecture版）](about/onboarding.md)
+- [Portal.C Documentation](about/README.md)
+- [ドキュメントセットアップガイド](about/SETUP.md)
 
 # Getting Started
 

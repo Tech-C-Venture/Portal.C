@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "pnpm run test:ci",
+    "test:docs": "node tools/docs/update-summary.js --check",
     "test:unit": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
