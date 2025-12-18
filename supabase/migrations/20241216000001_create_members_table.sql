@@ -89,8 +89,5 @@ CREATE POLICY "Members can update own profile"
 CREATE POLICY "Only admins can insert members"
   ON public.members FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM auth.jwt() -> 'roles' AS roles
-      WHERE roles ? 'admin'
-    )
+    (auth.jwt() -> 'roles') ? 'admin'
   );
