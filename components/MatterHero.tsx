@@ -1,81 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import Matter from "matter-js";
+import Link from "next/link";
 
-export function MatterHero() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<Matter.Engine | null>(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const cw = window.innerWidth;
-    // モバイルでは適切な高さに調整
-    const ch = window.innerWidth < 768
-      ? Math.min(500, window.innerHeight * 0.6)
-      : Math.min(600, window.innerHeight * 0.7);
-
-    canvas.width = cw;
-    canvas.height = ch;
-
-    // Matter.jsのセットアップ
-    const Engine = Matter.Engine;
-    const Render = Matter.Render;
-    const World = Matter.World;
-    const Bodies = Matter.Bodies;
-    const Mouse = Matter.Mouse;
-    const MouseConstraint = Matter.MouseConstraint;
-
-    const engine = Engine.create({
-      gravity: { x: 0, y: 0.5, scale: 0.001 },
-    });
-    engineRef.current = engine;
-
-    const render = Render.create({
-      canvas: canvas,
-      engine: engine,
-      options: {
-        width: cw,
-        height: ch,
-        wireframes: false,
-        background: "transparent",
-      },
-    });
-
-    // カラーパレット（柔らかく美しい色）
-    const colors = [
-      "#A8E6CF", // ミントグリーン
-      "#FFD3B6", // ピーチ
-      "#FFAAA5", // コーラル
-      "#FF8B94", // ローズ
-      "#B4A7D6", // ラベンダー
-      "#9AD1D4", // スカイブルー
-    ];
-
-    // 壁を作成
-    const wallOptions = {
-      isStatic: true,
-      render: { fillStyle: "transparent" },
-    };
-
-    const walls = [
-      Bodies.rectangle(cw / 2, -25, cw, 50, wallOptions), // 上
-      Bodies.rectangle(cw / 2, ch + 25, cw, 50, wallOptions), // 下
-      Bodies.rectangle(-25, ch / 2, 50, ch, wallOptions), // 左
-      Bodies.rectangle(cw + 25, ch / 2, 50, ch, wallOptions), // 右
-    ];
-
-    // シンプルなオブジェクトを作成
-    const objects: Matter.Body[] = [];
-
-    // 円と四角形をランダムに配置
-    for (let i = 0; i < 12; i++) {
-      const x = Math.random() * cw * 0.8 + cw * 0.1;
-      const y = Math.random() * ch * 0.3;
-      const size = Math.random() * 30 + 25;
-      const color = colors[Math.floor(Math.random() * colors.length)];
+const BRAND = "#2a61b3";
+const ACCENT_2 = "#b7e0e4";
 
       let shape;
       if (Math.random() > 0.5) {
