@@ -99,8 +99,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  const roles = Array.isArray((token as { roles?: string[] }).roles)
-    ? (token as { roles?: string[] }).roles
+  const tokenRoles = (token as { roles?: unknown }).roles
+  const roles = Array.isArray(tokenRoles)
+    ? tokenRoles.filter((role): role is string => typeof role === "string")
     : []
   const isAdmin = roles.includes("admin")
   const zitadelId = typeof token.sub === "string" ? token.sub : ""

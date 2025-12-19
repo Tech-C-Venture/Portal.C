@@ -8,14 +8,13 @@ import { Member, createMember } from '@/domain/entities/Member';
 import { Result, success, failure } from '@/application/common/Result';
 import { DatabaseClient } from '../database/DatabaseClient';
 import type { Database } from '@/types/database.types';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 type MemberRow = Database['public']['Tables']['members']['Row'];
 type MemberInsert = Database['public']['Tables']['members']['Insert'];
 type MemberUpdate = Database['public']['Tables']['members']['Update'];
 type TagRow = Database['public']['Tables']['tags']['Row'];
 type MemberTagInsert = Database['public']['Tables']['member_tags']['Insert'];
-type SupabaseDbClient = SupabaseClient<Database>;
+type SupabaseDbClient = Awaited<ReturnType<typeof DatabaseClient.getServerClient>>;
 
 export class SupabaseMemberRepository implements IMemberRepository {
   private async getClient() {

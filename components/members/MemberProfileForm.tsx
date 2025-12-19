@@ -34,7 +34,7 @@ function LogoutButton() {
       type="button"
       size="large"
       variant="outlined"
-      className="w-full"
+      layout="fullWidth"
       onClick={() => signOut({ callbackUrl: "/login" })}
     >
       ログアウト

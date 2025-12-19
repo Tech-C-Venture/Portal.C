@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
+
+type TagNameRow = Pick<Database["public"]["Tables"]["tags"]["Row"], "name">;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = (searchParams.get("query") ?? "").trim();
-  const category = searchParams.get("category") ?? "";
+  const categoryParam = searchParams.get("category");
+  const category =
+    categoryParam === "skill" || categoryParam === "interest" ? categoryParam : null;
 
-  if (!query || (category !== "skill" && category !== "interest")) {
+  if (!query || !category) {
     return NextResponse.json({ tags: [] });
   }
 
@@ -23,5 +28,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ tags: [] }, { status: 500 });
   }
 
-  return NextResponse.json({ tags: data.map((row) => row.name) });
+  const tags = ((data ?? []) as TagNameRow[]).map((row) => row.name);
+  return NextResponse.json({ tags });
 }

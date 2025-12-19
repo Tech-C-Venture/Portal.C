@@ -61,6 +61,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       tags: {
         Row: {
@@ -81,6 +82,7 @@ export interface Database {
           category?: "skill" | "interest";
           created_at?: string;
         };
+        Relationships: [];
       };
       member_tags: {
         Row: {
@@ -98,6 +100,7 @@ export interface Database {
           tag_id?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       events: {
         Row: {
@@ -133,6 +136,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       event_participants: {
         Row: {
@@ -153,6 +157,7 @@ export interface Database {
           participated?: boolean;
           registered_at?: string;
         };
+        Relationships: [];
       };
       timetables: {
         Row: {
@@ -188,6 +193,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
     Views: {
@@ -201,6 +207,7 @@ export interface Database {
           participated_count: number;
           available_spots: number | null;
         };
+        Relationships: [];
       };
       timetable_by_grade_major: {
         Row: {
@@ -214,6 +221,7 @@ export interface Database {
           semester: "spring" | "fall" | null;
           year: number;
         };
+        Relationships: [];
       };
     };
     Functions: {
@@ -226,5 +234,6 @@ export interface Database {
       };
     };
     Enums: {};
+    CompositeTypes: {};
   };
 }

@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 type NavigationProps = {
-  isAdmin?: boolean;
+  roles?: string[];
 };
 
-export function Navigation({ isAdmin = false }: NavigationProps) {
+export function Navigation({ roles }: NavigationProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isAdmin = Array.isArray(roles) && roles.includes("admin");
 
   const navItems = [
     { href: "/events", label: "イベント一覧" },

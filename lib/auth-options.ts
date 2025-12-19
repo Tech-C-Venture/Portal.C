@@ -44,11 +44,14 @@ function extractRoles(profile?: ExtendedProfile | null): string[] {
   return [];
 }
 
-async function fetchUserInfoRoles(accessToken?: string | null): Promise<string[]> {
+async function fetchUserInfoRoles(
+  endpoint: string,
+  accessToken?: string | null
+): Promise<string[]> {
   if (!accessToken) return [];
 
   try {
-    const response = await fetch(userInfoEndpoint, {
+    const response = await fetch(endpoint, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -66,15 +69,19 @@ async function fetchUserInfoRoles(accessToken?: string | null): Promise<string[]
   }
 }
 
-const issuer = process.env.ZITADEL_ISSUER;
-const clientId = process.env.ZITADEL_CLIENT_ID;
-const userInfoEndpoint = process.env.ZITADEL_USERINFO_ENDPOINT;
-
-if (!issuer || !clientId || !userInfoEndpoint) {
-  throw new Error(
-    "ZITADEL_ISSUER, ZITADEL_CLIENT_ID, and ZITADEL_USERINFO_ENDPOINT must be set"
-  );
+function requireEnv(value: string | undefined, name: string): string {
+  if (!value) {
+    throw new Error(`${name} must be set`);
+  }
+  return value;
 }
+
+const issuer = requireEnv(process.env.ZITADEL_ISSUER, "ZITADEL_ISSUER");
+const clientId = requireEnv(process.env.ZITADEL_CLIENT_ID, "ZITADEL_CLIENT_ID");
+const userInfoEndpoint = requireEnv(
+  process.env.ZITADEL_USERINFO_ENDPOINT,
+  "ZITADEL_USERINFO_ENDPOINT"
+);
 
 async function ensureMemberOnSignIn(user: {
   id?: string;
@@ -156,7 +163,10 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (!token.roles || token.roles.length === 0) {
-        const userInfoRoles = await fetchUserInfoRoles(token.accessToken as string | null);
+        const userInfoRoles = await fetchUserInfoRoles(
+          userInfoEndpoint,
+          token.accessToken as string | null
+        );
         if (userInfoRoles.length > 0) {
           token.roles = userInfoRoles;
         }
