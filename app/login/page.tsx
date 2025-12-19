@@ -1,11 +1,22 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { status } = useSession();
   const error = searchParams.get("error");
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const callbackUrl = searchParams.get("callbackUrl");
+    const safeCallback =
+      callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/";
+    router.replace(safeCallback);
+  }, [status, router, searchParams]);
 
   return (
     <main className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 px-4">
