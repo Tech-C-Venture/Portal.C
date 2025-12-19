@@ -1,13 +1,78 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useRef } from "react";
+import {
+  Bodies,
+  Engine,
+  Mouse,
+  MouseConstraint,
+  Render,
+  Runner,
+  World,
+} from "matter-js";
+import type { Body } from "matter-js";
 
 const BRAND = "#2a61b3";
 const ACCENT_2 = "#b7e0e4";
 
-      let shape;
+export function MatterHero() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const engine = Engine.create();
+    const initialWidth = window.innerWidth;
+    const initialHeight =
+      window.innerWidth < 768
+        ? Math.min(500, window.innerHeight * 0.6)
+        : Math.min(600, window.innerHeight * 0.7);
+
+    canvas.width = initialWidth;
+    canvas.height = initialHeight;
+
+    const render = Render.create({
+      canvas,
+      engine,
+      options: {
+        width: initialWidth,
+        height: initialHeight,
+        wireframes: false,
+        background: "transparent",
+        pixelRatio: window.devicePixelRatio || 1,
+      },
+    });
+
+    const cw = initialWidth;
+    const ch = initialHeight;
+    const wallThickness = 50;
+    const walls = [
+      Bodies.rectangle(cw / 2, -wallThickness / 2, cw, wallThickness, {
+        isStatic: true,
+      }),
+      Bodies.rectangle(cw / 2, ch + wallThickness / 2, cw, wallThickness, {
+        isStatic: true,
+      }),
+      Bodies.rectangle(-wallThickness / 2, ch / 2, wallThickness, ch, {
+        isStatic: true,
+      }),
+      Bodies.rectangle(cw + wallThickness / 2, ch / 2, wallThickness, ch, {
+        isStatic: true,
+      }),
+    ];
+
+    const colors = [BRAND, ACCENT_2, "#7aa5e5", "#f4b1c2"];
+    const objects: Body[] = [];
+    const objectCount = window.innerWidth < 768 ? 10 : 16;
+
+    for (let i = 0; i < objectCount; i += 1) {
+      const size = 12 + Math.random() * 18;
+      const x = Math.random() * cw;
+      const y = Math.random() * ch * 0.6;
+      const color = colors[i % colors.length];
+      let shape: Body;
       if (Math.random() > 0.5) {
-        // 円
         shape = Bodies.circle(x, y, size, {
           restitution: 0.6,
           friction: 0.05,
@@ -18,7 +83,6 @@ const ACCENT_2 = "#b7e0e4";
           },
         });
       } else {
-        // 四角形
         shape = Bodies.rectangle(x, y, size * 2, size * 2, {
           restitution: 0.6,
           friction: 0.05,
@@ -33,7 +97,6 @@ const ACCENT_2 = "#b7e0e4";
       objects.push(shape);
     }
 
-    // "Tech.C Venture 総合ポータル"のテキストを表現する大きな円
     const logoCircles = [
       Bodies.circle(cw * 0.3, ch * 0.5, 50, {
         isStatic: false,
@@ -57,13 +120,11 @@ const ACCENT_2 = "#b7e0e4";
       }),
     ];
 
-    // すべてのオブジェクトをワールドに追加
     World.add(engine.world, [...walls, ...objects, ...logoCircles]);
 
-    // マウスコントロールを追加
     const mouse = Mouse.create(canvas);
     const mouseConstraint = MouseConstraint.create(engine, {
-      mouse: mouse,
+      mouse,
       constraint: {
         stiffness: 0.2,
         render: {
@@ -74,17 +135,16 @@ const ACCENT_2 = "#b7e0e4";
 
     World.add(engine.world, mouseConstraint);
 
-    // レンダリングを開始
-    Matter.Runner.run(engine);
+    const runner = Runner.create();
+    Runner.run(runner, engine);
     Render.run(render);
 
-    // ウィンドウリサイズ対応
     const handleResize = () => {
       const newWidth = window.innerWidth;
-      // モバイルでは適切な高さに調整
-      const newHeight = window.innerWidth < 768
-        ? Math.min(500, window.innerHeight * 0.6)
-        : Math.min(600, window.innerHeight * 0.7);
+      const newHeight =
+        window.innerWidth < 768
+          ? Math.min(500, window.innerHeight * 0.6)
+          : Math.min(600, window.innerHeight * 0.7);
 
       canvas.width = newWidth;
       canvas.height = newHeight;
@@ -99,13 +159,12 @@ const ACCENT_2 = "#b7e0e4";
 
     window.addEventListener("resize", handleResize);
 
-    // クリーンアップ
     return () => {
       window.removeEventListener("resize", handleResize);
       Render.stop(render);
+      Runner.stop(runner);
       World.clear(engine.world, false);
       Engine.clear(engine);
-      render.canvas.remove();
     };
   }, []);
 

@@ -30,33 +30,34 @@ export function Navigation({ roles }: NavigationProps) {
   };
 
   return (
-    <nav className="bg-gray-800 text-white shadow-lg">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* ロゴ */}
-          <Link href="/" className="text-xl font-bold z-10">
-            Tech.C Venture 総合ポータル
-          </Link>
+    <>
+      <nav className="bg-gray-800 text-white shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* ロゴ */}
+            <Link href="/" className="text-xl font-bold z-10">
+              Tech.C Venture 総合ポータル
+            </Link>
 
-          {/* デスクトップメニュー (md以上で表示) */}
-          <div className="hidden md:flex space-x-4">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  pathname === item.href
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+            {/* デスクトップメニュー (md以上で表示) */}
+            <div className="hidden md:flex space-x-4">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    pathname === item.href
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
 
-          <div className="container mx-auto px-4">
-            <div className="flex h-16 items-center justify-between">
+            <div className="container mx-auto px-4">
+              <div className="flex h-16 items-center justify-between">
               {/* ロゴ */}
               <Link href="/" className="relative z-10 flex items-center gap-2">
                 <span
@@ -187,6 +188,7 @@ export function Navigation({ roles }: NavigationProps) {
                   })}
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </div>
