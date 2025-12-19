@@ -105,7 +105,7 @@ export function MatterHero() {
       objects.push(shape);
     }
 
-    // "Tech.C Venture 総合ポータル"のテキストを表現する大きな円
+    // "Portal.C"のテキストを表現する大きな円
     const logoCircles = [
       Bodies.circle(cw * 0.3, ch * 0.5, 50, {
         isStatic: false,
@@ -191,7 +191,7 @@ export function MatterHero() {
       />
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4">
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-gray-800 mb-2 md:mb-4 drop-shadow-lg text-center">
-          Tech.C Venture 総合ポータル
+          Portal.C
         </h1>
         <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-700 drop-shadow-md text-center px-4">
           Tech.C Venture メンバー管理システム

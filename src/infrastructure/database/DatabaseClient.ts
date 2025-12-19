@@ -4,7 +4,7 @@
  */
 
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
-import { createClient as createSupabaseAdminClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types/database.types';
 
@@ -13,7 +13,7 @@ export class DatabaseClient {
    * サーバーコンポーネント用のクライアント取得
    * RLSが有効
    */
-  static async getServerClient(): Promise<SupabaseClient<Database>> {
+  static async getServerClient() {
     const cookieStore = await cookies();
 
     return createSupabaseServerClient<Database>(
@@ -37,14 +37,14 @@ export class DatabaseClient {
           },
         },
       }
-    ) as unknown as SupabaseClient<Database>;
+    );
   }
 
   /**
    * 管理者用のクライアント取得
    * RLSをバイパス（サービスロールキー使用）
    */
-  static getAdminClient(): SupabaseClient<Database> {
+  static getAdminClient() {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
     }

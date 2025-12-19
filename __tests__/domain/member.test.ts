@@ -4,7 +4,6 @@ import { CurrentStatus } from '@/domain/value-objects/CurrentStatus';
 describe('Member domain entity', () => {
   const baseParams = {
     id: 'member-1',
-    zitadelId: 'zitadel-1',
     studentId: 'S2024001',
     name: 'Alice',
     schoolEmail: 'alice@example.ed.jp',

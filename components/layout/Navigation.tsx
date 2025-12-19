@@ -5,13 +5,12 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 type NavigationProps = {
-  roles?: string[];
+  isAdmin?: boolean;
 };
 
-export function Navigation({ roles }: NavigationProps) {
+export function Navigation({ isAdmin = false }: NavigationProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isAdmin = Array.isArray(roles) && roles.includes("admin");
 
   const navItems = [
     { href: "/events", label: "イベント一覧" },
@@ -35,7 +34,7 @@ export function Navigation({ roles }: NavigationProps) {
         <div className="flex items-center justify-between h-16">
           {/* ロゴ */}
           <Link href="/" className="text-xl font-bold z-10">
-            Tech.C Venture 総合ポータル
+            Portal.C
           </Link>
 
           {/* デスクトップメニュー (md以上で表示) */}

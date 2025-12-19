@@ -10,13 +10,12 @@ export class MemberMapper {
   static toDTO(member: Member): MemberDTO {
     return {
       id: member.id,
-      studentId: member.studentId?.value ?? null,
+      studentId: member.studentId.value,
       name: member.name,
       schoolEmail: member.schoolEmail.value,
       gmailAddress: member.gmailAddress?.value,
       enrollmentYear: member.enrollmentYear,
       isRepeating: member.isRepeating,
-      repeatYears: member.repeatYears,
       department: member.department,
       skills: [...member.skills],
       interests: [...member.interests],

@@ -8,7 +8,6 @@ import { Result } from '../common/Result';
 
 export interface IMemberRepository {
   findById(id: string): Promise<Result<Member | null>>;
-  findByZitadelId(zitadelId: string): Promise<Result<Member | null>>;
   findAll(): Promise<Result<Member[]>>;
   findByEmail(email: string): Promise<Result<Member | null>>;
   findByStudentId(studentId: string): Promise<Result<Member | null>>;
