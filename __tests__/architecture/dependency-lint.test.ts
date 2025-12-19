@@ -15,7 +15,7 @@ const runEslint = (code: string, virtualPath: string) =>
       '--stdin-filename',
       virtualPath,
     ],
-    { encoding: 'utf8', input: code }
+    { encoding: 'utf8', input: code, shell: true }
   );
 
 describe('Layer dependency lint rules', () => {
@@ -26,7 +26,7 @@ describe('Layer dependency lint rules', () => {
       'src/domain/example.ts'
     );
     expect(result.status).not.toBe(0);
-    expect(result.stderr + result.stdout).toContain('no-restricted-imports');
+    expect(result.stdout).toContain('Domain layer cannot import');
   });
 
   test('allows domain self imports', () => {
@@ -45,6 +45,7 @@ describe('Layer dependency lint rules', () => {
       'src/application/example.ts'
     );
     expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain('Application layer cannot import');
   });
 
   test('flags presentation -> infrastructure dependency', () => {
@@ -54,6 +55,7 @@ describe('Layer dependency lint rules', () => {
       'app/example.tsx'
     );
     expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain('Presentation layer cannot import');
   });
 
   test('allows presentation to depend on application', () => {
