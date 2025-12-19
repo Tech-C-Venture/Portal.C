@@ -36,8 +36,8 @@ export default async function EventsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">イベント一覧</h1>
-        <p className="text-gray-600">Tech.C Ventureのイベントに参加しよう</p>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">イベント一覧</h1>
+        <p className="text-muted">Tech.C Ventureのイベントに参加しよう</p>
       </div>
 
       <EventList events={events} />

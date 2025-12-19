@@ -5,14 +5,14 @@ export default async function ProfilePage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">プロフィール</h1>
-        <p className="text-gray-600">あなたの情報を編集</p>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">プロフィール</h1>
+        <p className="text-muted">あなたの情報を編集</p>
       </div>
 
-      <div className="max-w-2xl bg-white rounded-lg shadow-md p-8">
+      <div className="max-w-2xl rounded-2xl border border-border bg-card shadow-soft p-8">
         <div className="mb-6 flex items-center">
           <div className="w-24 h-24 bg-gray-300 rounded-full mr-6"></div>
-          <Button size="medium" variant="contained">
+          <Button size="md" variant="primary">
             写真を変更
           </Button>
         </div>
@@ -22,7 +22,7 @@ export default async function ProfilePage() {
             <label className="block text-sm font-medium mb-2">名前</label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="山田太郎"
             />
           </div>
@@ -33,7 +33,7 @@ export default async function ProfilePage() {
             </label>
             <input
               type="email"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="yamada@example.ed.jp"
             />
           </div>
@@ -43,7 +43,7 @@ export default async function ProfilePage() {
               <label className="block text-sm font-medium mb-2">入学年度</label>
               <input
                 type="number"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="2022"
               />
             </div>
@@ -51,7 +51,7 @@ export default async function ProfilePage() {
               <label className="block text-sm font-medium mb-2">所属専攻</label>
               <input
                 type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="情報システム科"
               />
             </div>
@@ -70,7 +70,7 @@ export default async function ProfilePage() {
             </label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="課題中..."
               maxLength={100}
             />
@@ -80,7 +80,7 @@ export default async function ProfilePage() {
             <label className="block text-sm font-medium mb-2">スキルタグ</label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="React, TypeScript, Next.js (カンマ区切り)"
             />
           </div>
@@ -89,7 +89,7 @@ export default async function ProfilePage() {
             <label className="block text-sm font-medium mb-2">興味タグ</label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Web開発, UI/UX (カンマ区切り)"
             />
           </div>

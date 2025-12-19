@@ -14,8 +14,8 @@ export default async function MembersPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">メンバー一覧</h1>
-        <p className="text-gray-600">Tech.C Ventureのメンバー</p>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">メンバー一覧</h1>
+        <p className="text-muted">Tech.C Ventureのメンバー</p>
       </div>
 
       <MemberList members={members} />

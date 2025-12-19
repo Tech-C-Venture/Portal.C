@@ -9,19 +9,19 @@ export default function TimetablePage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">時間割</h1>
-        <p className="text-gray-600">メンバーの時間割を確認</p>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">時間割</h1>
+        <p className="text-muted">メンバーの時間割を確認</p>
       </div>
 
       <div className="mb-6 flex gap-4">
-        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select className="px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring">
           <option>全学年</option>
           <option>1年生</option>
           <option>2年生</option>
           <option>3年生</option>
           <option>4年生</option>
         </select>
-        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select className="px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring">
           <option>全専攻</option>
           <option>情報システム科</option>
           <option>AIシステム科</option>
@@ -29,7 +29,7 @@ export default function TimetablePage() {
         </select>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="rounded-2xl border border-border bg-card shadow-soft overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -54,7 +54,7 @@ export default function TimetablePage() {
                 </td>
                 {days.map((day) => (
                   <td key={`${day}-${period}`} className="px-4 py-3">
-                    <div className="text-sm text-gray-500 hover:bg-gray-50 p-2 rounded cursor-pointer">
+                    <div className="text-sm text-muted2 hover:bg-gray-50 p-2 rounded cursor-pointer">
                       {/* 授業情報がここに表示される */}
                       -
                     </div>
@@ -67,7 +67,7 @@ export default function TimetablePage() {
       </div>
 
       <div className="mt-6">
-        <Button size="medium" variant="contained">
+        <Button size="md" variant="primary">
           自分の時間割を登録
         </Button>
       </div>

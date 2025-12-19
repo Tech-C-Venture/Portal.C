@@ -35,7 +35,7 @@ export function MemberList({ members }: MemberListProps) {
           placeholder="スキルや興味で検索..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-border rounded-xl bg-white text-foreground placeholder:text-muted2 focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
@@ -46,7 +46,7 @@ export function MemberList({ members }: MemberListProps) {
       </div>
 
       {filteredMembers.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted">
           検索条件に一致するメンバーが見つかりませんでした
         </div>
       )}

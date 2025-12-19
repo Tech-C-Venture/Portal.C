@@ -18,33 +18,33 @@ export function MemberCard({ member }: MemberCardProps) {
     : false;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-soft hover:shadow-[0_16px_42px_rgba(42,97,179,0.14)] transition-shadow">
       <div className="flex items-center mb-4">
-        <div className="w-12 h-12 bg-gray-300 rounded-full mr-4 flex items-center justify-center text-white font-bold">
+        <div className="w-12 h-12 bg-accent2 rounded-full mr-4 flex items-center justify-center text-foreground font-bold">
           {member.name.charAt(0)}
         </div>
         <div>
-          <h2 className="text-lg font-semibold">{member.name}</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-foreground">{member.name}</h2>
+          <p className="text-sm text-muted2">
             {member.grade}年生 / {member.department}
           </p>
         </div>
       </div>
 
       {member.currentStatus && isStatusValid && (
-        <div className="mb-3 p-2 bg-blue-50 rounded text-sm text-blue-700">
+        <div className="mb-3 rounded-xl border border-border bg-accent1 p-3 text-sm text-foreground">
           💬 {member.currentStatus.message}
         </div>
       )}
 
       {member.skills.length > 0 && (
         <div className="mb-3">
-          <p className="text-sm text-gray-600 mb-1">スキル:</p>
+          <p className="text-sm text-muted mb-1">スキル:</p>
           <div className="flex flex-wrap gap-1">
             {member.skills.map((skill) => (
               <span
                 key={skill}
-                className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded"
+                className="px-2 py-1 bg-accent1 text-foreground text-xs rounded-lg border border-border"
               >
                 {skill}
               </span>
@@ -55,12 +55,12 @@ export function MemberCard({ member }: MemberCardProps) {
 
       {member.interests.length > 0 && (
         <div>
-          <p className="text-sm text-gray-600 mb-1">興味:</p>
+          <p className="text-sm text-muted mb-1">興味:</p>
           <div className="flex flex-wrap gap-1">
             {member.interests.map((interest) => (
               <span
                 key={interest}
-                className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded"
+                className="px-2 py-1 bg-[#b7e0e4]/40 text-foreground text-xs rounded-lg border border-border"
               >
                 {interest}
               </span>
