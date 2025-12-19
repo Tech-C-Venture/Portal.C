@@ -2,6 +2,7 @@ import { isAdmin } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@openameba/spindle-ui";
 import "@openameba/spindle-ui/Button/Button.css";
+import { MemberGmailForm } from "@/components/admin/MemberGmailForm";
 
 export default async function AdminPage() {
   const admin = await isAdmin();
@@ -86,7 +87,15 @@ export default async function AdminPage() {
         </form>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card shadow-soft p-6">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-2">私用Gmail登録</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          管理者専用: 学校メールアドレスで検索し、私用Gmailを登録します。
+        </p>
+        <MemberGmailForm />
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold mb-4">参加統計</h2>
         <div className="overflow-x-auto">
           <table className="w-full">

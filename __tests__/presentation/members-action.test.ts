@@ -14,6 +14,7 @@ import { container } from '@/infrastructure/di/setup';
 describe('getMemberListAction', () => {
   const member = createMember({
     id: 'member-1',
+    zitadelId: 'zitadel-1',
     studentId: 'S2024001',
     name: 'Alice',
     schoolEmail: 'alice@example.ed.jp',
@@ -23,6 +24,7 @@ describe('getMemberListAction', () => {
 
   const repo: IMemberRepository = {
     findById: jest.fn(),
+    findByZitadelId: jest.fn(),
     findAll: jest.fn().mockResolvedValue(success([member])),
     findByEmail: jest.fn(),
     findByStudentId: jest.fn(),

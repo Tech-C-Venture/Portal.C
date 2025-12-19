@@ -2,56 +2,57 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useState } from "react";
 
-export function Navigation() {
-    const pathname = usePathname();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+type NavigationProps = {
+  roles?: string[];
+};
 
-    const { data: session, status } = useSession();
-    const isAdmin = !!session?.user?.roles?.includes("admin");
+export function Navigation({ roles }: NavigationProps) {
+  const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isAdmin = Array.isArray(roles) && roles.includes("admin");
 
-    const navItems = useMemo(() => {
-        const items = [
-            { href: "/events", label: "イベント一覧" },
-            { href: "/members", label: "メンバー" },
-            { href: "/timetable", label: "時間割" },
-            { href: "/profile", label: "プロフィール" },
-        ];
+  const navItems = [
+    { href: "/events", label: "イベント一覧" },
+    { href: "/members", label: "メンバー" },
+    { href: "/timetable", label: "時間割" },
+    { href: "/profile", label: "プロフィール" },
+    { href: "/admin", label: "管理画面" },
+  ].filter((item) => item.href !== "/admin" || isAdmin);
 
-        // 読み込み中は非表示、確定でadminなら表示
-        if (status === "authenticated" && isAdmin) {
-            items.push({ href: "/admin", label: "管理画面" });
-        }
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
-        return items;
-    }, [status, isAdmin]);
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
 
-    // 以下は既存のままでOK
-    useEffect(() => setIsMenuOpen(false), [pathname]);
-    const toggleMenu = () => setIsMenuOpen((v) => !v);
+  return (
+    <nav className="bg-gray-800 text-white shadow-lg">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* ロゴ */}
+          <Link href="/" className="text-xl font-bold z-10">
+            Tech.C Venture 総合ポータル
+          </Link>
 
-    return (
-    <>
-      <nav className="sticky top-0 z-50">
-        <div className="relative overflow-hidden border-b border-border bg-background">
-          {/* うっすら動くアクセント（白背景用に控えめ） */}
-          <div className="pointer-events-none absolute inset-0">
-            <div
-              className="absolute -inset-x-24 -top-24 h-56 blur-2xl opacity-70 animate-aurora"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(220,240,248,0.85), rgba(183,224,228,0.55), rgba(220,240,248,0.85))",
-              }}
-            />
-            <div
-              className="absolute -inset-x-24 -bottom-24 h-56 blur-2xl opacity-60 animate-aurora2"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(183,224,228,0.60), rgba(220,240,248,0.80), rgba(183,224,228,0.60))",
-              }}
-            />
+          {/* デスクトップメニュー (md以上で表示) */}
+          <div className="hidden md:flex space-x-4">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  pathname === item.href
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
 
           <div className="container mx-auto px-4">

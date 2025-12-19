@@ -5,62 +5,134 @@ import Link from "next/link";
 const BRAND = "#2a61b3";
 const ACCENT_2 = "#b7e0e4";
 
-export function MatterHero() {
-    return (
-        <>
-            <section
-                className="relative w-full overflow-hidden rounded-2xl border bg-white px-6 py-14 sm:px-10 sm:py-16 text-center"
-                style={{
-                    borderColor: ACCENT_2,
-                    boxShadow: "0 18px 44px rgba(42,97,179,0.14)",
-                }}
-            >
-                <div className="pointer-events-none absolute inset-0 hero-bg" />
+      let shape;
+      if (Math.random() > 0.5) {
+        // 円
+        shape = Bodies.circle(x, y, size, {
+          restitution: 0.6,
+          friction: 0.05,
+          render: {
+            fillStyle: color,
+            strokeStyle: "rgba(255, 255, 255, 0.5)",
+            lineWidth: 2,
+          },
+        });
+      } else {
+        // 四角形
+        shape = Bodies.rectangle(x, y, size * 2, size * 2, {
+          restitution: 0.6,
+          friction: 0.05,
+          chamfer: { radius: 10 },
+          render: {
+            fillStyle: color,
+            strokeStyle: "rgba(255, 255, 255, 0.5)",
+            lineWidth: 2,
+          },
+        });
+      }
+      objects.push(shape);
+    }
 
-                <div className="relative z-10">
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight" style={{ color: BRAND }}>
-                        Portal.C
-                    </h1>
+    // "Tech.C Venture 総合ポータル"のテキストを表現する大きな円
+    const logoCircles = [
+      Bodies.circle(cw * 0.3, ch * 0.5, 50, {
+        isStatic: false,
+        restitution: 0.8,
+        friction: 0.01,
+        render: {
+          fillStyle: "#667EEA",
+          strokeStyle: "#FFFFFF",
+          lineWidth: 3,
+        },
+      }),
+      Bodies.circle(cw * 0.7, ch * 0.5, 50, {
+        isStatic: false,
+        restitution: 0.8,
+        friction: 0.01,
+        render: {
+          fillStyle: "#764BA2",
+          strokeStyle: "#FFFFFF",
+          lineWidth: 3,
+        },
+      }),
+    ];
 
-                    <p className="mt-3 text-sm sm:text-base md:text-lg" style={{ color: "rgba(42,97,179,0.80)" }}>
-                        Tech.C Venture メンバー管理システム
-                    </p>
+    // すべてのオブジェクトをワールドに追加
+    World.add(engine.world, [...walls, ...objects, ...logoCircles]);
 
-                    <div className="mt-7">
-                        <Link
-                            href="/events"
-                            className="inline-flex items-center justify-center rounded-full px-8 py-3 md:px-10 md:py-3.5 text-sm md:text-base font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2"
-                            style={{
-                                background: BRAND,
-                                boxShadow: "0 12px 28px rgba(42,97,179,0.22)",
-                                outlineColor: ACCENT_2,
-                            }}
-                        >
-                            イベントを見る
-                        </Link>
-                    </div>
-                </div>
-            </section>
+    // マウスコントロールを追加
+    const mouse = Mouse.create(canvas);
+    const mouseConstraint = MouseConstraint.create(engine, {
+      mouse: mouse,
+      constraint: {
+        stiffness: 0.2,
+        render: {
+          visible: false,
+        },
+      },
+    });
 
-            <style jsx global>{`
-                @media (prefers-reduced-motion: reduce) {
-                    .hero-bg {
-                        animation: none !important;
-                    }
-                }
-                .hero-bg {
-                    background:
-                            radial-gradient(900px 420px at 18% 28%, rgba(220, 240, 248, 0.92), rgba(255, 255, 255, 0) 65%),
-                            radial-gradient(820px 420px at 82% 32%, rgba(183, 224, 228, 0.72), rgba(255, 255, 255, 0) 60%),
-                            radial-gradient(900px 520px at 50% 95%, rgba(42, 97, 179, 0.10), rgba(255, 255, 255, 0) 65%);
-                    animation: heroGlow 10s ease-in-out infinite;
-                }
-                @keyframes heroGlow {
-                    0% { transform: translateY(0) translateX(0) scale(1); }
-                    50% { transform: translateY(8px) translateX(-10px) scale(1.02); }
-                    100% { transform: translateY(0) translateX(0) scale(1); }
-                }
-            `}</style>
-        </>
-    );
+    World.add(engine.world, mouseConstraint);
+
+    // レンダリングを開始
+    Matter.Runner.run(engine);
+    Render.run(render);
+
+    // ウィンドウリサイズ対応
+    const handleResize = () => {
+      const newWidth = window.innerWidth;
+      // モバイルでは適切な高さに調整
+      const newHeight = window.innerWidth < 768
+        ? Math.min(500, window.innerHeight * 0.6)
+        : Math.min(600, window.innerHeight * 0.7);
+
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+
+      render.bounds.max.x = newWidth;
+      render.bounds.max.y = newHeight;
+      render.options.width = newWidth;
+      render.options.height = newHeight;
+      render.canvas.width = newWidth;
+      render.canvas.height = newHeight;
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // クリーンアップ
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      Render.stop(render);
+      World.clear(engine.world, false);
+      Engine.clear(engine);
+      render.canvas.remove();
+    };
+  }, []);
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-lg shadow-lg">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50" />
+      <canvas
+        ref={canvasRef}
+        className="relative z-10 w-full"
+        style={{ display: "block", touchAction: "none", maxWidth: "100%" }}
+      />
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-gray-800 mb-2 md:mb-4 drop-shadow-lg text-center">
+          Tech.C Venture 総合ポータル
+        </h1>
+        <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-700 drop-shadow-md text-center px-4">
+          Tech.C Venture メンバー管理システム
+        </p>
+        <div className="mt-4 md:mt-8 pointer-events-auto">
+          <a
+            href="/events"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 md:px-8 md:py-3 rounded-full text-sm md:text-base font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          >
+            イベントを見る
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }
