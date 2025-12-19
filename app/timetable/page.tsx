@@ -67,7 +67,7 @@ export default function TimetablePage() {
       </div>
 
       <div className="mt-6">
-        <Button size="md" variant="primary">
+        <Button size="medium" variant="contained">
           自分の時間割を登録
         </Button>
       </div>

@@ -12,7 +12,7 @@ export default async function ProfilePage() {
       <div className="max-w-2xl rounded-2xl border border-border bg-card shadow-soft p-8">
         <div className="mb-6 flex items-center">
           <div className="w-24 h-24 bg-gray-300 rounded-full mr-6"></div>
-          <Button size="md" variant="primary">
+          <Button size="medium" variant="contained">
             写真を変更
           </Button>
         </div>
