@@ -34,7 +34,7 @@ export function Navigation({ isAdmin = false }: NavigationProps) {
         <div className="flex items-center justify-between h-16">
           {/* ロゴ */}
           <Link href="/" className="text-xl font-bold z-10">
-            Portal.C
+            Tech.C Venture 総合ポータル
           </Link>
 
           {/* デスクトップメニュー (md以上で表示) */}

@@ -9,10 +9,12 @@ import { MemberMapper } from '../mappers/MemberMapper';
 import { updateMember } from '@/domain/entities/Member';
 import { CurrentStatus } from '@/domain/value-objects/CurrentStatus';
 import { Email } from '@/domain/value-objects/Email';
+import { StudentId } from '@/domain/value-objects/StudentId';
 import { Result, success, failure } from '../common/Result';
 
 interface UpdateMemberInput {
   name?: string;
+  studentId?: string;
   gmailAddress?: string;
   department?: string;
   skills?: string[];
@@ -20,6 +22,8 @@ interface UpdateMemberInput {
   currentStatusMessage?: string;
   avatarUrl?: string;
   isRepeating?: boolean;
+  enrollmentYear?: number;
+  repeatYears?: number | null;
 }
 
 export class UpdateMemberProfileUseCase {
@@ -41,6 +45,7 @@ export class UpdateMemberProfileUseCase {
     // 更新データ準備
     const updates: {
       name?: string;
+      studentId?: StudentId;
       gmailAddress?: Email;
       department?: string;
       skills?: string[];
@@ -48,9 +53,14 @@ export class UpdateMemberProfileUseCase {
       currentStatus?: CurrentStatus;
       avatarUrl?: string;
       isRepeating?: boolean;
+      enrollmentYear?: number;
+      repeatYears?: number;
     } = {};
 
     if (input.name !== undefined) updates.name = input.name;
+    if (input.studentId !== undefined) {
+      updates.studentId = StudentId.create(input.studentId);
+    }
     if (input.gmailAddress !== undefined)
       updates.gmailAddress = Email.create(input.gmailAddress);
     if (input.department !== undefined) updates.department = input.department;
@@ -58,6 +68,10 @@ export class UpdateMemberProfileUseCase {
     if (input.interests !== undefined) updates.interests = input.interests;
     if (input.avatarUrl !== undefined) updates.avatarUrl = input.avatarUrl;
     if (input.isRepeating !== undefined) updates.isRepeating = input.isRepeating;
+    if (input.enrollmentYear !== undefined) updates.enrollmentYear = input.enrollmentYear;
+    if (input.repeatYears !== undefined) {
+      updates.repeatYears = input.repeatYears ?? undefined;
+    }
     if (input.currentStatusMessage !== undefined) {
       updates.currentStatus = CurrentStatus.create(input.currentStatusMessage);
     }

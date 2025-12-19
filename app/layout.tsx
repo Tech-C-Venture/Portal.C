@@ -16,13 +16,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
+  const isAdmin = session?.user?.roles?.includes("admin") ?? false;
 
   return (
     <html lang="ja">
-      <body>
+      <body className="bg-gray-50 text-gray-900">
         <Providers>
-          {session && <Navigation />}
-          <main className="container mx-auto px-4 py-8">
+          {session && <Navigation isAdmin={isAdmin} />}
+          <main className="container mx-auto min-h-screen px-4 py-8">
             {children}
           </main>
         </Providers>

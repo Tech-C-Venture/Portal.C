@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import type { JWT } from "next-auth/jwt";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 interface ExtendedProfile {
   sub: string;
@@ -35,17 +36,81 @@ declare module "next-auth/jwt" {
 function extractRoles(profile?: ExtendedProfile | null): string[] {
   if (!profile) return [];
   if (Array.isArray(profile.roles)) return profile.roles;
-  if (Array.isArray(profile["urn:zitadel:iam:org:project:roles"])) {
-    return profile["urn:zitadel:iam:org:project:roles"] ?? [];
+  const projectRoles = profile["urn:zitadel:iam:org:project:roles"];
+  if (Array.isArray(projectRoles)) return projectRoles;
+  if (projectRoles && typeof projectRoles === "object") {
+    return Object.keys(projectRoles);
   }
   return [];
 }
 
+async function fetchUserInfoRoles(accessToken?: string | null): Promise<string[]> {
+  if (!accessToken) return [];
+
+  try {
+    const response = await fetch(userInfoEndpoint, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.warn('[auth] userinfo request failed', response.status);
+      return [];
+    }
+
+    const profile = (await response.json()) as ExtendedProfile;
+    return extractRoles(profile);
+  } catch {
+    return [];
+  }
+}
+
 const issuer = process.env.ZITADEL_ISSUER;
 const clientId = process.env.ZITADEL_CLIENT_ID;
+const userInfoEndpoint = process.env.ZITADEL_USERINFO_ENDPOINT;
 
-if (!issuer || !clientId) {
-  throw new Error("ZITADEL_ISSUER and ZITADEL_CLIENT_ID must be set");
+if (!issuer || !clientId || !userInfoEndpoint) {
+  throw new Error(
+    "ZITADEL_ISSUER, ZITADEL_CLIENT_ID, and ZITADEL_USERINFO_ENDPOINT must be set"
+  );
+}
+
+async function ensureMemberOnSignIn(user: {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+}) {
+  if (!user?.id || !user.email) {
+    throw new Error("ZITADEL user id/email is missing");
+  }
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("members")
+    .select("id")
+    .eq("zitadel_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to check member: ${error.message}`);
+  }
+
+  if (data) return;
+
+  const enrollmentYear = new Date().getFullYear();
+  const { error: insertError } = await supabase.from("members").insert({
+    zitadel_id: user.id,
+    student_id: null,
+    name: user.name ?? user.email,
+    school_email: user.email,
+    enrollment_year: enrollmentYear,
+    major: null,
+  });
+
+  if (insertError && insertError.code !== "23505") {
+    throw new Error(`Failed to create member: ${insertError.message}`);
+  }
 }
 
 export const authOptions: NextAuthOptions = {
@@ -56,7 +121,9 @@ export const authOptions: NextAuthOptions = {
       name: "ZITADEL",
       type: "oauth",
       wellKnown: `${issuer}/.well-known/openid-configuration`,
-      authorization: { params: { scope: "openid email profile" } },
+      authorization: {
+        params: { scope: "openid email profile urn:zitadel:iam:org:project:roles" },
+      },
       idToken: true,
       checks: ["pkce", "state"],
       client: {
@@ -87,6 +154,13 @@ export const authOptions: NextAuthOptions = {
         token.email = extendedProfile.email ?? token.email ?? null;
         token.roles = extractRoles(extendedProfile);
       }
+
+      if (!token.roles || token.roles.length === 0) {
+        const userInfoRoles = await fetchUserInfoRoles(token.accessToken as string | null);
+        if (userInfoRoles.length > 0) {
+          token.roles = userInfoRoles;
+        }
+      }
       return token;
     },
     async session({ session, token }) {
@@ -96,6 +170,10 @@ export const authOptions: NextAuthOptions = {
         session.user.roles = token.roles;
       }
       return session;
+    },
+    async signIn({ user }) {
+      await ensureMemberOnSignIn(user);
+      return true;
     },
   },
   pages: {

@@ -16,11 +16,13 @@ export interface Database {
         Row: {
           id: string;
           zitadel_id: string;
+          student_id: string | null;
           name: string;
           school_email: string;
           gmail_address: string | null;
           enrollment_year: number;
           is_repeating: boolean;
+          repeat_years: number | null;
           major: string | null;
           current_status: string | null;
           status_updated_at: string | null;
@@ -30,11 +32,13 @@ export interface Database {
         Insert: {
           id?: string;
           zitadel_id: string;
+          student_id?: string | null;
           name: string;
           school_email: string;
           gmail_address?: string | null;
           enrollment_year: number;
           is_repeating?: boolean;
+          repeat_years?: number | null;
           major?: string | null;
           current_status?: string | null;
           status_updated_at?: string | null;
@@ -44,11 +48,13 @@ export interface Database {
         Update: {
           id?: string;
           zitadel_id?: string;
+          student_id?: string | null;
           name?: string;
           school_email?: string;
           gmail_address?: string | null;
           enrollment_year?: number;
           is_repeating?: boolean;
+          repeat_years?: number | null;
           major?: string | null;
           current_status?: string | null;
           status_updated_at?: string | null;

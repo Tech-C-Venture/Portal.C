@@ -11,6 +11,7 @@ describe('Member Entity', () => {
     it('should create valid member', () => {
       const member = createMember({
         id: '1',
+        zitadelId: 'zitadel-1',
         studentId: 'S2023001',
         name: '山田太郎',
         schoolEmail: 'yamada@school.ed.jp',
@@ -19,7 +20,7 @@ describe('Member Entity', () => {
       });
 
       expect(member.id).toBe('1');
-      expect(member.studentId.value).toBe('S2023001');
+      expect(member.studentId?.value).toBe('S2023001');
       expect(member.name).toBe('山田太郎');
       expect(member.schoolEmail.value).toBe('yamada@school.ed.jp');
       expect(member.enrollmentYear).toBe(2023);
@@ -30,6 +31,7 @@ describe('Member Entity', () => {
     it('should create member with optional fields', () => {
       const member = createMember({
         id: '1',
+        zitadelId: 'zitadel-1',
         studentId: 'S2023001',
         name: '山田太郎',
         schoolEmail: 'yamada@school.ed.jp',
@@ -55,6 +57,7 @@ describe('Member Entity', () => {
     it('should calculate correct grade', () => {
       const member = createMember({
         id: '1',
+        zitadelId: 'zitadel-1',
         studentId: 'S2022001',
         name: 'Test',
         schoolEmail: 'test@school.ed.jp',
@@ -69,6 +72,7 @@ describe('Member Entity', () => {
     it('should adjust grade for repeating students', () => {
       const member = createMember({
         id: '1',
+        zitadelId: 'zitadel-1',
         studentId: 'S2022001',
         name: 'Test',
         schoolEmail: 'test@school.ed.jp',
@@ -86,6 +90,7 @@ describe('Member Entity', () => {
     it('should return false when no status', () => {
       const member = createMember({
         id: '1',
+        zitadelId: 'zitadel-1',
         studentId: 'S2023001',
         name: 'Test',
         schoolEmail: 'test@school.ed.jp',
@@ -100,6 +105,7 @@ describe('Member Entity', () => {
       const now = new Date();
       const member = createMember({
         id: '1',
+        zitadelId: 'zitadel-1',
         studentId: 'S2023001',
         name: 'Test',
         schoolEmail: 'test@school.ed.jp',
@@ -120,6 +126,7 @@ describe('Member Entity', () => {
 
       const member = createMember({
         id: '1',
+        zitadelId: 'zitadel-1',
         studentId: 'S2023001',
         name: 'Test',
         schoolEmail: 'test@school.ed.jp',
@@ -139,6 +146,7 @@ describe('Member Entity', () => {
     it('should update member immutably', () => {
       const original = createMember({
         id: '1',
+        zitadelId: 'zitadel-1',
         studentId: 'S2023001',
         name: 'Original',
         schoolEmail: 'test@school.ed.jp',
