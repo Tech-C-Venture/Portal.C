@@ -86,6 +86,12 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (pathname.startsWith("/login")) {
+    if (token) {
+      const callbackUrl = req.nextUrl.searchParams.get("callbackUrl")
+      const safeCallback =
+        callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/"
+      return NextResponse.redirect(new URL(safeCallback, req.url))
+    }
     return NextResponse.next()
   }
 
