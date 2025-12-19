@@ -84,9 +84,13 @@ async function isProfileComplete(zitadelId: string): Promise<boolean> {
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const { pathname } = req.nextUrl
+  const hasSessionCookie = Boolean(
+    req.cookies.get("__Secure-next-auth.session-token")?.value ??
+      req.cookies.get("next-auth.session-token")?.value
+  )
 
   if (pathname.startsWith("/login")) {
-    if (token) {
+    if (token || hasSessionCookie) {
       const callbackUrl = req.nextUrl.searchParams.get("callbackUrl")
       const safeCallback =
         callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/"
@@ -99,25 +103,27 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  if (!token) {
+  if (!token && !hasSessionCookie) {
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  const tokenRoles = (token as { roles?: unknown }).roles
-  const roles = Array.isArray(tokenRoles)
-    ? tokenRoles.filter((role): role is string => typeof role === "string")
-    : []
-  const isAdmin = roles.includes("admin")
-  const zitadelId = typeof token.sub === "string" ? token.sub : ""
-  if (!isAdmin && zitadelId) {
-    const profileComplete = await isProfileComplete(zitadelId)
-    if (!profileComplete) {
-      return NextResponse.redirect(new URL("/onboarding", req.url))
-    }
-    if (pathname === "/") {
-      return NextResponse.redirect(new URL("/events", req.url))
+  if (token) {
+    const tokenRoles = (token as { roles?: unknown }).roles
+    const roles = Array.isArray(tokenRoles)
+      ? tokenRoles.filter((role): role is string => typeof role === "string")
+      : []
+    const isAdmin = roles.includes("admin")
+    const zitadelId = typeof token.sub === "string" ? token.sub : ""
+    if (!isAdmin && zitadelId) {
+      const profileComplete = await isProfileComplete(zitadelId)
+      if (!profileComplete) {
+        return NextResponse.redirect(new URL("/onboarding", req.url))
+      }
+      if (pathname === "/") {
+        return NextResponse.redirect(new URL("/events", req.url))
+      }
     }
   }
 
