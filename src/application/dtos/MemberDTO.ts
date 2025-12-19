@@ -5,12 +5,13 @@
 
 export interface MemberDTO {
   id: string;
-  studentId: string;
+  studentId: string | null;
   name: string;
   schoolEmail: string;
   gmailAddress?: string;
   enrollmentYear: number;
   isRepeating: boolean;
+  repeatYears?: number;
   department: string;
   skills: string[];
   interests: string[];
