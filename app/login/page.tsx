@@ -4,13 +4,16 @@ import { authOptions } from "@/lib/auth-options";
 import { LoginPageClient } from "./LoginPageClient";
 
 type LoginPageProps = {
-  searchParams?: { callbackUrl?: string | string[] };
+  searchParams?: Promise<{ callbackUrl?: string | string[] }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getServerSession(authOptions);
   if (session) {
-    const callbackUrl = searchParams?.callbackUrl;
+    const resolvedSearchParams = searchParams
+      ? await searchParams
+      : undefined;
+    const callbackUrl = resolvedSearchParams?.callbackUrl;
     const rawCallback = Array.isArray(callbackUrl)
       ? callbackUrl[0]
       : callbackUrl;
