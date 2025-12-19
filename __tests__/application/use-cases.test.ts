@@ -11,6 +11,7 @@ describe('Application use cases', () => {
   describe('GetMemberProfileUseCase', () => {
     const member = createMember({
       id: 'member-1',
+      zitadelId: 'zitadel-1',
       studentId: 'S2024001',
       name: 'Alice',
       schoolEmail: 'alice@example.ed.jp',
@@ -20,6 +21,7 @@ describe('Application use cases', () => {
 
     const repo: IMemberRepository = {
       findById: jest.fn().mockResolvedValue(success(member)),
+      findByZitadelId: jest.fn(),
       findAll: jest.fn(),
       findByEmail: jest.fn(),
       findByStudentId: jest.fn(),
