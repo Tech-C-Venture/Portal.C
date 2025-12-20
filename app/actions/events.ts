@@ -104,6 +104,7 @@ export async function createEventAction(
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('events')
     .insert({
@@ -310,6 +311,7 @@ export async function updateEventAction(
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('events')
     .update({
@@ -348,6 +350,7 @@ export async function deleteEventAction(
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('events')
     .delete()

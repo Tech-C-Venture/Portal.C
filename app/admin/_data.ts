@@ -215,6 +215,7 @@ export async function getMemberParticipations(
     .order('registered_at', { ascending: false });
 
   return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?.map((row: any) => ({
       eventId: row.event_id,
       title: row.events?.title ?? '不明なイベント',

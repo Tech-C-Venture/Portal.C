@@ -41,6 +41,7 @@ export async function createPublicTimetableAction(
 
   const year = new Date().getFullYear();
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from('timetables').insert({
     member_id: null,
     day_of_week: dayOfWeek,
@@ -79,6 +80,7 @@ export async function deletePublicTimetableAction(
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('timetables')
     .delete()
