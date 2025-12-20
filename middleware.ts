@@ -114,9 +114,8 @@ export async function middleware(req: NextRequest) {
     const roles = Array.isArray(tokenRoles)
       ? tokenRoles.filter((role): role is string => typeof role === "string")
       : []
-    const isAdmin = roles.includes("admin")
     const zitadelId = typeof token.sub === "string" ? token.sub : ""
-    if (!isAdmin && zitadelId) {
+    if (zitadelId) {
       const profileComplete = await isProfileComplete(zitadelId)
       if (!profileComplete) {
         return NextResponse.redirect(new URL("/onboarding", req.url))
