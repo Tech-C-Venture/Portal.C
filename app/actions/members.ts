@@ -186,6 +186,7 @@ export async function updateMemberGmailAction(
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('members')
     .update({ gmail_address: gmailRaw.toLowerCase() })

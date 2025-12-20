@@ -1,6 +1,5 @@
 import { DayOfWeek } from "@/types";
-import { Button } from "@openameba/spindle-ui";
-import "@openameba/spindle-ui/Button/Button.css";
+
 
 const days = Object.values(DayOfWeek);
 const periods = [1, 2, 3, 4, 5, 6];

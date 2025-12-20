@@ -41,6 +41,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
     const allNames = Array.from(new Set([...normalizedSkills, ...normalizedInterests]));
 
     if (allNames.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: upsertError } = await (supabase as any)
         .from('tags')
         .upsert(
@@ -56,6 +57,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: deleteError } = await (supabase as any)
       .from('member_tags')
       .delete()
@@ -91,6 +93,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
       })) as MemberTagInsert[];
 
     if (memberTags.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: memberTagsError } = await (supabase as any)
         .from('member_tags')
         .insert(memberTags);
@@ -110,6 +113,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
     const map = new Map<string, { skills: string[]; interests: string[] }>();
     if (memberIds.length === 0) return map;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from('member_tags')
       .select('member_id, tag:tags(name, category)')
@@ -318,6 +322,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
   async create(member: Member): Promise<Result<Member>> {
     try {
       const supabase = await this.getClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from('members')
         .insert(this.toInsert(member))
@@ -347,6 +352,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
   async update(member: Member): Promise<Result<Member>> {
     try {
       const supabase = DatabaseClient.getAdminClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from('members')
         .update(this.toUpdate(member))

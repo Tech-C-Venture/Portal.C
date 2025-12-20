@@ -1,5 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
-import type { JWT } from "next-auth/jwt";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 
 interface ExtendedProfile {

@@ -117,6 +117,7 @@ export class SupabaseTimetableRepository implements ITimetableRepository {
   async create(timetable: Timetable): Promise<Result<Timetable>> {
     try {
       const supabase = await this.getClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from('timetables')
         .insert(this.toInsert(timetable))
@@ -136,6 +137,7 @@ export class SupabaseTimetableRepository implements ITimetableRepository {
   async update(timetable: Timetable): Promise<Result<Timetable>> {
     try {
       const supabase = await this.getClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from('timetables')
         .update(this.toUpdate(timetable))
