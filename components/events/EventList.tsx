@@ -6,20 +6,14 @@
 'use client';
 
 import { EventDTO } from '@/application/dtos';
-import { Button } from '@openameba/spindle-ui';
-import '@openameba/spindle-ui/Button/Button.css';
+import Link from 'next/link';
+import { FiCalendar, FiMapPin, FiUsers } from 'react-icons/fi';
 
 interface EventListProps {
-  events: EventDTO[];
+  events: Array<EventDTO & { isRegistered?: boolean }>;
 }
 
 export function EventList({ events }: EventListProps) {
-  const handleRegister = async (eventId: string) => {
-    // TODO: Server Actionを実装
-    console.log('Register for event:', eventId);
-    alert('イベント参加機能は実装中です');
-  };
-
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {events.map((event) => (
@@ -27,26 +21,43 @@ export function EventList({ events }: EventListProps) {
           key={event.id}
           className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
         >
-          <h2 className="text-xl font-semibold mb-2">{event.title}</h2>
-          <p className="text-gray-600 mb-4">{event.description}</p>
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-semibold">{event.title}</h2>
+            {typeof event.isRegistered === "boolean" && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  event.isRegistered
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {event.isRegistered ? "参加済み" : "未参加"}
+              </span>
+            )}
+          </div>
           <div className="space-y-2 text-sm text-gray-500 mb-4">
-            <p>📅 {new Date(event.startDate).toLocaleString('ja-JP')}</p>
-            <p>📍 {event.location}</p>
-            <p>
-              👥 {event.participantCount} /{' '}
+            <p className="flex items-center gap-2">
+              <FiCalendar className="h-4 w-4" aria-hidden />
+              {new Date(event.startDate).toLocaleString('ja-JP')}
+            </p>
+            <p className="flex items-center gap-2">
+              <FiMapPin className="h-4 w-4" aria-hidden />
+              {event.location}
+            </p>
+            <p className="flex items-center gap-2">
+              <FiUsers className="h-4 w-4" aria-hidden />
+              {event.participantCount} /{' '}
               {event.capacity === 'unlimited' ? '無制限' : event.capacity}名
             </p>
             {event.isFull && <p className="text-red-600 font-semibold">満員</p>}
           </div>
           <div className="mt-4 w-full">
-            <Button
-              size="medium"
-              variant="contained"
-              onClick={() => handleRegister(event.id)}
-              disabled={event.isFull}
+            <Link
+              href={`/events/${event.id}`}
+              className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              {event.isFull ? '満員' : '参加する'}
-            </Button>
+              詳細を見る
+            </Link>
           </div>
         </div>
       ))}
