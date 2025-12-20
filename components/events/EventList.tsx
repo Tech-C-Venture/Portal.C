@@ -7,6 +7,7 @@
 
 import { EventDTO } from '@/application/dtos';
 import Link from 'next/link';
+import { FiCalendar, FiMapPin, FiUsers } from 'react-icons/fi';
 
 interface EventListProps {
   events: Array<EventDTO & { isRegistered?: boolean }>;
@@ -20,12 +21,32 @@ export function EventList({ events }: EventListProps) {
           key={event.id}
           className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
         >
-          <h2 className="text-xl font-semibold mb-2">{event.title}</h2>
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-semibold">{event.title}</h2>
+            {typeof event.isRegistered === "boolean" && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  event.isRegistered
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {event.isRegistered ? "参加済み" : "未参加"}
+              </span>
+            )}
+          </div>
           <div className="space-y-2 text-sm text-gray-500 mb-4">
-            <p>📅 {new Date(event.startDate).toLocaleString('ja-JP')}</p>
-            <p>📍 {event.location}</p>
-            <p>
-              👥 {event.participantCount} /{' '}
+            <p className="flex items-center gap-2">
+              <FiCalendar className="h-4 w-4" aria-hidden />
+              {new Date(event.startDate).toLocaleString('ja-JP')}
+            </p>
+            <p className="flex items-center gap-2">
+              <FiMapPin className="h-4 w-4" aria-hidden />
+              {event.location}
+            </p>
+            <p className="flex items-center gap-2">
+              <FiUsers className="h-4 w-4" aria-hidden />
+              {event.participantCount} /{' '}
               {event.capacity === 'unlimited' ? '無制限' : event.capacity}名
             </p>
             {event.isFull && <p className="text-red-600 font-semibold">満員</p>}

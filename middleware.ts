@@ -90,9 +90,6 @@ export async function middleware(req: NextRequest) {
     if (!profileComplete) {
       return NextResponse.redirect(new URL("/onboarding", req.url))
     }
-    if (pathname === "/") {
-      return NextResponse.redirect(new URL("/events", req.url))
-    }
   }
 
   return NextResponse.next()
