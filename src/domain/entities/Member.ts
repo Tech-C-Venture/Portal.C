@@ -20,6 +20,7 @@ export interface Member {
   readonly department: string;
   readonly skills: readonly string[];
   readonly interests: readonly string[];
+  readonly onboardingCompleted: boolean;
   readonly currentStatus?: CurrentStatus;
   readonly avatarUrl?: string;
   readonly createdAt: Date;
@@ -42,6 +43,7 @@ export function createMember(params: {
   department: string;
   skills?: string[];
   interests?: string[];
+  onboardingCompleted?: boolean;
   currentStatus?: { message: string; createdAt: Date };
   avatarUrl?: string;
   createdAt?: Date;
@@ -62,6 +64,7 @@ export function createMember(params: {
     department: params.department,
     skills: Object.freeze(params.skills ?? []),
     interests: Object.freeze(params.interests ?? []),
+    onboardingCompleted: params.onboardingCompleted ?? false,
     currentStatus: params.currentStatus
       ? CurrentStatus.create(
           params.currentStatus.message,
@@ -112,6 +115,7 @@ export function updateMember(
       | 'repeatYears'
       | 'studentId'
       | 'enrollmentYear'
+      | 'onboardingCompleted'
     >
   >
 ): Member {
