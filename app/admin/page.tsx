@@ -1,7 +1,12 @@
+import Link from "next/link";
 import { isAdmin } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Button } from "@openameba/spindle-ui";
-import "@openameba/spindle-ui/Button/Button.css";
+import {
+  getAverageParticipationRate,
+  getEventParticipants,
+  getMembers,
+  getAverageParticipants,
+} from "@/app/admin/_data";
 
 export default async function AdminPage() {
   const admin = await isAdmin();
@@ -10,113 +15,101 @@ export default async function AdminPage() {
     redirect("/events");
   }
 
+  const [
+    eventsWithParticipants,
+    members,
+    averageParticipationRate,
+    averageParticipants,
+  ] =
+    await Promise.all([
+      getEventParticipants(),
+      getMembers(),
+      getAverageParticipationRate(),
+      getAverageParticipants(),
+    ]);
+
+  const now = new Date();
+  const eventsThisMonth = eventsWithParticipants.filter(({ event }) => {
+    const date = new Date(event.startDate);
+    return (
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth()
+    );
+  }).length;
+
   return (
-    <div>
-      <div className="mb-8">
+    <div className="space-y-10">
+      <div>
         <h1 className="text-3xl font-bold mb-2">管理画面</h1>
-        <p className="text-gray-600">イベント管理と参加者統計</p>
+        <p className="text-gray-600">
+          イベント・時間割・メンバーの実データをまとめて管理します。
+        </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold mb-2">総メンバー数</h3>
-          <p className="text-3xl font-bold text-blue-600">42</p>
+          <p className="text-3xl font-bold text-blue-600">{members.length}</p>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold mb-2">今月のイベント</h3>
-          <p className="text-3xl font-bold text-green-600">5</p>
+          <p className="text-3xl font-bold text-green-600">
+            {eventsThisMonth}
+          </p>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold mb-2">平均参加率</h3>
-          <p className="text-3xl font-bold text-purple-600">78%</p>
+          <p className="text-3xl font-bold text-purple-600">
+            {averageParticipationRate === null
+              ? "計測中"
+              : `${averageParticipationRate}%`}
+          </p>
+          <p className="mt-2 text-xs text-gray-500">
+            平均参加者数:
+            {averageParticipants === null
+              ? " -"
+              : ` ${averageParticipants}人`}
+          </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">新規イベント作成</h2>
-        <form className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              イベント名
-            </label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="イベント名を入力"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">説明</label>
-            <textarea
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              placeholder="イベントの説明"
-            ></textarea>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">日時</label>
-              <input
-                type="datetime-local"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">場所</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="場所を入力"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">定員</label>
-            <input
-              type="number"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="30"
-            />
-          </div>
-          <div className="w-full">
-            <Button type="submit" size="large" variant="contained">
-              イベントを作成
-            </Button>
-          </div>
-        </form>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4">参加統計</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                  メンバー
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                  参加回数
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                  最終参加日
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              <tr>
-                <td className="px-4 py-3 text-sm">山田太郎</td>
-                <td className="px-4 py-3 text-sm">15回</td>
-                <td className="px-4 py-3 text-sm">2024-03-20</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 text-sm">佐藤花子</td>
-                <td className="px-4 py-3 text-sm">12回</td>
-                <td className="px-4 py-3 text-sm">2024-03-18</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Link
+          href="/admin/events/create"
+          className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+        >
+          <h2 className="text-lg font-semibold mb-2">イベント作成</h2>
+          <p className="text-sm text-gray-600">
+            新規イベントの登録・日程入力
+          </p>
+        </Link>
+        <Link
+          href="/admin/events/participants"
+          className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+        >
+          <h2 className="text-lg font-semibold mb-2">登録イベント一覧</h2>
+          <p className="text-sm text-gray-600">
+            登録済みイベントの一覧
+          </p>
+        </Link>
+        <Link
+          href="/admin/timetables"
+          className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+        >
+          <h2 className="text-lg font-semibold mb-2">時間割</h2>
+          <p className="text-sm text-gray-600">
+            時間割登録メンバーの確認
+          </p>
+        </Link>
+        <Link
+          href="/admin/hr"
+          className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+        >
+          <h2 className="text-lg font-semibold mb-2">メンバーHR</h2>
+          <p className="text-sm text-gray-600">
+            基本情報・イベント参加数の確認
+          </p>
+        </Link>
       </div>
     </div>
   );

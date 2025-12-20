@@ -9,15 +9,18 @@ import { CurrentStatus } from '../value-objects/CurrentStatus';
 
 export interface Member {
   readonly id: string;
-  readonly studentId: StudentId;
+  readonly zitadelId: string;
+  readonly studentId?: StudentId;
   readonly name: string;
   readonly schoolEmail: Email;
   readonly gmailAddress?: Email;
   readonly enrollmentYear: number;
   readonly isRepeating: boolean;
+  readonly repeatYears?: number;
   readonly department: string;
   readonly skills: readonly string[];
   readonly interests: readonly string[];
+  readonly onboardingCompleted: boolean;
   readonly currentStatus?: CurrentStatus;
   readonly avatarUrl?: string;
   readonly createdAt: Date;
@@ -29,15 +32,18 @@ export interface Member {
  */
 export function createMember(params: {
   id: string;
-  studentId: string;
+  zitadelId: string;
+  studentId?: string;
   name: string;
   schoolEmail: string;
   gmailAddress?: string;
   enrollmentYear: number;
   isRepeating?: boolean;
+  repeatYears?: number;
   department: string;
   skills?: string[];
   interests?: string[];
+  onboardingCompleted?: boolean;
   currentStatus?: { message: string; createdAt: Date };
   avatarUrl?: string;
   createdAt?: Date;
@@ -45,7 +51,8 @@ export function createMember(params: {
 }): Member {
   return {
     id: params.id,
-    studentId: StudentId.create(params.studentId),
+    zitadelId: params.zitadelId,
+    studentId: params.studentId ? StudentId.create(params.studentId) : undefined,
     name: params.name,
     schoolEmail: Email.create(params.schoolEmail),
     gmailAddress: params.gmailAddress
@@ -53,9 +60,11 @@ export function createMember(params: {
       : undefined,
     enrollmentYear: params.enrollmentYear,
     isRepeating: params.isRepeating ?? false,
+    repeatYears: params.repeatYears,
     department: params.department,
     skills: Object.freeze(params.skills ?? []),
     interests: Object.freeze(params.interests ?? []),
+    onboardingCompleted: params.onboardingCompleted ?? false,
     currentStatus: params.currentStatus
       ? CurrentStatus.create(
           params.currentStatus.message,
@@ -103,6 +112,10 @@ export function updateMember(
       | 'currentStatus'
       | 'avatarUrl'
       | 'isRepeating'
+      | 'repeatYears'
+      | 'studentId'
+      | 'enrollmentYear'
+      | 'onboardingCompleted'
     >
   >
 ): Member {

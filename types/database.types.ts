@@ -16,12 +16,15 @@ export interface Database {
         Row: {
           id: string;
           zitadel_id: string;
+          student_id: string | null;
           name: string;
           school_email: string;
           gmail_address: string | null;
           enrollment_year: number;
           is_repeating: boolean;
+          repeat_years: number | null;
           major: string | null;
+          onboarding_completed: boolean;
           current_status: string | null;
           status_updated_at: string | null;
           created_at: string;
@@ -30,12 +33,15 @@ export interface Database {
         Insert: {
           id?: string;
           zitadel_id: string;
+          student_id?: string | null;
           name: string;
           school_email: string;
           gmail_address?: string | null;
           enrollment_year: number;
           is_repeating?: boolean;
+          repeat_years?: number | null;
           major?: string | null;
+          onboarding_completed?: boolean;
           current_status?: string | null;
           status_updated_at?: string | null;
           created_at?: string;
@@ -44,17 +50,21 @@ export interface Database {
         Update: {
           id?: string;
           zitadel_id?: string;
+          student_id?: string | null;
           name?: string;
           school_email?: string;
           gmail_address?: string | null;
           enrollment_year?: number;
           is_repeating?: boolean;
+          repeat_years?: number | null;
           major?: string | null;
+          onboarding_completed?: boolean;
           current_status?: string | null;
           status_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       tags: {
         Row: {
@@ -75,23 +85,25 @@ export interface Database {
           category?: "skill" | "interest";
           created_at?: string;
         };
+        Relationships: [];
       };
       member_tags: {
         Row: {
-          member_id: string;
+          member_id: string | null;
           tag_id: string;
           created_at: string;
         };
         Insert: {
-          member_id: string;
+          member_id?: string | null;
           tag_id: string;
           created_at?: string;
         };
         Update: {
-          member_id?: string;
+          member_id?: string | null;
           tag_id?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       events: {
         Row: {
@@ -102,6 +114,8 @@ export interface Database {
           location: string | null;
           capacity: number | null;
           created_by: string | null;
+          online_url: string | null;
+          online_password: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -113,6 +127,8 @@ export interface Database {
           location?: string | null;
           capacity?: number | null;
           created_by?: string | null;
+          online_url?: string | null;
+          online_password?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -124,9 +140,12 @@ export interface Database {
           location?: string | null;
           capacity?: number | null;
           created_by?: string | null;
+          online_url?: string | null;
+          online_password?: string | null;
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       event_participants: {
         Row: {
@@ -147,6 +166,7 @@ export interface Database {
           participated?: boolean;
           registered_at?: string;
         };
+        Relationships: [];
       };
       timetables: {
         Row: {
@@ -157,6 +177,11 @@ export interface Database {
           course_name: string;
           semester: "spring" | "fall" | null;
           year: number;
+          is_public: boolean | null;
+          grade: number | null;
+          major: string | null;
+          classroom: string | null;
+          instructor: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -168,6 +193,11 @@ export interface Database {
           course_name: string;
           semester?: "spring" | "fall" | null;
           year: number;
+          is_public?: boolean | null;
+          grade?: number | null;
+          major?: string | null;
+          classroom?: string | null;
+          instructor?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -179,9 +209,15 @@ export interface Database {
           course_name?: string;
           semester?: "spring" | "fall" | null;
           year?: number;
+          is_public?: boolean | null;
+          grade?: number | null;
+          major?: string | null;
+          classroom?: string | null;
+          instructor?: string | null;
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
     Views: {
@@ -195,6 +231,7 @@ export interface Database {
           participated_count: number;
           available_spots: number | null;
         };
+        Relationships: [];
       };
       timetable_by_grade_major: {
         Row: {
@@ -208,6 +245,7 @@ export interface Database {
           semester: "spring" | "fall" | null;
           year: number;
         };
+        Relationships: [];
       };
     };
     Functions: {
@@ -220,5 +258,6 @@ export interface Database {
       };
     };
     Enums: {};
+    CompositeTypes: {};
   };
 }

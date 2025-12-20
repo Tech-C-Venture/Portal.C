@@ -12,6 +12,8 @@ export interface Event {
   readonly startDate: Date;
   readonly endDate: Date;
   readonly location: string;
+  readonly onlineUrl?: string;
+  readonly onlinePassword?: string;
   readonly capacity: EventCapacity;
   readonly participantCount: number;
   readonly participantIds: readonly string[];
@@ -30,6 +32,8 @@ export function createEvent(params: {
   startDate: Date;
   endDate: Date;
   location: string;
+  onlineUrl?: string | null;
+  onlinePassword?: string | null;
   capacity?: number;
   participantIds?: string[];
   createdBy: string;
@@ -54,6 +58,8 @@ export function createEvent(params: {
     startDate: params.startDate,
     endDate: params.endDate,
     location: params.location,
+    onlineUrl: params.onlineUrl ?? undefined,
+    onlinePassword: params.onlinePassword ?? undefined,
     capacity,
     participantCount: participantIds.length,
     participantIds,

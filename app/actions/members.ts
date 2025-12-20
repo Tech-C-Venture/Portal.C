@@ -6,6 +6,24 @@ import { REPOSITORY_KEYS } from '@/infrastructure/di/keys';
 import { MemberMapper } from '@/application/mappers/MemberMapper';
 import type { MemberDTO } from '@/application/dtos/MemberDTO';
 import type { IMemberRepository } from '@/application/ports/IMemberRepository';
+import { getCurrentUser } from '@/lib/auth';
+import { USE_CASE_KEYS } from '@/infrastructure/di/keys';
+import type { UpdateMemberProfileUseCase } from '@/application/use-cases/UpdateMemberProfileUseCase';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { isAdmin } from '@/lib/auth';
+import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+import { Email } from '@/domain/value-objects/Email';
+
+export interface MemberProfileFormState {
+  error: string | null;
+  success: string | null;
+}
+
+export interface AdminGmailFormState {
+  error: string | null;
+  success: string | null;
+}
 
 export async function getMemberListAction(): Promise<MemberDTO[]> {
   const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
@@ -16,4 +34,172 @@ export async function getMemberListAction(): Promise<MemberDTO[]> {
   }
 
   return MemberMapper.toDTOList(result.value);
+}
+
+export async function getCurrentMemberProfileAction(): Promise<MemberDTO> {
+  const user = await getCurrentUser();
+  if (!user?.id) {
+    throw new Error('Not authenticated');
+  }
+
+  const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
+  const result = await memberRepository.findByZitadelId(user.id);
+
+  if (!result.success) {
+    throw new Error(`Failed to fetch member: ${result.error.message}`);
+  }
+
+  if (!result.value) {
+    throw new Error(`Member not found for zitadel_id: ${user.id}`);
+  }
+
+  return MemberMapper.toDTO(result.value);
+}
+
+export async function updateCurrentMemberProfileAction(
+  _prevState: MemberProfileFormState,
+  formData: FormData
+): Promise<MemberProfileFormState> {
+  const user = await getCurrentUser();
+  if (!user?.id) {
+    return { error: '認証が必要です。再ログインしてください。', success: null };
+  }
+
+  const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
+  const memberResult = await memberRepository.findByZitadelId(user.id);
+  if (!memberResult.success) {
+    return { error: `メンバー取得に失敗しました: ${memberResult.error.message}`, success: null };
+  }
+  if (!memberResult.value) {
+    return { error: 'メンバー情報が見つかりませんでした。', success: null };
+  }
+
+  const mode = formData.get('mode');
+  const lockedName = memberResult.value.name?.trim();
+  const studentId = (formData.get('studentId') as string | null)?.trim();
+  const department = (formData.get('department') as string | null)?.trim();
+  const enrollmentYearRaw = (formData.get('enrollmentYear') as string | null)?.trim();
+  const currentStatusMessage = (formData.get('currentStatusMessage') as string | null)?.trim();
+  const gmailAddress = (formData.get('gmailAddress') as string | null)?.trim();
+  const skillsRaw = (formData.get('skills') as string | null) ?? '';
+  const interestsRaw = (formData.get('interests') as string | null) ?? '';
+  const isRepeating = formData.get('isRepeating') === 'on';
+  const repeatYearsRaw = (formData.get('repeatYears') as string | null)?.trim();
+
+  const enrollmentYear = enrollmentYearRaw ? Number(enrollmentYearRaw) : undefined;
+  if (enrollmentYearRaw && Number.isNaN(enrollmentYear)) {
+    return { error: '入学年度は数字で入力してください。', success: null };
+  }
+
+  const repeatYearsParsed = repeatYearsRaw ? Number(repeatYearsRaw) : undefined;
+  if (repeatYearsRaw && Number.isNaN(repeatYearsParsed)) {
+    return { error: '留年年数は数字で入力してください。', success: null };
+  }
+  const repeatYears = isRepeating ? repeatYearsParsed : null;
+
+  const skills = skillsRaw
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  const interests = interestsRaw
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  if (mode === 'onboarding') {
+    if (!lockedName) {
+      return { error: '名前が取得できませんでした。再ログインしてください。', success: null };
+    }
+    if (!studentId) return { error: '学籍番号を入力してください。', success: null };
+    if (!department) return { error: '所属専攻を入力してください。', success: null };
+    if (!enrollmentYear) {
+      return { error: '入学年度を入力してください。', success: null };
+    }
+    if (skills.length === 0) {
+      return { error: 'スキルタグを1つ以上入力してください。', success: null };
+    }
+    if (interests.length === 0) {
+      return { error: '興味タグを1つ以上入力してください。', success: null };
+    }
+    if (isRepeating && !repeatYears) {
+      return { error: '留年年数を入力してください。', success: null };
+    }
+  }
+
+  const useCase = container.resolve<UpdateMemberProfileUseCase>(
+    USE_CASE_KEYS.UPDATE_MEMBER_PROFILE
+  );
+
+  const result = await useCase.execute(memberResult.value.id, {
+    studentId: studentId || undefined,
+    gmailAddress: gmailAddress || undefined,
+    department: department || undefined,
+    enrollmentYear,
+    currentStatusMessage: currentStatusMessage || undefined,
+    skills,
+    interests,
+    isRepeating,
+    repeatYears,
+    onboardingCompleted: mode === 'onboarding' ? true : undefined,
+  });
+
+  if (!result.success) {
+    return { error: result.error, success: null };
+  }
+
+  revalidatePath('/profile');
+  revalidatePath('/onboarding');
+  revalidatePath('/');
+
+  const redirectTo = formData.get('redirectTo');
+  if (redirectTo && typeof redirectTo === 'string') {
+    redirect(redirectTo);
+  }
+
+  return { error: null, success: '保存しました。' };
+}
+
+export async function updateMemberGmailAction(
+  _prevState: AdminGmailFormState,
+  formData: FormData
+): Promise<AdminGmailFormState> {
+  const admin = await isAdmin();
+  if (!admin) {
+    return { error: '管理者権限が必要です。', success: null };
+  }
+
+  const schoolEmailRaw = (formData.get('schoolEmail') as string | null)?.trim();
+  const gmailRaw = (formData.get('gmailAddress') as string | null)?.trim();
+
+  if (!schoolEmailRaw) {
+    return { error: '学校メールアドレスを入力してください。', success: null };
+  }
+  if (!gmailRaw) {
+    return { error: '私用Gmailアドレスを入力してください。', success: null };
+  }
+
+  try {
+    Email.create(schoolEmailRaw);
+    Email.create(gmailRaw);
+  } catch (error) {
+    return { error: (error as Error).message, success: null };
+  }
+
+  const supabase = DatabaseClient.getAdminClient();
+  const { data, error } = await (supabase as any)
+    .from('members')
+    .update({ gmail_address: gmailRaw.toLowerCase() })
+    .eq('school_email', schoolEmailRaw.toLowerCase())
+    .select('id');
+
+  if (error) {
+    return { error: `更新に失敗しました: ${error.message}`, success: null };
+  }
+
+  const updatedCount = Array.isArray(data) ? data.length : 0;
+  if (updatedCount === 0) {
+    return { error: '該当するメンバーが見つかりませんでした。', success: null };
+  }
+
+  return { error: null, success: `私用Gmailを更新しました（${updatedCount}件）。` };
 }
