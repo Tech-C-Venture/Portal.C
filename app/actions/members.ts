@@ -140,6 +140,7 @@ export async function updateCurrentMemberProfileAction(
     interests,
     isRepeating,
     repeatYears,
+    onboardingCompleted: mode === 'onboarding' ? true : undefined,
   });
 
   if (!result.success) {
