@@ -114,6 +114,8 @@ export interface Database {
           location: string | null;
           capacity: number | null;
           created_by: string | null;
+          online_url: string | null;
+          online_password: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -125,6 +127,8 @@ export interface Database {
           location?: string | null;
           capacity?: number | null;
           created_by?: string | null;
+          online_url?: string | null;
+          online_password?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -136,6 +140,8 @@ export interface Database {
           location?: string | null;
           capacity?: number | null;
           created_by?: string | null;
+          online_url?: string | null;
+          online_password?: string | null;
           created_at?: string;
           updated_at?: string;
         };
