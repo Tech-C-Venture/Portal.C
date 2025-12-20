@@ -104,6 +104,44 @@ export async function getTimetableSummaries(): Promise<TimetableSummary[]> {
   return Array.from(timetableMap.values());
 }
 
+export type PublicTimetableEntry = {
+  id: string;
+  dayOfWeek: number;
+  period: number;
+  courseName: string;
+  grade: number | null;
+  major: string | null;
+  classroom: string | null;
+  instructor: string | null;
+};
+
+export async function getPublicTimetables(): Promise<PublicTimetableEntry[]> {
+  const supabase = await DatabaseClient.getServerClient();
+  const { data } = await supabase
+    .from('timetables')
+    .select(
+      'id, day_of_week, period, course_name, grade, major, classroom, instructor'
+    )
+    .eq('is_public', true)
+    .order('grade', { ascending: true })
+    .order('major', { ascending: true })
+    .order('day_of_week', { ascending: true })
+    .order('period', { ascending: true });
+
+  return (
+    data?.map((row) => ({
+      id: row.id,
+      dayOfWeek: row.day_of_week,
+      period: row.period,
+      courseName: row.course_name,
+      grade: row.grade,
+      major: row.major,
+      classroom: row.classroom,
+      instructor: row.instructor,
+    })) ?? []
+  );
+}
+
 export async function getParticipationCounts(): Promise<Map<string, number>> {
   const supabase = await DatabaseClient.getServerClient();
   const { data } = await supabase

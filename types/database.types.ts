@@ -89,17 +89,17 @@ export interface Database {
       };
       member_tags: {
         Row: {
-          member_id: string;
+          member_id: string | null;
           tag_id: string;
           created_at: string;
         };
         Insert: {
-          member_id: string;
+          member_id?: string | null;
           tag_id: string;
           created_at?: string;
         };
         Update: {
-          member_id?: string;
+          member_id?: string | null;
           tag_id?: string;
           created_at?: string;
         };
@@ -177,6 +177,11 @@ export interface Database {
           course_name: string;
           semester: "spring" | "fall" | null;
           year: number;
+          is_public: boolean | null;
+          grade: number | null;
+          major: string | null;
+          classroom: string | null;
+          instructor: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -188,6 +193,11 @@ export interface Database {
           course_name: string;
           semester?: "spring" | "fall" | null;
           year: number;
+          is_public?: boolean | null;
+          grade?: number | null;
+          major?: string | null;
+          classroom?: string | null;
+          instructor?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -199,6 +209,11 @@ export interface Database {
           course_name?: string;
           semester?: "spring" | "fall" | null;
           year?: number;
+          is_public?: boolean | null;
+          grade?: number | null;
+          major?: string | null;
+          classroom?: string | null;
+          instructor?: string | null;
           created_at?: string;
           updated_at?: string;
         };
