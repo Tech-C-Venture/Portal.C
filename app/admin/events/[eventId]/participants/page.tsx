@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FiCalendar, FiGlobe, FiKey, FiMapPin, FiUsers } from 'react-icons/fi';
 import {
   getEventById,
   getEventParticipantsByEventId,
@@ -63,17 +64,28 @@ export default async function AdminEventParticipantsDetailPage({
             {event.description || '詳細が登録されていません。'}
           </p>
           <div className="space-y-2 text-sm text-gray-500">
-            <p>📅 {new Date(event.startDate).toLocaleString('ja-JP')}</p>
-            <p>📍 {event.location || '場所未設定'}</p>
-            <p>
-              👥 {participants.length} /{' '}
+            <p className="flex items-center gap-2">
+              <FiCalendar className="h-4 w-4" aria-hidden />
+              {new Date(event.startDate).toLocaleString('ja-JP')}
+            </p>
+            <p className="flex items-center gap-2">
+              <FiMapPin className="h-4 w-4" aria-hidden />
+              {event.location || '場所未設定'}
+            </p>
+            <p className="flex items-center gap-2">
+              <FiUsers className="h-4 w-4" aria-hidden />
+              {participants.length} /{' '}
               {event.capacity === 'unlimited' ? '無制限' : event.capacity}名
             </p>
-            <p>
-              🌐 {event.onlineUrl ? event.onlineUrl : 'オンラインリンクなし'}
+            <p className="flex items-center gap-2">
+              <FiGlobe className="h-4 w-4" aria-hidden />
+              {event.onlineUrl ? event.onlineUrl : 'オンラインリンクなし'}
             </p>
             {event.onlinePassword && (
-              <p>🔑 パスワード: {event.onlinePassword}</p>
+              <p className="flex items-center gap-2">
+                <FiKey className="h-4 w-4" aria-hidden />
+                パスワード: {event.onlinePassword}
+              </p>
             )}
           </div>
         </div>

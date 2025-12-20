@@ -6,6 +6,7 @@
 'use client';
 
 import { MemberDTO } from '@/application/dtos';
+import { FiMessageCircle } from 'react-icons/fi';
 
 interface MemberCardProps {
   member: MemberDTO;
@@ -32,8 +33,9 @@ export function MemberCard({ member }: MemberCardProps) {
       </div>
 
       {member.currentStatus && isStatusValid && (
-        <div className="mb-3 p-2 bg-blue-50 rounded text-sm text-blue-700">
-          💬 {member.currentStatus.message}
+        <div className="mb-3 flex items-center gap-2 rounded bg-blue-50 p-2 text-sm text-blue-700">
+          <FiMessageCircle className="h-4 w-4" aria-hidden />
+          {member.currentStatus.message}
         </div>
       )}
 
