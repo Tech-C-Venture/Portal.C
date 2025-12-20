@@ -27,6 +27,7 @@ export interface Database {
           onboarding_completed: boolean;
           current_status: string | null;
           status_updated_at: string | null;
+          avatar_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -44,6 +45,7 @@ export interface Database {
           onboarding_completed?: boolean;
           current_status?: string | null;
           status_updated_at?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -61,6 +63,7 @@ export interface Database {
           onboarding_completed?: boolean;
           current_status?: string | null;
           status_updated_at?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -163,6 +163,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
             createdAt: new Date(row.status_updated_at!),
           }
         : undefined,
+      avatarUrl: row.avatar_url ?? undefined,
       createdAt: new Date(row.created_at!),
       updatedAt: new Date(row.updated_at!),
     });
@@ -186,6 +187,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
       onboarding_completed: member.onboardingCompleted,
       current_status: member.currentStatus?.message,
       status_updated_at: member.currentStatus?.createdAt.toISOString(),
+      avatar_url: member.avatarUrl ?? null,
     };
   }
 
@@ -205,6 +207,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
       onboarding_completed: member.onboardingCompleted,
       current_status: member.currentStatus?.message,
       status_updated_at: member.currentStatus?.createdAt.toISOString(),
+      avatar_url: member.avatarUrl ?? null,
       updated_at: member.updatedAt.toISOString(),
     };
   }
