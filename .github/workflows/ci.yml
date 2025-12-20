@@ -71,3 +71,29 @@ jobs:
 
       - name: Run Integration tests (Architecture)
         run: pnpm test:arch
+
+  build-and-lint:
+    name: Build and Lint
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Lint
+        run: pnpm run lint
+
+      - name: Run Build
+        run: pnpm run build
