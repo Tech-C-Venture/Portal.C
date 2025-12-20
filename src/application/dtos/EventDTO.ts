@@ -10,6 +10,8 @@ export interface EventDTO {
   startDate: string; // ISO string
   endDate: string; // ISO string
   location: string;
+  onlineUrl?: string;
+  onlinePassword?: string;
   capacity: number | 'unlimited';
   participantCount: number;
   remainingCapacity: number | 'unlimited';
