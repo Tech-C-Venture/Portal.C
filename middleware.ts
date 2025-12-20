@@ -11,10 +11,7 @@ async function isProfileComplete(zitadelId: string): Promise<boolean> {
   }
 
   const memberUrl = new URL(`${supabaseUrl}/rest/v1/members`)
-  memberUrl.searchParams.set(
-    "select",
-    "id,onboarding_completed"
-  )
+  memberUrl.searchParams.set("select", "id,onboarding_completed")
   memberUrl.searchParams.set("zitadel_id", `eq.${encodeURIComponent(zitadelId)}`)
   memberUrl.searchParams.set("limit", "1")
 
@@ -44,13 +41,9 @@ async function isProfileComplete(zitadelId: string): Promise<boolean> {
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const { pathname } = req.nextUrl
-  const hasSessionCookie = Boolean(
-    req.cookies.get("__Secure-next-auth.session-token")?.value ??
-      req.cookies.get("next-auth.session-token")?.value
-  )
 
   if (pathname.startsWith("/login")) {
-    if (token || hasSessionCookie) {
+    if (token) {
       const callbackUrl = req.nextUrl.searchParams.get("callbackUrl")
       const safeCallback =
         callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/"
@@ -63,17 +56,13 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  if (!token && !hasSessionCookie) {
+  if (!token) {
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
   if (token) {
-    const tokenRoles = (token as { roles?: unknown }).roles
-    const roles = Array.isArray(tokenRoles)
-      ? tokenRoles.filter((role): role is string => typeof role === "string")
-      : []
     const zitadelId = typeof token.sub === "string" ? token.sub : ""
     if (zitadelId) {
       const profileComplete = await isProfileComplete(zitadelId)
