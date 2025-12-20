@@ -15,6 +15,7 @@ export interface MemberDTO {
   department: string;
   skills: string[];
   interests: string[];
+  onboardingCompleted: boolean;
   currentStatus?: {
     message: string;
     createdAt: string; // ISO string

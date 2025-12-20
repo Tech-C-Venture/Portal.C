@@ -3,12 +3,7 @@ import { MemberProfileForm } from "@/components/members/MemberProfileForm";
 
 export default async function ProfilePage() {
   const member = await getCurrentMemberProfileAction();
-  const needsOnboarding =
-    !member.studentId ||
-    !member.department ||
-    member.department.trim().length === 0 ||
-    member.skills.length === 0 ||
-    member.interests.length === 0;
+  const needsOnboarding = !member.onboardingCompleted;
 
   return (
     <div>

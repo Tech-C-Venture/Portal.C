@@ -24,6 +24,7 @@ export interface Database {
           is_repeating: boolean;
           repeat_years: number | null;
           major: string | null;
+          onboarding_completed: boolean;
           current_status: string | null;
           status_updated_at: string | null;
           created_at: string;
@@ -40,6 +41,7 @@ export interface Database {
           is_repeating?: boolean;
           repeat_years?: number | null;
           major?: string | null;
+          onboarding_completed?: boolean;
           current_status?: string | null;
           status_updated_at?: string | null;
           created_at?: string;
@@ -56,6 +58,7 @@ export interface Database {
           is_repeating?: boolean;
           repeat_years?: number | null;
           major?: string | null;
+          onboarding_completed?: boolean;
           current_status?: string | null;
           status_updated_at?: string | null;
           created_at?: string;

@@ -11,10 +11,7 @@ async function isProfileComplete(zitadelId: string): Promise<boolean> {
   }
 
   const memberUrl = new URL(`${supabaseUrl}/rest/v1/members`)
-  memberUrl.searchParams.set(
-    "select",
-    "id,student_id,enrollment_year,major,is_repeating,repeat_years"
-  )
+  memberUrl.searchParams.set("select", "id,onboarding_completed")
   memberUrl.searchParams.set("zitadel_id", `eq.${encodeURIComponent(zitadelId)}`)
   memberUrl.searchParams.set("limit", "1")
 
@@ -32,65 +29,21 @@ async function isProfileComplete(zitadelId: string): Promise<boolean> {
 
   const data = (await memberResponse.json()) as Array<{
     id: string
-    student_id: string | null
-    enrollment_year: number | null
-    major: string | null
-    is_repeating: boolean | null
-    repeat_years: number | null
+    onboarding_completed: boolean | null
   }>
 
   const member = data[0]
   if (!member) return false
 
-  const tagsUrl = new URL(`${supabaseUrl}/rest/v1/member_tags`)
-  tagsUrl.searchParams.set("select", "tag:tags(category)")
-  tagsUrl.searchParams.set("member_id", `eq.${member.id}`)
-
-  const tagsResponse = await fetch(tagsUrl.toString(), {
-    headers: {
-      apikey: supabaseAnonKey,
-      Authorization: `Bearer ${supabaseAnonKey}`,
-      Accept: "application/json",
-    },
-  })
-
-  if (!tagsResponse.ok) {
-    return true
-  }
-
-  const tags = (await tagsResponse.json()) as Array<{
-    tag: { category: string } | null
-  }>
-
-  let hasSkill = false
-  let hasInterest = false
-  for (const item of tags) {
-    if (item.tag?.category === "skill") hasSkill = true
-    if (item.tag?.category === "interest") hasInterest = true
-  }
-
-  const baseOk =
-    !!member.student_id &&
-    !!member.enrollment_year &&
-    !!member.major &&
-    member.major.trim().length > 0 &&
-    hasSkill &&
-    hasInterest
-  const repeatingOk = !member.is_repeating || !!member.repeat_years
-
-  return baseOk && repeatingOk
+  return Boolean(member.onboarding_completed)
 }
 
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const { pathname } = req.nextUrl
-  const hasSessionCookie = Boolean(
-    req.cookies.get("__Secure-next-auth.session-token")?.value ??
-      req.cookies.get("next-auth.session-token")?.value
-  )
 
   if (pathname.startsWith("/login")) {
-    if (token || hasSessionCookie) {
+    if (token) {
       const callbackUrl = req.nextUrl.searchParams.get("callbackUrl")
       const safeCallback =
         callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/"
@@ -103,17 +56,13 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  if (!token && !hasSessionCookie) {
+  if (!token) {
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
   if (token) {
-    const tokenRoles = (token as { roles?: unknown }).roles
-    const roles = Array.isArray(tokenRoles)
-      ? tokenRoles.filter((role): role is string => typeof role === "string")
-      : []
     const zitadelId = typeof token.sub === "string" ? token.sub : ""
     if (zitadelId) {
       const profileComplete = await isProfileComplete(zitadelId)
@@ -130,7 +79,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next|favicon.ico).*)",
-  ],
+  matcher: ["/((?!api|_next|favicon.ico).*)"],
 }
