@@ -11,10 +11,7 @@ async function isProfileComplete(zitadelId: string): Promise<boolean> {
   }
 
   const memberUrl = new URL(`${supabaseUrl}/rest/v1/members`)
-  memberUrl.searchParams.set(
-    "select",
-    "id,student_id,enrollment_year,major,is_repeating,repeat_years"
-  )
+  memberUrl.searchParams.set("select", "id,onboarding_completed")
   memberUrl.searchParams.set("zitadel_id", `eq.${encodeURIComponent(zitadelId)}`)
   memberUrl.searchParams.set("limit", "1")
 
@@ -32,53 +29,28 @@ async function isProfileComplete(zitadelId: string): Promise<boolean> {
 
   const data = (await memberResponse.json()) as Array<{
     id: string
-    student_id: string | null
-    enrollment_year: number | null
-    major: string | null
-    is_repeating: boolean | null
-    repeat_years: number | null
+    onboarding_completed: boolean | null
   }>
 
   const member = data[0]
   if (!member) return false
 
-  const tagsUrl = new URL(`${supabaseUrl}/rest/v1/member_tags`)
-  tagsUrl.searchParams.set("select", "tag:tags(category)")
-  tagsUrl.searchParams.set("member_id", `eq.${member.id}`)
+  return Boolean(member.onboarding_completed)
+}
 
-  const tagsResponse = await fetch(tagsUrl.toString(), {
+async function getSessionUserId(req: NextRequest): Promise<string | null> {
+  const sessionUrl = new URL("/api/auth/session", req.url)
+  const response = await fetch(sessionUrl.toString(), {
     headers: {
-      apikey: supabaseAnonKey,
-      Authorization: `Bearer ${supabaseAnonKey}`,
-      Accept: "application/json",
+      cookie: req.headers.get("cookie") ?? "",
     },
   })
 
-  if (!tagsResponse.ok) {
-    return true
-  }
+  if (!response.ok) return null
 
-  const tags = (await tagsResponse.json()) as Array<{
-    tag: { category: string } | null
-  }>
-
-  let hasSkill = false
-  let hasInterest = false
-  for (const item of tags) {
-    if (item.tag?.category === "skill") hasSkill = true
-    if (item.tag?.category === "interest") hasInterest = true
-  }
-
-  const baseOk =
-    !!member.student_id &&
-    !!member.enrollment_year &&
-    !!member.major &&
-    member.major.trim().length > 0 &&
-    hasSkill &&
-    hasInterest
-  const repeatingOk = !member.is_repeating || !!member.repeat_years
-
-  return baseOk && repeatingOk
+  const session = (await response.json()) as { user?: { id?: string } }
+  const userId = session?.user?.id
+  return typeof userId === "string" ? userId : null
 }
 
 export async function middleware(req: NextRequest) {
@@ -88,9 +60,11 @@ export async function middleware(req: NextRequest) {
     req.cookies.get("__Secure-next-auth.session-token")?.value ??
       req.cookies.get("next-auth.session-token")?.value
   )
+  const sessionUserId =
+    !token && hasSessionCookie ? await getSessionUserId(req) : null
 
   if (pathname.startsWith("/login")) {
-    if (token || hasSessionCookie) {
+    if (token || sessionUserId) {
       const callbackUrl = req.nextUrl.searchParams.get("callbackUrl")
       const safeCallback =
         callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/"
@@ -103,27 +77,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  if (!token && !hasSessionCookie) {
+  if (!token && !sessionUserId) {
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  if (token) {
-    const tokenRoles = (token as { roles?: unknown }).roles
-    const roles = Array.isArray(tokenRoles)
-      ? tokenRoles.filter((role): role is string => typeof role === "string")
-      : []
-    const isAdmin = roles.includes("admin")
-    const zitadelId = typeof token.sub === "string" ? token.sub : ""
-    if (!isAdmin && zitadelId) {
-      const profileComplete = await isProfileComplete(zitadelId)
-      if (!profileComplete) {
-        return NextResponse.redirect(new URL("/onboarding", req.url))
-      }
-      if (pathname === "/") {
-        return NextResponse.redirect(new URL("/events", req.url))
-      }
+  const zitadelId =
+    typeof token?.sub === "string" ? token.sub : sessionUserId ?? ""
+  if (zitadelId) {
+    const profileComplete = await isProfileComplete(zitadelId)
+    if (!profileComplete) {
+      return NextResponse.redirect(new URL("/onboarding", req.url))
+    }
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/events", req.url))
     }
   }
 
@@ -131,7 +99,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next|favicon.ico).*)",
-  ],
+  matcher: ["/((?!api|_next|favicon.ico).*)"],
 }

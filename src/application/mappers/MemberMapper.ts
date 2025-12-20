@@ -20,6 +20,7 @@ export class MemberMapper {
       department: member.department,
       skills: [...member.skills],
       interests: [...member.interests],
+      onboardingCompleted: member.onboardingCompleted,
       currentStatus: member.currentStatus
         ? {
             message: member.currentStatus.message,

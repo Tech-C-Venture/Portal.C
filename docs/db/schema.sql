@@ -7,6 +7,7 @@ CREATE TABLE members (
     enrollment_year INT NOT NULL,
     is_repeated_year BOOLEAN DEFAULT FALSE,
     major VARCHAR(100),
+    onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
     current_status TEXT,  -- 今のところは文字制限がないTEXT型で保存するようにしています。(今日は図書館で勉強しています。夜までいます！)のような少し長い文字を書くかもしれないので
     status_updated_at TIMESTAMP,
     is_admin BOOLEAN DEFAULT FALSE
