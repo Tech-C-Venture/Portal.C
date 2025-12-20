@@ -26,13 +26,18 @@ export class SupabaseEventRepository implements IEventRepository {
    * DB型→ドメインエンティティ変換
    */
   private toDomain(row: EventRow, participantIds: string[] = []): Event {
+    const startDate = new Date(row.event_date);
+    const defaultDurationMs = 60 * 60 * 1000;
+    const endDate = new Date(startDate.getTime() + defaultDurationMs);
     return createEvent({
       id: row.id,
       title: row.title,
       description: row.description ?? '',
-      startDate: new Date(row.event_date),
-      endDate: new Date(row.event_date),
+      startDate,
+      endDate,
       location: row.location ?? '',
+      onlineUrl: row.online_url ?? undefined,
+      onlinePassword: row.online_password ?? undefined,
       capacity: row.capacity ?? undefined,
       participantIds,
       createdBy: row.created_by ?? 'system',
@@ -52,6 +57,8 @@ export class SupabaseEventRepository implements IEventRepository {
       event_date: event.startDate.toISOString(),
       location: event.location,
       capacity: event.capacity.isUnlimited() ? null : event.capacity.value,
+      online_url: event.onlineUrl ?? null,
+      online_password: event.onlinePassword ?? null,
       created_by: event.createdBy,
     };
   }
@@ -66,6 +73,8 @@ export class SupabaseEventRepository implements IEventRepository {
       event_date: event.startDate.toISOString(),
       location: event.location,
       capacity: event.capacity.isUnlimited() ? null : event.capacity.value,
+      online_url: event.onlineUrl ?? null,
+      online_password: event.onlinePassword ?? null,
       updated_at: event.updatedAt.toISOString(),
     };
   }

@@ -35,7 +35,7 @@ export function Navigation({ roles }: NavigationProps) {
         <div className="flex items-center justify-between h-16">
           {/* ロゴ */}
           <Link href="/" className="text-xl font-bold z-10">
-            Tech.C Venture 総合ポータル
+            Portal.C
           </Link>
 
           {/* デスクトップメニュー (md以上で表示) */}
