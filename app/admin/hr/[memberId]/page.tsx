@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getMemberParticipations, getMembers } from '@/app/admin/_data';
+import { CopyButton } from '@/components/admin/CopyButton';
 
 type MemberHrDetailPageProps = {
   params: Promise<{ memberId: string }>;
@@ -44,15 +45,24 @@ export default async function MemberHrDetailPage({
         <div className="grid gap-4 md:grid-cols-2 text-sm text-gray-700">
           <div>
             <div className="text-xs text-gray-500">学籍番号</div>
-            <div>{member.studentId ?? '未登録'}</div>
+            <div className="flex items-center gap-2">
+              <span>{member.studentId ?? '未登録'}</span>
+              <CopyButton value={member.studentId ?? undefined} />
+            </div>
           </div>
           <div>
             <div className="text-xs text-gray-500">学校メール</div>
-            <div>{member.schoolEmail}</div>
+            <div className="flex items-center gap-2">
+              <span>{member.schoolEmail}</span>
+              <CopyButton value={member.schoolEmail} />
+            </div>
           </div>
           <div>
             <div className="text-xs text-gray-500">私用Gmail</div>
-            <div>{member.gmailAddress ?? '未登録'}</div>
+            <div className="flex items-center gap-2">
+              <span>{member.gmailAddress ?? '未登録'}</span>
+              <CopyButton value={member.gmailAddress ?? undefined} />
+            </div>
           </div>
           <div>
             <div className="text-xs text-gray-500">イベント参加数</div>

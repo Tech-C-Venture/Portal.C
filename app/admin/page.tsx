@@ -97,15 +97,6 @@ export default async function AdminPage() {
             基本情報・イベント参加数の確認
           </p>
         </Link>
-        <Link
-          href="/admin/gmail"
-          className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
-        >
-          <h2 className="text-lg font-semibold mb-2">Gmail登録</h2>
-          <p className="text-sm text-gray-600">
-            学校メールから私用Gmailを登録
-          </p>
-        </Link>
       </div>
     </div>
   );

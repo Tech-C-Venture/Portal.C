@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getMembers, getParticipationCounts } from '@/app/admin/_data';
+import { CopyButton } from '@/components/admin/CopyButton';
 
 export default async function AdminHrPage() {
   const [members, participationCounts] = await Promise.all([
@@ -62,13 +63,22 @@ export default async function AdminHrPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      {member.studentId ?? '未登録'}
+                      <div className="flex items-center gap-2">
+                        <span>{member.studentId ?? '未登録'}</span>
+                        <CopyButton value={member.studentId ?? undefined} />
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      {member.schoolEmail}
+                      <div className="flex items-center gap-2">
+                        <span>{member.schoolEmail}</span>
+                        <CopyButton value={member.schoolEmail} />
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      {member.gmailAddress ?? '未登録'}
+                      <div className="flex items-center gap-2">
+                        <span>{member.gmailAddress ?? '未登録'}</span>
+                        <CopyButton value={member.gmailAddress ?? undefined} />
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {participationCounts.get(member.id) ?? 0}
@@ -76,7 +86,7 @@ export default async function AdminHrPage() {
                     <td className="px-4 py-3 text-sm">
                       <Link
                         href={`/admin/hr/${member.id}`}
-                        className="text-blue-600 hover:underline"
+                        className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                       >
                         参加履歴
                       </Link>

@@ -53,12 +53,6 @@ export default async function AdminLayout({
             >
               メンバーHR
             </Link>
-            <Link
-              href="/admin/gmail"
-              className="rounded-full border border-gray-200 px-3 py-1 hover:bg-gray-50"
-            >
-              Gmail登録
-            </Link>
           </nav>
         </div>
       </div>
