@@ -5,6 +5,7 @@ import {
   getAverageParticipationRate,
   getEventParticipants,
   getMembers,
+  getAverageParticipants,
 } from "@/app/admin/_data";
 
 export default async function AdminPage() {
@@ -14,11 +15,17 @@ export default async function AdminPage() {
     redirect("/events");
   }
 
-  const [eventsWithParticipants, members, averageParticipationRate] =
+  const [
+    eventsWithParticipants,
+    members,
+    averageParticipationRate,
+    averageParticipants,
+  ] =
     await Promise.all([
       getEventParticipants(),
       getMembers(),
       getAverageParticipationRate(),
+      getAverageParticipants(),
     ]);
 
   const now = new Date();
@@ -56,6 +63,12 @@ export default async function AdminPage() {
             {averageParticipationRate === null
               ? "計測中"
               : `${averageParticipationRate}%`}
+          </p>
+          <p className="mt-2 text-xs text-gray-500">
+            平均参加者数:
+            {averageParticipants === null
+              ? " -"
+              : ` ${averageParticipants}人`}
           </p>
         </div>
       </div>

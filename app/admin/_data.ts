@@ -232,6 +232,7 @@ export async function getAverageParticipationRate(): Promise<number | null> {
     .from('event_participation_stats')
     .select('capacity, registered_count');
 
+  // Note: Unbounded events should be summarized via average participants.
   const capacityRates = (data ?? [])
     .filter((row) => row.capacity && row.capacity > 0)
     .map((row) => row.registered_count / (row.capacity ?? 1));
@@ -244,5 +245,22 @@ export async function getAverageParticipationRate(): Promise<number | null> {
     (capacityRates.reduce((sum, rate) => sum + rate, 0) /
       capacityRates.length) *
       100
+  );
+}
+
+export async function getAverageParticipants(): Promise<number | null> {
+  const supabase = await DatabaseClient.getServerClient();
+  const { data } = await supabase
+    .from('event_participation_stats')
+    .select('capacity, registered_count');
+
+  const counts = (data ?? []).map((row) => row.registered_count);
+
+  if (counts.length === 0) {
+    return null;
+  }
+
+  return Math.round(
+    counts.reduce((sum, value) => sum + value, 0) / counts.length
   );
 }
