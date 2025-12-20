@@ -37,15 +37,19 @@ export function PublicTimetableTable({
   const grades = useMemo(
     () =>
       Array.from(
-        new Set(entries.map((entry) => entry.grade).filter(Boolean))
-      ).sort((a, b) => (a ?? 0) - (b ?? 0)),
+        new Set(entries.map((entry) => entry.grade).filter((grade): grade is number => typeof grade === 'number'))
+      ).sort((a, b) => a - b),
     [entries]
   );
 
   const majors = useMemo(
     () =>
       Array.from(
-        new Set(entries.map((entry) => entry.major).filter(Boolean))
+        new Set(
+          entries
+            .map((entry) => entry.major)
+            .filter((major): major is string => typeof major === 'string')
+        )
       ).sort(),
     [entries]
   );
@@ -74,7 +78,7 @@ export function PublicTimetableTable({
         >
           <option value="all">全学年</option>
           {grades.map((grade) => (
-            <option key={grade} value={grade}>
+            <option key={grade} value={String(grade)}>
               {grade}年
             </option>
           ))}
