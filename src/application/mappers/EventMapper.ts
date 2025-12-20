@@ -17,6 +17,8 @@ export class EventMapper {
       startDate: event.startDate.toISOString(),
       endDate: event.endDate.toISOString(),
       location: event.location,
+      onlineUrl: event.onlineUrl,
+      onlinePassword: event.onlinePassword,
       capacity: event.capacity.isUnlimited() ? 'unlimited' : event.capacity.value,
       participantCount: event.participantCount,
       remainingCapacity:
