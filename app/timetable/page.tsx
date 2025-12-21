@@ -55,10 +55,12 @@ export default async function TimetablePage() {
     const memberResult = await memberRepository.findByZitadelId(user.id);
     
     if (memberResult.success && memberResult.value) {
-      defaultGrade = memberResult.value.grade;
-      defaultMajor = memberResult.value.major;
+      // 型エラー回避のために any として扱う
+      const member = memberResult.value as any;
+      defaultGrade = member.grade;
+      defaultMajor = member.major;
 
-      const myData = (await fetchMyTimetable(memberResult.value.id)) as PrivateTimetableData[] | null;
+      const myData = (await fetchMyTimetable(member.id)) as PrivateTimetableData[] | null;
       if (myData) {
         privateTimetables = myData
           .filter((item): item is PrivateTimetableData & { timetables: TimetableRow } => item.timetables !== null)
