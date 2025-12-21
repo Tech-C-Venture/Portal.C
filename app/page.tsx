@@ -16,12 +16,14 @@ import { container } from "@/infrastructure/di/setup";
 import { REPOSITORY_KEYS } from "@/infrastructure/di/keys";
 import type { IEventRepository, IMemberRepository } from "@/application/ports";
 import type { EventDTO } from "@/application/dtos";
+import type { Event } from "@/domain/entities/Event";
+import { isMemberRegistered } from "@/domain/entities/Event";
 import { getCurrentUser } from "@/lib/auth";
 import { hasValidStatus, calculateGrade } from "@/domain/entities/Member";
 import { DatabaseClient } from "@/infrastructure/database/DatabaseClient";
 import { FiMapPin, FiUsers, FiMessageCircle } from "react-icons/fi";
 
-async function getEvents(): Promise<EventDTO[]> {
+async function getEvents(): Promise<Event[]> {
     try {
         const eventRepository = container.resolve<IEventRepository>(REPOSITORY_KEYS.EVENT);
         const result = await eventRepository.findAll();
@@ -31,8 +33,7 @@ async function getEvents(): Promise<EventDTO[]> {
             return [];
         }
 
-        const { EventMapper } = await import("@/application/mappers/EventMapper");
-        return EventMapper.toDTOList(result.value);
+        return result.value;
     } catch (error) {
         console.error("Error fetching events:", error);
         return [];
@@ -116,16 +117,30 @@ export default async function Home() {
         : { success: false as const, value: null as any };
 
     const currentMember = currentMemberResult.success ? currentMemberResult.value : null;
+    const currentMemberId = currentMember?.id ?? null;
+
+    const { EventMapper } = await import("@/application/mappers/EventMapper");
+    const eventDtos = EventMapper.toDTOList(events);
+    const eventsById = new Map(events.map((event) => [event.id, event]));
+    const eventsWithRegistration: Array<EventDTO & { isRegistered?: boolean }> = eventDtos.map((eventDto) => {
+        if (!currentMemberId) {
+            return eventDto;
+        }
+
+        const sourceEvent = eventsById.get(eventDto.id);
+        const isRegistered = sourceEvent ? isMemberRegistered(sourceEvent, currentMemberId) : false;
+        return { ...eventDto, isRegistered };
+    });
 
     // 開催予定（startDate が未来）
-    const upcomingEvents = (events ?? [])
+    const upcomingEvents = (eventsWithRegistration ?? [])
         .filter((e) => new Date(e.startDate) >= now)
         .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
     const nextEvent = upcomingEvents[0] ?? null;
 
     // 受付中（既存ロジック流用）：isFull === false かつ endDate >= now（開始日ソート）
-    const openEvents = (events ?? [])
+    const openEvents = (eventsWithRegistration ?? [])
         .filter((e) => !e.isFull && new Date(e.endDate) >= now)
         .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
@@ -277,6 +292,17 @@ export default async function Home() {
                                                     <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-gray-700">
                                                         {e.isFull ? "満員" : "受付中"}
                                                     </span>
+                                                    {typeof e.isRegistered === "boolean" && (
+                                                        <span
+                                                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                                                e.isRegistered
+                                                                    ? "bg-emerald-100 text-emerald-800"
+                                                                    : "bg-gray-200 text-gray-700"
+                                                            }`}
+                                                        >
+                                                            {e.isRegistered ? "参加済み" : "未参加"}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                             <Link href={`/events/${e.id}`} className="text-sm font-semibold text-blue-700 hover:underline">
