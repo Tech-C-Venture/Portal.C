@@ -11,6 +11,7 @@ import {
   updateCurrentMemberProfileAction,
   type MemberProfileFormState,
 } from '@/app/actions/members';
+import { departmentOptions } from '@/lib/constants/departments';
 
 interface MemberProfileFormProps {
   member: MemberDTO;
@@ -316,7 +317,11 @@ export function MemberProfileForm({
         </label>
         <input
           type="email"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none ${
+            mode === 'profile'
+              ? 'bg-gray-100 text-gray-600'
+              : 'focus:ring-2 focus:ring-blue-500'
+          }`}
           defaultValue={member.schoolEmail}
           readOnly
         />
@@ -349,25 +354,50 @@ export function MemberProfileForm({
         </div>
         <div>
           <label className="block text-sm font-medium mb-2">入学年度</label>
-          <input
-            type="number"
-            name="enrollmentYear"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="2022"
-            defaultValue={member.enrollmentYear}
-            required={mode === 'onboarding'}
-          />
+          {mode === 'onboarding' ? (
+            <input
+              type="number"
+              name="enrollmentYear"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="2022"
+              defaultValue={member.enrollmentYear}
+              required
+            />
+          ) : (
+            <input
+              type="number"
+              name="enrollmentYear"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 focus:outline-none"
+              defaultValue={member.enrollmentYear}
+              readOnly
+            />
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-2">所属専攻</label>
-          <input
-            type="text"
-            name="department"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="ホワイトハッカー専攻"
-            defaultValue={member.department}
-            required={mode === 'onboarding'}
-          />
+          {mode === 'onboarding' ? (
+            <select
+              name="department"
+              defaultValue={member.department || ''}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">選択</option>
+              {departmentOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              name="department"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 focus:outline-none"
+              defaultValue={member.department}
+              readOnly
+            />
+          )}
         </div>
       </div>
 
