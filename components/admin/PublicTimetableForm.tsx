@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useMemo, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@openameba/spindle-ui';
 import '@openameba/spindle-ui/Button/Button.css';
@@ -8,6 +8,7 @@ import {
   createPublicTimetableAction,
   type PublicTimetableFormState,
 } from '@/app/actions/timetables';
+import type { TimeSlotEntry } from '@/app/admin/_data';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -18,7 +19,11 @@ function SubmitButton() {
   );
 }
 
-export function PublicTimetableForm() {
+export function PublicTimetableForm({
+  timeSlots,
+}: {
+  timeSlots: TimeSlotEntry[];
+}) {
   const [state, formAction] = useActionState<PublicTimetableFormState, FormData>(
     createPublicTimetableAction,
     {
@@ -27,9 +32,13 @@ export function PublicTimetableForm() {
     }
   );
   const [dayOfWeek, setDayOfWeek] = useState('');
-  const [period, setPeriod] = useState('');
+  const [timeSlotId, setTimeSlotId] = useState('');
   const [grade, setGrade] = useState('');
   const [major, setMajor] = useState('');
+  const activeTimeSlots = useMemo(
+    () => timeSlots.filter((slot) => slot.isActive),
+    [timeSlots]
+  );
 
   return (
     <form action={formAction} className="space-y-4">
@@ -67,16 +76,16 @@ export function PublicTimetableForm() {
         <div>
           <label className="block text-sm font-medium mb-2">時限</label>
           <select
-            name="period"
-            value={period}
-            onChange={(event) => setPeriod(event.target.value)}
+            name="timeSlotId"
+            value={timeSlotId}
+            onChange={(event) => setTimeSlotId(event.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="">選択</option>
-            {Array.from({ length: 7 }, (_, index) => index + 1).map((value) => (
-              <option key={value} value={value}>
-                {value}限
+            {activeTimeSlots.map((slot) => (
+              <option key={slot.id} value={slot.id}>
+                {slot.label}
               </option>
             ))}
           </select>
