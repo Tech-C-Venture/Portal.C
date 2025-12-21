@@ -52,7 +52,7 @@ function TagsInput({
   category,
 }: {
   name: string;
-  label: string;
+  label: React.ReactNode;
   initialValues: string[];
   placeholder: string;
   required?: boolean;
@@ -199,6 +199,8 @@ export function MemberProfileForm({
   redirectTo,
   submitLabel,
 }: MemberProfileFormProps) {
+  const isOnboarding = mode === 'onboarding';
+  const requiredMark = <span className="ml-1 text-rose-500">*</span>;
   const [isRepeating, setIsRepeating] = useState(member.isRepeating);
   const [repeatYears, setRepeatYears] = useState<number | ''>(
     member.repeatYears ?? ''
@@ -211,6 +213,8 @@ export function MemberProfileForm({
       avatarUrl: member.avatarUrl ?? null,
     }
   );
+  const readOnlyInputClass =
+    'w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 focus:outline-none';
   const currentAvatarUrl = state.avatarUrl ?? member.avatarUrl ?? null;
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(currentAvatarUrl);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -263,7 +267,10 @@ export function MemberProfileForm({
       )}
 
       <div>
-        <label className="block text-sm font-medium mb-2">アイコン画像</label>
+        <label className="block text-sm font-medium mb-2">
+          アイコン画像
+          {isOnboarding && requiredMark}
+        </label>
         <div className="mb-3 flex items-center gap-4">
           <button
             type="button"
@@ -304,7 +311,7 @@ export function MemberProfileForm({
         <input
           type="text"
           name="name"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 focus:outline-none"
+          className={readOnlyInputClass}
           placeholder="山田太郎"
           defaultValue={member.name}
           readOnly
@@ -317,11 +324,7 @@ export function MemberProfileForm({
         </label>
         <input
           type="email"
-          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none ${
-            mode === 'profile'
-              ? 'bg-gray-100 text-gray-600'
-              : 'focus:ring-2 focus:ring-blue-500'
-          }`}
+          className={readOnlyInputClass}
           defaultValue={member.schoolEmail}
           readOnly
         />
@@ -330,6 +333,7 @@ export function MemberProfileForm({
       <div>
         <label className="block text-sm font-medium mb-2">
           私用Gmailアドレス（非公開）
+          {isOnboarding && requiredMark}
         </label>
         <input
           type="email"
@@ -337,23 +341,35 @@ export function MemberProfileForm({
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="taro@gmail.com"
           defaultValue={member.gmailAddress ?? ''}
+          required={isOnboarding}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">学籍番号</label>
+          <label className="block text-sm font-medium mb-2">
+            学籍番号
+            {isOnboarding && requiredMark}
+          </label>
           <input
             type="text"
             name="studentId"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none ${
+              mode === 'profile'
+                ? 'bg-gray-100 text-gray-600'
+                : 'focus:ring-2 focus:ring-blue-500'
+            }`}
             placeholder="2406070000"
             defaultValue={member.studentId ?? ''}
+            readOnly={mode === 'profile'}
             required={mode === 'onboarding'}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">入学年度</label>
+          <label className="block text-sm font-medium mb-2">
+            入学年度
+            {isOnboarding && requiredMark}
+          </label>
           {mode === 'onboarding' ? (
             <input
               type="number"
@@ -367,14 +383,17 @@ export function MemberProfileForm({
             <input
               type="number"
               name="enrollmentYear"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 focus:outline-none"
+              className={readOnlyInputClass}
               defaultValue={member.enrollmentYear}
               readOnly
             />
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">所属専攻</label>
+          <label className="block text-sm font-medium mb-2">
+            所属専攻
+            {isOnboarding && requiredMark}
+          </label>
           {mode === 'onboarding' ? (
             <select
               name="department"
@@ -393,7 +412,7 @@ export function MemberProfileForm({
             <input
               type="text"
               name="department"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 focus:outline-none"
+              className={readOnlyInputClass}
               defaultValue={member.department}
               readOnly
             />
@@ -422,6 +441,7 @@ export function MemberProfileForm({
         <div>
           <label className="block text-sm font-medium mb-2">
             何年留年していますか？
+            {isOnboarding && requiredMark}
           </label>
           <input
             type="number"
@@ -455,19 +475,29 @@ export function MemberProfileForm({
 
       <TagsInput
         name="skills"
-        label="スキルタグ"
+        label={
+          <>
+            スキルタグ
+            {isOnboarding && requiredMark}
+          </>
+        }
         initialValues={member.skills}
         placeholder="React, TypeScript, Next.js"
-        required={mode === 'onboarding'}
+        required={isOnboarding}
         category="skill"
       />
 
       <TagsInput
         name="interests"
-        label="興味タグ"
+        label={
+          <>
+            興味タグ
+            {isOnboarding && requiredMark}
+          </>
+        }
         initialValues={member.interests}
         placeholder="Web開発, UI/UX"
-        required={mode === 'onboarding'}
+        required={isOnboarding}
         category="interest"
       />
 
