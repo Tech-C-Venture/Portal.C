@@ -18,11 +18,46 @@ import { Email } from '@/domain/value-objects/Email';
 export interface MemberProfileFormState {
   error: string | null;
   success: string | null;
+  avatarUrl: string | null;
 }
 
 export interface AdminGmailFormState {
   error: string | null;
   success: string | null;
+}
+
+async function signAvatarUrl(
+  avatarUrl: string | null | undefined
+): Promise<string | undefined> {
+  if (!avatarUrl) return undefined;
+
+  try {
+    const url = new URL(avatarUrl);
+    const publicPrefix = '/storage/v1/object/public/';
+    const signedPrefix = '/storage/v1/object/sign/';
+    const prefix = url.pathname.startsWith(publicPrefix)
+      ? publicPrefix
+      : url.pathname.startsWith(signedPrefix)
+        ? signedPrefix
+        : null;
+
+    if (!prefix) return avatarUrl;
+
+    const rest = url.pathname.slice(prefix.length);
+    const [bucket, ...pathParts] = rest.split('/');
+    if (!bucket || pathParts.length === 0) return avatarUrl;
+
+    const path = pathParts.join('/');
+    const supabase = DatabaseClient.getAdminClient();
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(path, 60 * 60 * 24 * 365);
+    if (error || !data?.signedUrl) return avatarUrl;
+
+    return data.signedUrl;
+  } catch {
+    return avatarUrl;
+  }
 }
 
 export async function getMemberListAction(): Promise<MemberDTO[]> {
@@ -33,7 +68,14 @@ export async function getMemberListAction(): Promise<MemberDTO[]> {
     throw new Error(`Failed to fetch members: ${result.error.message}`);
   }
 
-  return MemberMapper.toDTOList(result.value);
+  const dtos = MemberMapper.toDTOList(result.value);
+  const signedDtos = await Promise.all(
+    dtos.map(async (member) => ({
+      ...member,
+      avatarUrl: await signAvatarUrl(member.avatarUrl),
+    }))
+  );
+  return signedDtos;
 }
 
 export async function getCurrentMemberProfileAction(): Promise<MemberDTO> {
@@ -53,7 +95,8 @@ export async function getCurrentMemberProfileAction(): Promise<MemberDTO> {
     throw new Error(`Member not found for zitadel_id: ${user.id}`);
   }
 
-  return MemberMapper.toDTO(result.value);
+  const dto = MemberMapper.toDTO(result.value);
+  return { ...dto, avatarUrl: await signAvatarUrl(dto.avatarUrl) };
 }
 
 export async function updateCurrentMemberProfileAction(
@@ -62,17 +105,23 @@ export async function updateCurrentMemberProfileAction(
 ): Promise<MemberProfileFormState> {
   const user = await getCurrentUser();
   if (!user?.id) {
-    return { error: '認証が必要です。再ログインしてください。', success: null };
+    return { error: '認証が必要です。再ログインしてください。', success: null, avatarUrl: null };
   }
 
   const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
   const memberResult = await memberRepository.findByZitadelId(user.id);
   if (!memberResult.success) {
-    return { error: `メンバー取得に失敗しました: ${memberResult.error.message}`, success: null };
+    return {
+      error: `メンバー取得に失敗しました: ${memberResult.error.message}`,
+      success: null,
+      avatarUrl: null,
+    };
   }
   if (!memberResult.value) {
-    return { error: 'メンバー情報が見つかりませんでした。', success: null };
+    return { error: 'メンバー情報が見つかりませんでした。', success: null, avatarUrl: null };
   }
+
+  let avatarUrl = memberResult.value.avatarUrl ?? null;
 
   const mode = formData.get('mode');
   const lockedName = memberResult.value.name?.trim();
@@ -85,15 +134,16 @@ export async function updateCurrentMemberProfileAction(
   const interestsRaw = (formData.get('interests') as string | null) ?? '';
   const isRepeating = formData.get('isRepeating') === 'on';
   const repeatYearsRaw = (formData.get('repeatYears') as string | null)?.trim();
+  const avatarFile = formData.get('avatar');
 
   const enrollmentYear = enrollmentYearRaw ? Number(enrollmentYearRaw) : undefined;
   if (enrollmentYearRaw && Number.isNaN(enrollmentYear)) {
-    return { error: '入学年度は数字で入力してください。', success: null };
+    return { error: '入学年度は数字で入力してください。', success: null, avatarUrl };
   }
 
   const repeatYearsParsed = repeatYearsRaw ? Number(repeatYearsRaw) : undefined;
   if (repeatYearsRaw && Number.isNaN(repeatYearsParsed)) {
-    return { error: '留年年数は数字で入力してください。', success: null };
+    return { error: '留年年数は数字で入力してください。', success: null, avatarUrl };
   }
   const repeatYears = isRepeating ? repeatYearsParsed : null;
 
@@ -105,25 +155,62 @@ export async function updateCurrentMemberProfileAction(
     .split(',')
     .map((value) => value.trim())
     .filter((value) => value.length > 0);
+  const hasNewAvatar = avatarFile instanceof File && avatarFile.size > 0;
 
   if (mode === 'onboarding') {
     if (!lockedName) {
-      return { error: '名前が取得できませんでした。再ログインしてください。', success: null };
+      return {
+        error: '名前が取得できませんでした。再ログインしてください。',
+        success: null,
+        avatarUrl,
+      };
     }
-    if (!studentId) return { error: '学籍番号を入力してください。', success: null };
-    if (!department) return { error: '所属専攻を入力してください。', success: null };
+    if (!studentId) return { error: '学籍番号を入力してください。', success: null, avatarUrl };
+    if (!department) return { error: '所属専攻を入力してください。', success: null, avatarUrl };
     if (!enrollmentYear) {
-      return { error: '入学年度を入力してください。', success: null };
+      return { error: '入学年度を入力してください。', success: null, avatarUrl };
     }
     if (skills.length === 0) {
-      return { error: 'スキルタグを1つ以上入力してください。', success: null };
+      return { error: 'スキルタグを1つ以上入力してください。', success: null, avatarUrl };
     }
     if (interests.length === 0) {
-      return { error: '興味タグを1つ以上入力してください。', success: null };
+      return { error: '興味タグを1つ以上入力してください。', success: null, avatarUrl };
     }
     if (isRepeating && !repeatYears) {
-      return { error: '留年年数を入力してください。', success: null };
+      return { error: '留年年数を入力してください。', success: null, avatarUrl };
     }
+    if (!avatarUrl && !hasNewAvatar) {
+      return { error: 'アイコン画像を登録してください。', success: null, avatarUrl };
+    }
+  }
+
+  if (hasNewAvatar) {
+    const supabase = await DatabaseClient.getServerClient();
+    const fileExtension =
+      ((avatarFile as File).name?.split('.').pop() ||
+        (avatarFile as File).type?.split('/').pop() ||
+        'png')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '') || 'png';
+    const storagePath = `avatars/${memberResult.value.id}.${fileExtension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('TCV-images')
+      .upload(storagePath, avatarFile as File, {
+        upsert: true,
+        contentType: (avatarFile as File).type || undefined,
+      });
+
+    if (uploadError) {
+      return {
+        error: `アイコンのアップロードに失敗しました: ${uploadError.message}`,
+        success: null,
+        avatarUrl,
+      };
+    }
+
+    const { data } = supabase.storage.from('TCV-images').getPublicUrl(storagePath);
+    avatarUrl = data.publicUrl;
   }
 
   const useCase = container.resolve<UpdateMemberProfileUseCase>(
@@ -141,11 +228,15 @@ export async function updateCurrentMemberProfileAction(
     isRepeating,
     repeatYears,
     onboardingCompleted: mode === 'onboarding' ? true : undefined,
+    avatarUrl: avatarUrl ?? undefined,
   });
 
   if (!result.success) {
-    return { error: result.error, success: null };
+    return { error: result.error, success: null, avatarUrl };
   }
+
+  const nextAvatarUrl = result.value.avatarUrl ?? avatarUrl ?? null;
+  const signedAvatarUrl = await signAvatarUrl(nextAvatarUrl);
 
   revalidatePath('/profile');
   revalidatePath('/onboarding');
@@ -156,7 +247,7 @@ export async function updateCurrentMemberProfileAction(
     redirect(redirectTo);
   }
 
-  return { error: null, success: '保存しました。' };
+  return { error: null, success: '保存しました。', avatarUrl: signedAvatarUrl ?? null };
 }
 
 export async function updateMemberGmailAction(
