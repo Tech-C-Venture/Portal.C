@@ -101,7 +101,7 @@ export function PublicTimetableForm({
             required
           >
             <option value="">選択</option>
-            {[1, 2, 3, 4, 5].map((value) => (
+            {[1, 2, 3, 4].map((value) => (
               <option key={value} value={value}>
                 {value}年
               </option>
