@@ -9,6 +9,7 @@ import {
   type PublicTimetableFormState,
 } from '@/app/actions/timetables';
 import type { TimeSlotEntry } from '@/app/admin/_data';
+import { departmentOptions } from '@/lib/constants/departments';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -119,16 +120,11 @@ export function PublicTimetableForm({
           required
         >
           <option value="">選択</option>
-          <option value="ホワイトハッカー専攻">ホワイトハッカー専攻</option>
-          <option value="AIエンジニア専攻">AIエンジニア専攻</option>
-          <option value="スーパITエンジニア専攻">スーパITエンジニア専攻</option>
-          <option value="AI・ITスタートアップ専攻">
-            AI・ITスタートアップ専攻
-          </option>
-          <option value="AIロボットクリエーター専攻">
-            AIロボットクリエーター専攻
-          </option>
-          <option value="ITエンジニア専攻">ITエンジニア専攻</option>
+          {departmentOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
         </select>
       </div>
 
