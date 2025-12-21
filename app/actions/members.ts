@@ -26,8 +26,10 @@ export interface AdminGmailFormState {
   success: string | null;
 }
 
-async function signAvatarUrl(avatarUrl: string | null | undefined): Promise<string | null> {
-  if (!avatarUrl) return null;
+async function signAvatarUrl(
+  avatarUrl: string | null | undefined
+): Promise<string | undefined> {
+  if (!avatarUrl) return undefined;
 
   try {
     const url = new URL(avatarUrl);
@@ -245,7 +247,7 @@ export async function updateCurrentMemberProfileAction(
     redirect(redirectTo);
   }
 
-  return { error: null, success: '保存しました。', avatarUrl: signedAvatarUrl };
+  return { error: null, success: '保存しました。', avatarUrl: signedAvatarUrl ?? null };
 }
 
 export async function updateMemberGmailAction(
