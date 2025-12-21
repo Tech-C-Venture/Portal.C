@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 export type PublicTimetableEntry = {
   id: string;
@@ -28,49 +28,18 @@ const periods = [1, 2, 3, 4, 5, 6];
 export function PublicTimetableTable({
   entries,
   privateEntries = [],
-  defaultGrade,
-  defaultMajor,
+  onRegister,
 }: {
   entries: PublicTimetableEntry[];
   privateEntries?: PublicTimetableEntry[];
-  defaultGrade?: number;
-  defaultMajor?: string;
+  onRegister?: (timetableId: string) => Promise<void>;
 }) {
   const [viewMode, setViewMode] = useState<'public' | 'private'>('public');
-  const [gradeFilter, setGradeFilter] = useState(defaultGrade ? String(defaultGrade) : 'all');
-  const [majorFilter, setMajorFilter] = useState(defaultMajor ?? 'all');
   const isWeekView = true;
 
   const currentEntries = viewMode === 'private' ? privateEntries : entries;
 
-  const grades = useMemo(
-    () => Array.from(new Set(currentEntries.map((e) => e.grade).filter((g): g is number => typeof g === 'number'))).sort((a, b) => a - b),
-    [currentEntries]
-  );
-
-  const majors = useMemo(
-    () => Array.from(new Set(currentEntries.map((e) => e.major).filter((m): m is string => typeof m === 'string'))).sort(),
-    [currentEntries]
-  );
-
-  useEffect(() => {
-    if (gradeFilter === 'all' && defaultGrade && grades.includes(defaultGrade)) {
-      setGradeFilter(String(defaultGrade));
-    }
-  }, [grades, defaultGrade, gradeFilter]);
-
-  useEffect(() => {
-    if (majorFilter === 'all' && defaultMajor && majors.includes(defaultMajor)) {
-      setMajorFilter(defaultMajor);
-    }
-  }, [majors, defaultMajor, majorFilter]);
-
-  const filteredEntries = currentEntries.filter((entry) => {
-    if (viewMode === 'private') return true;
-    const gradeMatch = gradeFilter === 'all' || entry.grade === Number(gradeFilter);
-    const majorMatch = majorFilter === 'all' || entry.major === majorFilter;
-    return gradeMatch && majorMatch;
-  });
+  const filteredEntries = currentEntries;
 
   const getEntriesForSlot = (day: number, period: number) =>
     filteredEntries.filter((entry) => entry.dayOfWeek === day && entry.period === period);
@@ -86,31 +55,6 @@ export function PublicTimetableTable({
           <option value="public">🌍 全校時間割を表示</option>
           <option value="private">👤 自分専用を表示</option>
         </select>
-
-        {viewMode === 'public' && (
-          <>
-            <select
-              value={gradeFilter}
-              onChange={(event) => setGradeFilter(event.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">全学年</option>
-              {grades.map((grade) => (
-                <option key={grade} value={String(grade)}>{grade}年</option>
-              ))}
-            </select>
-            <select
-              value={majorFilter}
-              onChange={(event) => setMajorFilter(event.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">全専攻</option>
-              {majors.map((major) => (
-                <option key={major} value={major}>{major}</option>
-              ))}
-            </select>
-          </>
-        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -136,9 +80,18 @@ export function PublicTimetableTable({
                       ) : (
                         <div className="space-y-1">
                           {slotEntries.map((entry) => (
-                            <div key={entry.id} className="rounded-md border border-gray-200 bg-gray-50 p-2 text-[10px] text-gray-700">
+                            <div key={entry.id} className="relative rounded-md border border-gray-200 bg-gray-50 p-2 text-[10px] text-gray-700">
                               <div className="font-bold">{entry.courseName}</div>
                               <div>{entry.classroom} / {entry.instructor}</div>
+                              {viewMode === 'public' && onRegister && (
+                                <button
+                                  onClick={() => onRegister(entry.id)}
+                                  className="absolute top-1 right-1 bg-blue-500 text-white rounded-full p-1 text-xs leading-none hover:bg-blue-600"
+                                  aria-label="マイ時間割に追加"
+                                >
+                                  +
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>

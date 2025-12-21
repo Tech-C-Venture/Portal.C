@@ -1,4 +1,6 @@
 /* eslint-disable no-restricted-imports */
+'use client'; // サーバーアクションをクライアントコンポーネントに渡すため
+
 import { container } from '@/infrastructure/di/setup';
 import { REPOSITORY_KEYS } from '@/infrastructure/di/keys';
 import type { IMemberRepository } from '@/application/ports/IMemberRepository';
@@ -7,6 +9,8 @@ import { DatabaseClient } from "@/infrastructure/database/DatabaseClient";
 import { getCurrentUser } from '@/lib/auth';
 import { fetchMyTimetable } from '@/lib/supabase/actions';
 import { PublicTimetableTable, type PublicTimetableEntry } from "@/components/timetable/PublicTimetableTable";
+import { addCourseToMyTimetable } from '@/app/actions/timetables';
+import { useEffect, useState } from 'react';
 
 type TimetableRow = {
   id: string;
@@ -43,40 +47,52 @@ async function getPublicTimetables(): Promise<PublicTimetableEntry[]> {
   })) ?? [];
 }
 
-export default async function TimetablePage() {
-  const publicTimetables = await getPublicTimetables();
-  const user = await getCurrentUser();
-  let privateTimetables: PublicTimetableEntry[] = [];
-  let defaultGrade: number | undefined;
-  let defaultMajor: string | undefined;
+export default function TimetablePage() {
+  const [publicTimetables, setPublicTimetables] = useState<PublicTimetableEntry[]>([]);
+  const [privateTimetables, setPrivateTimetables] = useState<PublicTimetableEntry[]>([]);
 
-  if (user?.id) {
-    const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
-    const memberResult = await memberRepository.findByZitadelId(user.id);
-    
-    if (memberResult.success && memberResult.value) {
-      // 型エラー回避のために any として扱う
-      const member = memberResult.value as any;
-      defaultGrade = member.grade;
-      defaultMajor = member.major;
+  useEffect(() => {
+    async function fetchData() {
+      const publicData = await getPublicTimetables();
+      setPublicTimetables(publicData);
 
-      const myData = (await fetchMyTimetable(member.id)) as PrivateTimetableData[] | null;
-      if (myData) {
-        privateTimetables = myData
-          .filter((item): item is PrivateTimetableData & { timetables: TimetableRow } => item.timetables !== null)
-          .map((item) => ({
-            id: item.id,
-            dayOfWeek: item.timetables.day_of_week,
-            period: item.timetables.period,
-            courseName: item.timetables.course_name,
-            grade: item.timetables.grade,
-            major: item.timetables.major,
-            classroom: item.timetables.classroom,
-            instructor: item.timetables.instructor,
-          }));
+      const user = await getCurrentUser();
+      if (user?.id) {
+        const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
+        const memberResult = await memberRepository.findByZitadelId(user.id);
+
+        if (memberResult.success && memberResult.value) {
+          const myData = (await fetchMyTimetable(memberResult.value.id)) as PrivateTimetableData[] | null;
+          if (myData) {
+            const privateData = myData
+              .filter((item): item is PrivateTimetableData & { timetables: TimetableRow } => item.timetables !== null)
+              .map((item) => ({
+                id: item.id,
+                dayOfWeek: item.timetables.day_of_week,
+                period: item.timetables.period,
+                courseName: item.timetables.course_name,
+                grade: item.timetables.grade,
+                major: item.timetables.major,
+                classroom: item.timetables.classroom,
+                instructor: item.timetables.instructor,
+              }));
+            setPrivateTimetables(privateData);
+          }
+        }
       }
     }
-  }
+    fetchData();
+  }, []);
+
+  const handleRegister = async (timetableId: string) => {
+    const result = await addCourseToMyTimetable(timetableId);
+    if (result.success) {
+      alert('マイ時間割に追加しました。');
+      // データ再取得 or キャッシュ再検証によりUIが更新される
+    } else {
+      alert(`エラー: ${result.message}`);
+    }
+  };
 
   return (
     <div>
@@ -88,8 +104,7 @@ export default async function TimetablePage() {
       <PublicTimetableTable 
         entries={publicTimetables} 
         privateEntries={privateTimetables}
-        defaultGrade={defaultGrade}
-        defaultMajor={defaultMajor}
+        onRegister={handleRegister}
       />
     </div>
   );
