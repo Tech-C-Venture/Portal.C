@@ -1,210 +1,65 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import Matter from "matter-js";
+import Link from "next/link";
 
 export function MatterHero() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<Matter.Engine | null>(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const cw = window.innerWidth;
-    // モバイルでは適切な高さに調整
-    const ch = window.innerWidth < 768
-      ? Math.min(500, window.innerHeight * 0.6)
-      : Math.min(600, window.innerHeight * 0.7);
-
-    canvas.width = cw;
-    canvas.height = ch;
-
-    // Matter.jsのセットアップ
-    const Engine = Matter.Engine;
-    const Render = Matter.Render;
-    const World = Matter.World;
-    const Bodies = Matter.Bodies;
-    const Mouse = Matter.Mouse;
-    const MouseConstraint = Matter.MouseConstraint;
-
-    const engine = Engine.create({
-      gravity: { x: 0, y: 0.5, scale: 0.001 },
-    });
-    engineRef.current = engine;
-
-    const render = Render.create({
-      canvas: canvas,
-      engine: engine,
-      options: {
-        width: cw,
-        height: ch,
-        wireframes: false,
-        background: "transparent",
-      },
-    });
-
-    // カラーパレット（柔らかく美しい色）
-    const colors = [
-      "#A8E6CF", // ミントグリーン
-      "#FFD3B6", // ピーチ
-      "#FFAAA5", // コーラル
-      "#FF8B94", // ローズ
-      "#B4A7D6", // ラベンダー
-      "#9AD1D4", // スカイブルー
-    ];
-
-    // 壁を作成
-    const wallOptions = {
-      isStatic: true,
-      render: { fillStyle: "transparent" },
-    };
-
-    const walls = [
-      Bodies.rectangle(cw / 2, -25, cw, 50, wallOptions), // 上
-      Bodies.rectangle(cw / 2, ch + 25, cw, 50, wallOptions), // 下
-      Bodies.rectangle(-25, ch / 2, 50, ch, wallOptions), // 左
-      Bodies.rectangle(cw + 25, ch / 2, 50, ch, wallOptions), // 右
-    ];
-
-    // シンプルなオブジェクトを作成
-    const objects: Matter.Body[] = [];
-
-    // 円と四角形をランダムに配置
-    for (let i = 0; i < 12; i++) {
-      const x = Math.random() * cw * 0.8 + cw * 0.1;
-      const y = Math.random() * ch * 0.3;
-      const size = Math.random() * 30 + 25;
-      const color = colors[Math.floor(Math.random() * colors.length)];
-
-      let shape;
-      if (Math.random() > 0.5) {
-        // 円
-        shape = Bodies.circle(x, y, size, {
-          restitution: 0.6,
-          friction: 0.05,
-          render: {
-            fillStyle: color,
-            strokeStyle: "rgba(255, 255, 255, 0.5)",
-            lineWidth: 2,
-          },
-        });
-      } else {
-        // 四角形
-        shape = Bodies.rectangle(x, y, size * 2, size * 2, {
-          restitution: 0.6,
-          friction: 0.05,
-          chamfer: { radius: 10 },
-          render: {
-            fillStyle: color,
-            strokeStyle: "rgba(255, 255, 255, 0.5)",
-            lineWidth: 2,
-          },
-        });
-      }
-      objects.push(shape);
-    }
-
-    // "Tech.C Venture 総合ポータル"のテキストを表現する大きな円
-    const logoCircles = [
-      Bodies.circle(cw * 0.3, ch * 0.5, 50, {
-        isStatic: false,
-        restitution: 0.8,
-        friction: 0.01,
-        render: {
-          fillStyle: "#667EEA",
-          strokeStyle: "#FFFFFF",
-          lineWidth: 3,
-        },
-      }),
-      Bodies.circle(cw * 0.7, ch * 0.5, 50, {
-        isStatic: false,
-        restitution: 0.8,
-        friction: 0.01,
-        render: {
-          fillStyle: "#764BA2",
-          strokeStyle: "#FFFFFF",
-          lineWidth: 3,
-        },
-      }),
-    ];
-
-    // すべてのオブジェクトをワールドに追加
-    World.add(engine.world, [...walls, ...objects, ...logoCircles]);
-
-    // マウスコントロールを追加
-    const mouse = Mouse.create(canvas);
-    const mouseConstraint = MouseConstraint.create(engine, {
-      mouse: mouse,
-      constraint: {
-        stiffness: 0.2,
-        render: {
-          visible: false,
-        },
-      },
-    });
-
-    World.add(engine.world, mouseConstraint);
-
-    // レンダリングを開始
-    Matter.Runner.run(engine);
-    Render.run(render);
-
-    // ウィンドウリサイズ対応
-    const handleResize = () => {
-      const newWidth = window.innerWidth;
-      // モバイルでは適切な高さに調整
-      const newHeight = window.innerWidth < 768
-        ? Math.min(500, window.innerHeight * 0.6)
-        : Math.min(600, window.innerHeight * 0.7);
-
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-
-      render.bounds.max.x = newWidth;
-      render.bounds.max.y = newHeight;
-      render.options.width = newWidth;
-      render.options.height = newHeight;
-      render.canvas.width = newWidth;
-      render.canvas.height = newHeight;
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    // クリーンアップ
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      Render.stop(render);
-      World.clear(engine.world, false);
-      Engine.clear(engine);
-      render.canvas.remove();
-    };
-  }, []);
-
   return (
-    <div className="relative w-full overflow-hidden rounded-lg shadow-lg">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50" />
-      <canvas
-        ref={canvasRef}
-        className="relative z-10 w-full"
-        style={{ display: "block", touchAction: "none", maxWidth: "100%" }}
-      />
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-gray-800 mb-2 md:mb-4 drop-shadow-lg text-center">
-          Tech.C Venture 総合ポータル
-        </h1>
-        <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-700 drop-shadow-md text-center px-4">
-          Tech.C Venture メンバー管理システム
-        </p>
-        <div className="mt-4 md:mt-8 pointer-events-auto">
-          <a
-            href="/events"
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 md:px-8 md:py-3 rounded-full text-sm md:text-base font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-          >
-            イベントを見る
-          </a>
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+        {/* 背景グロー */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="hero-glow-1 absolute -left-24 -top-24 h-72 w-72 rounded-full blur-3xl opacity-70" />
+          <div className="hero-glow-2 absolute -right-24 -bottom-24 h-72 w-72 rounded-full blur-3xl opacity-60" />
         </div>
-      </div>
-    </div>
+
+        <div className="relative px-6 py-10 sm:px-10 sm:py-14">
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-primary">
+            Portal.C
+          </h1>
+          <p className="mt-3 text-base sm:text-lg text-primary/70">
+            Tech.C Venture メンバー管理システム
+          </p>
+
+          <div className="mt-6">
+            <Link
+                href="/events"
+                className={[
+                  "inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold",
+                  "bg-primary text-white shadow-[0_14px_30px_rgba(42,97,179,0.18)]",
+                  "transition will-change-transform",
+                  "hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(42,97,179,0.22)]",
+                  "active:translate-y-0",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                ].join(" ")}
+            >
+              イベントを見る
+            </Link>
+          </div>
+        </div>
+
+        <style jsx global>{`
+        @media (prefers-reduced-motion: reduce) {
+          .hero-glow-1,
+          .hero-glow-2 {
+            animation: none !important;
+          }
+        }
+        .hero-glow-1 {
+          background: radial-gradient(
+            closest-side,
+            rgba(220, 240, 248, 0.95),
+            rgba(220, 240, 248, 0)
+          );
+          animation: float-slow 11s ease-in-out infinite;
+        }
+        .hero-glow-2 {
+          background: radial-gradient(
+            closest-side,
+            rgba(183, 224, 228, 0.9),
+            rgba(183, 224, 228, 0)
+          );
+          animation: float-slow 13s ease-in-out infinite reverse;
+        }
+      `}</style>
+      </section>
   );
 }

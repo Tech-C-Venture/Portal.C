@@ -3,25 +3,50 @@
 @tailwind utilities;
 
 :root {
+  /* 指定パレット */
   --background: #ffffff;
-  --foreground: #171717;
-}
+  --foreground: #2a61b3;
+  --primary: #2a61b3;
+  --accent1: #dcf0f8;
+  --accent2: #b7e0e4;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* 補助 */
+  --card: #ffffff;
+  --border: rgba(42, 97, 179, 0.16);
+  --muted: rgba(42, 97, 179, 0.72);
+  --muted2: rgba(42, 97, 179, 0.52);
 }
 
 body {
-  color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+  "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", Arial, sans-serif;
+}
+
+::selection {
+  background: var(--accent2);
+  color: var(--primary);
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .shadow-soft {
+    box-shadow: 0 18px 45px rgba(42, 97, 179, 0.12);
+  }
+  .ring-soft {
+    box-shadow: 0 0 0 3px rgba(42, 97, 179, 0.18);
+  }
+}
+
+/* 使い回し用：ふわっと動く背景（prefers-reduced-motion対応は各コンポーネント側で止めます） */
+@keyframes float-slow {
+  0% {
+    transform: translate3d(-2%, -2%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, 2%, 0) scale(1.04);
+  }
+  100% {
+    transform: translate3d(-2%, -2%, 0) scale(1);
   }
 }
