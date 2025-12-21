@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import ts from '@typescript-eslint/eslint-plugin';
 import parser from '@typescript-eslint/parser';
 import globals from 'globals';
+import nextPlugin from '@next/eslint-plugin-next'; // @next/eslint-plugin-next をインポート
 
 const layerRestrictions = [
   // Domain: Can only import from itself and shared libraries
@@ -78,13 +79,16 @@ export default [
   {
     files: ['**/*.{js,mjs,cjs,ts,tsx}'],
     ignores: ['**/.next/**', '**/.vercel/**', '**/node_modules/**', '**/dist/**'],
+    plugins: { // ここに nextPlugin を追加
+      '@next/next': nextPlugin, // Next.js プラグインを追加
+    },
   },
   // Base JS config
   js.configs.recommended,
   // Base TS config
   {
     files: ['**/*.{ts,tsx}'],
-    plugins: {
+    plugins: { // 既存のプラグインにマージ
       '@typescript-eslint': ts,
     },
     languageOptions: {
@@ -98,6 +102,7 @@ export default [
     rules: {
       ...ts.configs['eslint-recommended'].rules,
       ...ts.configs.recommended.rules,
+      '@next/next/no-img-element': 'error', // 見つからなかったルールを明示的に追加
     },
   },
   // Layer dependency rules

@@ -131,12 +131,14 @@ function normalizeTimeValue(value: string | null): string {
 
 export async function getTimeSlots(): Promise<TimeSlotEntry[]> {
   const supabase = await DatabaseClient.getServerClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase as any)
     .from('timetable_time_slots')
     .select('id, period, label, start_time, end_time, is_active')
     .order('period', { ascending: true });
 
   return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?.map((row: any) => ({
       id: row.id,
       period: row.period,

@@ -114,6 +114,7 @@ export default async function Home() {
 
     const currentMemberResult = currentUser
         ? await memberRepository.findByZitadelId(currentUser.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         : { success: false as const, value: null as any };
 
     const currentMember = currentMemberResult.success ? currentMemberResult.value : null;
