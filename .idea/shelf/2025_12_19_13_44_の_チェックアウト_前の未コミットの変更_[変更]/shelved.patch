@@ -1,0 +1,377 @@
+Index: components/layout/Navigation.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>\"use client\";\r\n\r\nimport Link from \"next/link\";\r\nimport { usePathname } from \"next/navigation\";\r\nimport { useState } from \"react\";\r\n\r\nexport function Navigation() {\r\n  const pathname = usePathname();\r\n  const [isMenuOpen, setIsMenuOpen] = useState(false);\r\n\r\n  const navItems = [\r\n    { href: \"/events\", label: \"イベント一覧\" },\r\n    { href: \"/members\", label: \"メンバー\" },\r\n    { href: \"/timetable\", label: \"時間割\" },\r\n    { href: \"/profile\", label: \"プロフィール\" },\r\n    { href: \"/admin\", label: \"管理画面\" },\r\n  ];\r\n\r\n  const toggleMenu = () => {\r\n    setIsMenuOpen(!isMenuOpen);\r\n  };\r\n\r\n  const closeMenu = () => {\r\n    setIsMenuOpen(false);\r\n  };\r\n\r\n  return (\r\n    <nav className=\"bg-gray-800 text-white shadow-lg\">\r\n      <div className=\"container mx-auto px-4\">\r\n        <div className=\"flex items-center justify-between h-16\">\r\n          {/* ロゴ */}\r\n          <Link href=\"/\" className=\"text-xl font-bold z-10\">\r\n            Portal.C\r\n          </Link>\r\n\r\n          {/* デスクトップメニュー (md以上で表示) */}\r\n          <div className=\"hidden md:flex space-x-4\">\r\n            {navItems.map((item) => (\r\n              <Link\r\n                key={item.href}\r\n                href={item.href}\r\n                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${\r\n                  pathname === item.href\r\n                    ? \"bg-gray-900 text-white\"\r\n                    : \"text-gray-300 hover:bg-gray-700 hover:text-white\"\r\n                }`}\r\n              >\r\n                {item.label}\r\n              </Link>\r\n            ))}\r\n          </div>\r\n\r\n          {/* ハンバーガーボタン (mdより小さい画面で表示) */}\r\n          <button\r\n            onClick={toggleMenu}\r\n            className=\"md:hidden z-10 p-2 rounded-md text-gray-300 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white\"\r\n            aria-label=\"メニュー\"\r\n            aria-expanded={isMenuOpen}\r\n          >\r\n            <svg\r\n              className=\"h-6 w-6\"\r\n              fill=\"none\"\r\n              strokeLinecap=\"round\"\r\n              strokeLinejoin=\"round\"\r\n              strokeWidth=\"2\"\r\n              viewBox=\"0 0 24 24\"\r\n              stroke=\"currentColor\"\r\n            >\r\n              {isMenuOpen ? (\r\n                <path d=\"M6 18L18 6M6 6l12 12\" />\r\n              ) : (\r\n                <path d=\"M4 6h16M4 12h16M4 18h16\" />\r\n              )}\r\n            </svg>\r\n          </button>\r\n        </div>\r\n\r\n        {/* モバイルメニュー (mdより小さい画面で表示) */}\r\n        <div\r\n          className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${\r\n            isMenuOpen ? \"max-h-96 opacity-100\" : \"max-h-0 opacity-0\"\r\n          }`}\r\n        >\r\n          <div className=\"px-2 pt-2 pb-3 space-y-1\">\r\n            {navItems.map((item) => (\r\n              <Link\r\n                key={item.href}\r\n                href={item.href}\r\n                onClick={closeMenu}\r\n                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${\r\n                  pathname === item.href\r\n                    ? \"bg-gray-900 text-white\"\r\n                    : \"text-gray-300 hover:bg-gray-700 hover:text-white\"\r\n                }`}\r\n              >\r\n                {item.label}\r\n              </Link>\r\n            ))}\r\n          </div>\r\n        </div>\r\n      </div>\r\n    </nav>\r\n  );\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/components/layout/Navigation.tsx b/components/layout/Navigation.tsx
+--- a/components/layout/Navigation.tsx	(revision 806a4e56ecc822305fa97a1a15007cda4282d6a1)
++++ b/components/layout/Navigation.tsx	(date 1766119107525)
+@@ -2,103 +2,218 @@
+ 
+ import Link from "next/link";
+ import { usePathname } from "next/navigation";
+-import { useState } from "react";
++import { useEffect, useMemo, useState } from "react";
+ 
+ export function Navigation() {
+-  const pathname = usePathname();
+-  const [isMenuOpen, setIsMenuOpen] = useState(false);
++    const pathname = usePathname();
++    const [isMenuOpen, setIsMenuOpen] = useState(false);
+ 
+-  const navItems = [
+-    { href: "/events", label: "イベント一覧" },
+-    { href: "/members", label: "メンバー" },
+-    { href: "/timetable", label: "時間割" },
+-    { href: "/profile", label: "プロフィール" },
+-    { href: "/admin", label: "管理画面" },
+-  ];
++    const navItems = useMemo(
++        () => [
++            { href: "/events", label: "イベント一覧" },
++            { href: "/members", label: "メンバー" },
++            { href: "/timetable", label: "時間割" },
++            { href: "/profile", label: "プロフィール" },
++            { href: "/admin", label: "管理画面" },
++        ],
++        []
++    );
+ 
+-  const toggleMenu = () => {
+-    setIsMenuOpen(!isMenuOpen);
+-  };
+-
+-  const closeMenu = () => {
+-    setIsMenuOpen(false);
+-  };
++    useEffect(() => {
++        setIsMenuOpen(false);
++    }, [pathname]);
++
++    const toggleMenu = () => setIsMenuOpen((v) => !v);
+ 
+-  return (
+-    <nav className="bg-gray-800 text-white shadow-lg">
+-      <div className="container mx-auto px-4">
+-        <div className="flex items-center justify-between h-16">
+-          {/* ロゴ */}
+-          <Link href="/" className="text-xl font-bold z-10">
+-            Portal.C
+-          </Link>
++    return (
++        <>
++            <nav className="sticky top-0 z-50">
++                <div className="relative overflow-hidden border-b border-[#b7e0e4] bg-[#ffffff]">
++                    {/* うっすら動くアクセント（白背景用に控えめ） */}
++                    <div className="pointer-events-none absolute inset-0">
++                        <div
++                            className="absolute -inset-x-24 -top-24 h-56 blur-2xl opacity-70 animate-aurora"
++                            style={{
++                                background:
++                                    "linear-gradient(90deg, rgba(220,240,248,0.85), rgba(183,224,228,0.55), rgba(220,240,248,0.85))",
++                            }}
++                        />
++                        <div
++                            className="absolute -inset-x-24 -bottom-24 h-56 blur-2xl opacity-60 animate-aurora2"
++                            style={{
++                                background:
++                                    "linear-gradient(90deg, rgba(183,224,228,0.60), rgba(220,240,248,0.80), rgba(183,224,228,0.60))",
++                            }}
++                        />
++                    </div>
++
++                    <div className="container mx-auto px-4">
++                        <div className="flex h-16 items-center justify-between">
++                            {/* ロゴ */}
++                            <Link href="/" className="relative z-10 flex items-center gap-2">
++                <span
++                    className="inline-flex h-8 w-8 items-center justify-center rounded-xl"
++                    style={{
++                        background:
++                            "linear-gradient(135deg, #2a61b3 0%, #b7e0e4 100%)",
++                        boxShadow: "0 0 18px rgba(42,97,179,0.18)",
++                    }}
++                >
++                  <span className="h-3 w-3 rounded-full bg-white/90" />
++                </span>
++                                <span className="text-lg font-semibold tracking-wide text-[#2a61b3]">
++                  Portal.C
++                </span>
++                            </Link>
+ 
+-          {/* デスクトップメニュー (md以上で表示) */}
+-          <div className="hidden md:flex space-x-4">
+-            {navItems.map((item) => (
+-              <Link
+-                key={item.href}
+-                href={item.href}
+-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+-                  pathname === item.href
+-                    ? "bg-gray-900 text-white"
+-                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+-                }`}
+-              >
+-                {item.label}
+-              </Link>
+-            ))}
+-          </div>
++                            {/* デスクトップメニュー */}
++                            <div className="hidden md:flex items-center gap-1">
++                                {navItems.map((item) => {
++                                    const active = pathname === item.href;
++                                    return (
++                                        <Link
++                                            key={item.href}
++                                            href={item.href}
++                                            className={[
++                                                "group relative rounded-xl px-4 py-2 text-sm font-medium transition",
++                                                "text-[#2a61b3] hover:bg-[#dcf0f8]",
++                                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b7e0e4]",
++                                                active
++                                                    ? "bg-[#dcf0f8] shadow-[0_0_0_1px_rgba(183,224,228,0.9),0_10px_24px_rgba(42,97,179,0.10)]"
++                                                    : "",
++                                            ].join(" ")}
++                                        >
++                                            <span className="relative z-10">{item.label}</span>
++
++                                            {/* 下線（ホバーで伸びる / アクティブで常時） */}
++                                            <span
++                                                className={[
++                                                    "pointer-events-none absolute inset-x-3 -bottom-[2px] h-[2px] rounded-full",
++                                                    "transition-transform duration-300 ease-out origin-left",
++                                                    active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100",
++                                                ].join(" ")}
++                                                style={{
++                                                    background:
++                                                        "linear-gradient(90deg, #b7e0e4 0%, #dcf0f8 100%)",
++                                                }}
++                                            />
++                                        </Link>
++                                    );
++                                })}
++                            </div>
+ 
+-          {/* ハンバーガーボタン (mdより小さい画面で表示) */}
+-          <button
+-            onClick={toggleMenu}
+-            className="md:hidden z-10 p-2 rounded-md text-gray-300 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+-            aria-label="メニュー"
+-            aria-expanded={isMenuOpen}
+-          >
+-            <svg
+-              className="h-6 w-6"
+-              fill="none"
+-              strokeLinecap="round"
+-              strokeLinejoin="round"
+-              strokeWidth="2"
+-              viewBox="0 0 24 24"
+-              stroke="currentColor"
+-            >
+-              {isMenuOpen ? (
+-                <path d="M6 18L18 6M6 6l12 12" />
+-              ) : (
+-                <path d="M4 6h16M4 12h16M4 18h16" />
+-              )}
+-            </svg>
+-          </button>
+-        </div>
++                            {/* モバイル：ハンバーガー */}
++                            <button
++                                onClick={toggleMenu}
++                                className="md:hidden z-10 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcf0f8] text-[#2a61b3] hover:opacity-90 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b7e0e4]"
++                                aria-label="メニュー"
++                                aria-expanded={isMenuOpen}
++                                aria-controls="mobile-menu"
++                            >
++                <span className="relative block h-4 w-5">
++                  <span
++                      className={[
++                          "absolute left-0 top-0 h-[2px] w-5 rounded bg-current transition-transform duration-300",
++                          isMenuOpen ? "translate-y-[7px] rotate-45" : "translate-y-0 rotate-0",
++                      ].join(" ")}
++                  />
++                  <span
++                      className={[
++                          "absolute left-0 top-[7px] h-[2px] w-5 rounded bg-current transition-opacity duration-200",
++                          isMenuOpen ? "opacity-0" : "opacity-100",
++                      ].join(" ")}
++                  />
++                  <span
++                      className={[
++                          "absolute left-0 bottom-0 h-[2px] w-5 rounded bg-current transition-transform duration-300",
++                          isMenuOpen ? "-translate-y-[7px] -rotate-45" : "translate-y-0 rotate-0",
++                      ].join(" ")}
++                  />
++                </span>
++                            </button>
++                        </div>
+ 
+-        {/* モバイルメニュー (mdより小さい画面で表示) */}
+-        <div
+-          className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+-            isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+-          }`}
+-        >
+-          <div className="px-2 pt-2 pb-3 space-y-1">
+-            {navItems.map((item) => (
+-              <Link
+-                key={item.href}
+-                href={item.href}
+-                onClick={closeMenu}
+-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+-                  pathname === item.href
+-                    ? "bg-gray-900 text-white"
+-                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+-                }`}
+-              >
+-                {item.label}
+-              </Link>
+-            ))}
+-          </div>
+-        </div>
+-      </div>
+-    </nav>
+-  );
++                        {/* モバイルメニュー */}
++                        <div
++                            id="mobile-menu"
++                            className={[
++                                "md:hidden overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out",
++                                isMenuOpen ? "max-h-96 opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2",
++                            ].join(" ")}
++                        >
++                            <div className="pb-4 pt-2">
++                                <div className="rounded-2xl border border-[#b7e0e4] bg-white p-2 shadow-[0_14px_36px_rgba(42,97,179,0.12)]">
++                                    {navItems.map((item) => {
++                                        const active = pathname === item.href;
++                                        return (
++                                            <Link
++                                                key={item.href}
++                                                href={item.href}
++                                                className={[
++                                                    "block rounded-xl px-4 py-3 text-base font-medium transition",
++                                                    "text-[#2a61b3] hover:bg-[#dcf0f8]",
++                                                    active ? "bg-[#dcf0f8]" : "",
++                                                ].join(" ")}
++                                            >
++                        <span className="flex items-center justify-between">
++                          {item.label}
++                            <span
++                                className="h-2 w-2 rounded-full"
++                                style={{
++                                    background: active ? "#2a61b3" : "transparent",
++                                    opacity: active ? 1 : 0,
++                                    transition: "opacity 200ms ease",
++                                }}
++                            />
++                        </span>
++                                            </Link>
++                                        );
++                                    })}
++                                </div>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++            </nav>
++
++            <style jsx global>{`
++                @media (prefers-reduced-motion: reduce) {
++                    .animate-aurora,
++                    .animate-aurora2 {
++                        animation: none !important;
++                    }
++                }
++
++                .animate-aurora {
++                    animation: aurora 10s ease-in-out infinite;
++                }
++                .animate-aurora2 {
++                    animation: aurora2 12s ease-in-out infinite;
++                }
++
++                @keyframes aurora {
++                    0% {
++                        transform: translateX(-6%) translateY(0) scale(1);
++                    }
++                    50% {
++                        transform: translateX(6%) translateY(6%) scale(1.05);
++                    }
++                    100% {
++                        transform: translateX(-6%) translateY(0) scale(1);
++                    }
++                }
++                @keyframes aurora2 {
++                    0% {
++                        transform: translateX(6%) translateY(0) scale(1);
++                    }
++                    50% {
++                        transform: translateX(-6%) translateY(-6%) scale(1.06);
++                    }
++                    100% {
++                        transform: translateX(6%) translateY(0) scale(1);
++                    }
++                }
++            `}</style>
++        </>
++    );
+ }
+Index: CLAUDE.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># AI-DLC and Spec-Driven Development\r\n\r\nKiro-style Spec Driven Development implementation on AI-DLC (AI Development Life Cycle)\r\n\r\n## Project Context\r\n\r\n### Paths\r\n- Steering: `.kiro/steering/`\r\n- Specs: `.kiro/specs/`\r\n\r\n### Steering vs Specification\r\n\r\n**Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context\r\n**Specs** (`.kiro/specs/`) - Formalize development process for individual features\r\n\r\n### Active Specifications\r\n- Check `.kiro/specs/` for active specifications\r\n- Use `/kiro:spec-status [feature-name]` to check progress\r\n\r\n## Development Guidelines\r\n- Think in English, generate responses in English. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).\r\n\r\n## Minimal Workflow\r\n- Phase 0 (optional): `/kiro:steering`, `/kiro:steering-custom`\r\n- Phase 1 (Specification):\r\n  - `/kiro:spec-init \"description\"`\r\n  - `/kiro:spec-requirements {feature}`\r\n  - `/kiro:validate-gap {feature}` (optional: for existing codebase)\r\n  - `/kiro:spec-design {feature} [-y]`\r\n  - `/kiro:validate-design {feature}` (optional: design review)\r\n  - `/kiro:spec-tasks {feature} [-y]`\r\n- Phase 2 (Implementation): `/kiro:spec-impl {feature} [tasks]`\r\n  - `/kiro:validate-impl {feature}` (optional: after implementation)\r\n- Progress check: `/kiro:spec-status {feature}` (use anytime)\r\n\r\n## Development Rules\r\n- 3-phase approval workflow: Requirements → Design → Tasks → Implementation\r\n- Human review required each phase; use `-y` only for intentional fast-track\r\n- Keep steering current and verify alignment with `/kiro:spec-status`\r\n- Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.\r\n\r\n## Steering Configuration\r\n- Load entire `.kiro/steering/` as project memory\r\n- Default files: `product.md`, `tech.md`, `structure.md`\r\n- Custom files are supported (managed via `/kiro:steering-custom`)\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/CLAUDE.md b/CLAUDE.md
+--- a/CLAUDE.md	(revision 806a4e56ecc822305fa97a1a15007cda4282d6a1)
++++ b/CLAUDE.md	(date 1765976636378)
+@@ -18,7 +18,7 @@
+ - Use `/kiro:spec-status [feature-name]` to check progress
+ 
+ ## Development Guidelines
+-- Think in English, generate responses in English. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
++- Think in English, generate responses in Japanese. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
+ 
+ ## Minimal Workflow
+ - Phase 0 (optional): `/kiro:steering`, `/kiro:steering-custom`
+Index: .kiro/settings/templates/specs/init.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>{\r\n  \"feature_name\": \"{{FEATURE_NAME}}\",\r\n  \"created_at\": \"{{TIMESTAMP}}\",\r\n  \"updated_at\": \"{{TIMESTAMP}}\",\r\n  \"language\": \"en\",\r\n  \"phase\": \"initialized\",\r\n  \"approvals\": {\r\n    \"requirements\": {\r\n      \"generated\": false,\r\n      \"approved\": false\r\n    },\r\n    \"design\": {\r\n      \"generated\": false,\r\n      \"approved\": false\r\n    },\r\n    \"tasks\": {\r\n      \"generated\": false,\r\n      \"approved\": false\r\n    }\r\n  },\r\n  \"ready_for_implementation\": false\r\n}\r\n\r\n\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.kiro/settings/templates/specs/init.json b/.kiro/settings/templates/specs/init.json
+--- a/.kiro/settings/templates/specs/init.json	(revision 806a4e56ecc822305fa97a1a15007cda4282d6a1)
++++ b/.kiro/settings/templates/specs/init.json	(date 1766044535442)
+@@ -2,7 +2,7 @@
+   "feature_name": "{{FEATURE_NAME}}",
+   "created_at": "{{TIMESTAMP}}",
+   "updated_at": "{{TIMESTAMP}}",
+-  "language": "en",
++  "language": "ja",
+   "phase": "initialized",
+   "approvals": {
+     "requirements": {
+Index: .kiro/settings/rules/ears-format.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># EARS Format Guidelines\r\n\r\n## Overview\r\nEARS (Easy Approach to Requirements Syntax) is the standard format for acceptance criteria in spec-driven development.\r\n\r\nEARS patterns describe the logical structure of a requirement (condition + subject + response) and are not tied to any particular natural language.  \r\nAll acceptance criteria should be written in the target language configured for the specification (for example, `spec.json.language` / `en`).  \r\nKeep EARS trigger keywords and fixed phrases in English (`When`, `If`, `While`, `Where`, `The system shall`, `The [system] shall`) and localize only the variable parts (`[event]`, `[precondition]`, `[trigger]`, `[feature is included]`, `[response/action]`) into the target language. Do not interleave target-language text inside the trigger or fixed English phrases themselves.\r\n\r\n## Primary EARS Patterns\r\n\r\n### 1. Event-Driven Requirements\r\n- **Pattern**: When [event], the [system] shall [response/action]\r\n- **Use Case**: Responses to specific events or triggers\r\n- **Example**: When user clicks checkout button, the Checkout Service shall validate cart contents\r\n\r\n### 2. State-Driven Requirements\r\n- **Pattern**: While [precondition], the [system] shall [response/action]\r\n- **Use Case**: Behavior dependent on system state or preconditions\r\n- **Example**: While payment is processing, the Checkout Service shall display loading indicator\r\n\r\n### 3. Unwanted Behavior Requirements\r\n- **Pattern**: If [trigger], the [system] shall [response/action]\r\n- **Use Case**: System response to errors, failures, or undesired situations\r\n- **Example**: If invalid credit card number is entered, then the website shall display error message\r\n\r\n### 4. Optional Feature Requirements\r\n- **Pattern**: Where [feature is included], the [system] shall [response/action]\r\n- **Use Case**: Requirements for optional or conditional features\r\n- **Example**: Where the car has a sunroof, the car shall have a sunroof control panel\r\n\r\n### 5. Ubiquitous Requirements\r\n- **Pattern**: The [system] shall [response/action]\r\n- **Use Case**: Always-active requirements and fundamental system properties\r\n- **Example**: The mobile phone shall have a mass of less than 100 grams\r\n\r\n## Combined Patterns\r\n- While [precondition], when [event], the [system] shall [response/action]\r\n- When [event] and [additional condition], the [system] shall [response/action]\r\n\r\n## Subject Selection Guidelines\r\n- **Software Projects**: Use concrete system/service name (e.g., \"Checkout Service\", \"User Auth Module\")\r\n- **Process/Workflow**: Use responsible team/role (e.g., \"Support Team\", \"Review Process\")\r\n- **Non-Software**: Use appropriate subject (e.g., \"Marketing Campaign\", \"Documentation\")\r\n\r\n## Quality Criteria\r\n- Requirements must be testable, verifiable, and describe a single behavior.\r\n- Use objective language: \"shall\" for mandatory behavior, \"should\" for recommendations; avoid ambiguous terms.\r\n- Follow EARS syntax: [condition], the [system] shall [response/action].\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.kiro/settings/rules/ears-format.md b/.kiro/settings/rules/ears-format.md
+--- a/.kiro/settings/rules/ears-format.md	(revision 806a4e56ecc822305fa97a1a15007cda4282d6a1)
++++ b/.kiro/settings/rules/ears-format.md	(date 1766044535431)
+@@ -4,7 +4,7 @@
+ EARS (Easy Approach to Requirements Syntax) is the standard format for acceptance criteria in spec-driven development.
+ 
+ EARS patterns describe the logical structure of a requirement (condition + subject + response) and are not tied to any particular natural language.  
+-All acceptance criteria should be written in the target language configured for the specification (for example, `spec.json.language` / `en`).  
++All acceptance criteria should be written in the target language configured for the specification (for example, `spec.json.language` / `ja`).  
+ Keep EARS trigger keywords and fixed phrases in English (`When`, `If`, `While`, `Where`, `The system shall`, `The [system] shall`) and localize only the variable parts (`[event]`, `[precondition]`, `[trigger]`, `[feature is included]`, `[response/action]`) into the target language. Do not interleave target-language text inside the trigger or fixed English phrases themselves.
+ 
+ ## Primary EARS Patterns

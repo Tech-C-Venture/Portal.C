@@ -134,7 +134,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 <EventRegisterButton
                   eventId={eventDto.id}
                   isRegistered={isRegistered}
-                  disabled={eventDto.isFull}
+                  disabled={eventDto.isFull && !isRegistered}
                 />
               )}
             </div>
