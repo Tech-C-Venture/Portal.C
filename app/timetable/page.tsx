@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-imports */
 import { DatabaseClient } from "@/infrastructure/database/DatabaseClient";
 import { PublicTimetableTable } from "@/components/timetable/PublicTimetableTable";
+import { getCurrentMemberProfileAction } from "@/app/actions/members";
 
 async function getPublicTimetables() {
   const supabase = await DatabaseClient.getServerClient();
@@ -27,6 +28,16 @@ async function getPublicTimetables() {
 
 export default async function TimetablePage() {
   const publicTimetables = await getPublicTimetables();
+  let defaultGrade: number | undefined;
+  let defaultMajor: string | undefined;
+  try {
+    const member = await getCurrentMemberProfileAction();
+    defaultGrade = member.grade;
+    defaultMajor = member.department;
+  } catch {
+    defaultGrade = undefined;
+    defaultMajor = undefined;
+  }
   return (
     <div>
       <div className="mb-8">
@@ -34,7 +45,11 @@ export default async function TimetablePage() {
         <p className="text-gray-600">メンバーの時間割を確認</p>
       </div>
 
-      <PublicTimetableTable entries={publicTimetables} />
+      <PublicTimetableTable
+        entries={publicTimetables}
+        defaultGrade={defaultGrade}
+        defaultMajor={defaultMajor}
+      />
     </div>
   );
 }
