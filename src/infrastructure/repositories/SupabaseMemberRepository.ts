@@ -74,7 +74,8 @@ export class SupabaseMemberRepository implements IMemberRepository {
     const { data: tags, error: tagsError } = await supabase
       .from('tags')
       .select('id,name,category')
-      .in('name', allNames);
+      .in('name', allNames)
+      .execute(); // .execute() を追加
 
     if (tagsError) {
       return failure(new Error(tagsError.message));
@@ -117,7 +118,8 @@ export class SupabaseMemberRepository implements IMemberRepository {
     const { data, error } = await (supabase as any)
       .from('member_tags')
       .select('member_id, tag:tags(name, category)')
-      .in('member_id', memberIds);
+      .in('member_id', memberIds)
+      .execute(); // .execute() を追加
 
     if (error) {
       return map;
