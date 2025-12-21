@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-type PublicTimetableEntry = {
+export type PublicTimetableEntry = {
   id: string;
   dayOfWeek: number;
   period: number;
@@ -27,74 +27,80 @@ const periods = [1, 2, 3, 4, 5, 6, 7];
 
 export function PublicTimetableTable({
   entries,
+  privateEntries = [], // 追加
 }: {
   entries: PublicTimetableEntry[];
+  privateEntries?: PublicTimetableEntry[]; // 追加
 }) {
+  // 表示モードの管理 ('public' または 'private')
+  const [viewMode, setViewMode] = useState('public'); 
   const [gradeFilter, setGradeFilter] = useState('all');
   const [majorFilter, setMajorFilter] = useState('all');
   const isWeekView = true;
 
+  // 現在のモードに応じて表示する大元のデータを切り替える
+  const currentEntries = viewMode === 'private' ? privateEntries : entries;
+
+  // フィルタリング対象を currentEntries に変更
   const grades = useMemo(
-    () =>
-      Array.from(
-        new Set(entries.map((entry) => entry.grade).filter((grade): grade is number => typeof grade === 'number'))
-      ).sort((a, b) => a - b),
-    [entries]
+    () => Array.from(new Set(currentEntries.map((e) => e.grade).filter((g): g is number => typeof g === 'number'))).sort((a, b) => a - b),
+    [currentEntries]
   );
 
   const majors = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          entries
-            .map((entry) => entry.major)
-            .filter((major): major is string => typeof major === 'string')
-        )
-      ).sort(),
-    [entries]
+    () => Array.from(new Set(currentEntries.map((e) => e.major).filter((m): m is string => typeof m === 'string'))).sort(),
+    [currentEntries]
   );
 
-  const filteredEntries = entries.filter((entry) => {
-    const gradeMatch =
-      gradeFilter === 'all' ||
-      entry.grade === Number(gradeFilter);
-    const majorMatch =
-      majorFilter === 'all' || entry.major === majorFilter;
+  const filteredEntries = currentEntries.filter((entry) => {
+    // 自分用のときは基本全表示にする（またはフィルタを適用する）
+    if (viewMode === 'private') return true;
+    const gradeMatch = gradeFilter === 'all' || entry.grade === Number(gradeFilter);
+    const majorMatch = majorFilter === 'all' || entry.major === majorFilter;
     return gradeMatch && majorMatch;
   });
 
   const getEntriesForSlot = (day: number, period: number) =>
-    filteredEntries.filter(
-      (entry) => entry.dayOfWeek === day && entry.period === period
-    );
+    filteredEntries.filter((entry) => entry.dayOfWeek === day && entry.period === period);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-4">
+        {/* モード切り替えを追加 */}
         <select
-          value={gradeFilter}
-          onChange={(event) => setGradeFilter(event.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={viewMode}
+          onChange={(e) => setViewMode(e.target.value)}
+          className="px-4 py-2 border border-blue-500 bg-blue-50 font-bold rounded-lg focus:outline-none ring-2 ring-blue-100"
         >
-          <option value="all">全学年</option>
-          {grades.map((grade) => (
-            <option key={grade} value={String(grade)}>
-              {grade}年
-            </option>
-          ))}
+          <option value="public">🏫 全校時間割を表示</option>
+          <option value="private">👤 自分専用を表示</option>
         </select>
-        <select
-          value={majorFilter}
-          onChange={(event) => setMajorFilter(event.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="all">全専攻</option>
-          {majors.map((major) => (
-            <option key={major} value={major}>
-              {major}
-            </option>
-          ))}
-        </select>
+
+        {/* 学校表示の時だけ学年・専攻フィルタを出す */}
+        {viewMode === 'public' && (
+          <>
+            <select
+              value={gradeFilter}
+              onChange={(event) => setGradeFilter(event.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">全学年</option>
+              {grades.map((grade) => (
+                <option key={grade} value={String(grade)}>{grade}年</option>
+              ))}
+            </select>
+            <select
+              value={majorFilter}
+              onChange={(event) => setMajorFilter(event.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">全専攻</option>
+              {majors.map((major) => (
+                <option key={major} value={major}>{major}</option>
+              ))}
+            </select>
+          </>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
