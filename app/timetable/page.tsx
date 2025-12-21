@@ -3,11 +3,11 @@ import { container } from '@/infrastructure/di/setup';
 import { REPOSITORY_KEYS } from '@/infrastructure/di/keys';
 import type { IMemberRepository } from '@/application/ports/IMemberRepository';
 import { DatabaseClient } from "@/infrastructure/database/DatabaseClient";
+
 import { getCurrentUser } from '@/lib/auth';
 import { fetchMyTimetable } from '@/lib/supabase/actions';
 import { PublicTimetableTable, type PublicTimetableEntry } from "@/components/timetable/PublicTimetableTable";
 
-// Supabaseの自動生成された型が古いため、手動で型を定義
 type TimetableRow = {
   id: string;
   day_of_week: number;
@@ -44,25 +44,24 @@ async function getPublicTimetables(): Promise<PublicTimetableEntry[]> {
 }
 
 export default async function TimetablePage() {
-  // 1. 学校全体のデータを取得
   const publicTimetables = await getPublicTimetables();
-
-  // 2. ログインユーザーに紐づく自分用データを取得
   const user = await getCurrentUser();
   let privateTimetables: PublicTimetableEntry[] = [];
-  
+  let defaultGrade: number | undefined;
+  let defaultMajor: string | undefined;
+
   if (user?.id) {
     const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
     const memberResult = await memberRepository.findByZitadelId(user.id);
     
     if (memberResult.success && memberResult.value) {
+      defaultGrade = memberResult.value.grade;
+      defaultMajor = memberResult.value.major;
+
       const myData = (await fetchMyTimetable(memberResult.value.id)) as PrivateTimetableData[] | null;
       if (myData) {
         privateTimetables = myData
-          .filter(
-            (item): item is PrivateTimetableData & { timetables: TimetableRow } =>
-              item.timetables !== null
-          )
+          .filter((item): item is PrivateTimetableData & { timetables: TimetableRow } => item.timetables !== null)
           .map((item) => ({
             id: item.id,
             dayOfWeek: item.timetables.day_of_week,
@@ -84,10 +83,11 @@ export default async function TimetablePage() {
         <p className="text-gray-600">自分に合った時間割を表示</p>
       </div>
 
-      {/* 両方のデータを渡すように変更 */}
       <PublicTimetableTable 
         entries={publicTimetables} 
         privateEntries={privateTimetables}
+        defaultGrade={defaultGrade}
+        defaultMajor={defaultMajor}
       />
     </div>
   );

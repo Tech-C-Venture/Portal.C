@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export type PublicTimetableEntry = {
   id: string;
@@ -27,21 +27,22 @@ const periods = [1, 2, 3, 4, 5, 6, 7];
 
 export function PublicTimetableTable({
   entries,
-  privateEntries = [], // 追加
+  privateEntries = [],
+  defaultGrade,
+  defaultMajor,
 }: {
   entries: PublicTimetableEntry[];
-  privateEntries?: PublicTimetableEntry[]; // 追加
+  privateEntries?: PublicTimetableEntry[];
+  defaultGrade?: number;
+  defaultMajor?: string;
 }) {
-  // 表示モードの管理 ('public' または 'private')
-  const [viewMode, setViewMode] = useState('public'); 
-  const [gradeFilter, setGradeFilter] = useState('all');
-  const [majorFilter, setMajorFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'public' | 'private'>('public');
+  const [gradeFilter, setGradeFilter] = useState(defaultGrade ? String(defaultGrade) : 'all');
+  const [majorFilter, setMajorFilter] = useState(defaultMajor ?? 'all');
   const isWeekView = true;
 
-  // 現在のモードに応じて表示する大元のデータを切り替える
   const currentEntries = viewMode === 'private' ? privateEntries : entries;
 
-  // フィルタリング対象を currentEntries に変更
   const grades = useMemo(
     () => Array.from(new Set(currentEntries.map((e) => e.grade).filter((g): g is number => typeof g === 'number'))).sort((a, b) => a - b),
     [currentEntries]
@@ -52,8 +53,19 @@ export function PublicTimetableTable({
     [currentEntries]
   );
 
+  useEffect(() => {
+    if (gradeFilter === 'all' && defaultGrade && grades.includes(defaultGrade)) {
+      setGradeFilter(String(defaultGrade));
+    }
+  }, [grades, defaultGrade, gradeFilter]);
+
+  useEffect(() => {
+    if (majorFilter === 'all' && defaultMajor && majors.includes(defaultMajor)) {
+      setMajorFilter(defaultMajor);
+    }
+  }, [majors, defaultMajor, majorFilter]);
+
   const filteredEntries = currentEntries.filter((entry) => {
-    // 自分用のときは基本全表示にする（またはフィルタを適用する）
     if (viewMode === 'private') return true;
     const gradeMatch = gradeFilter === 'all' || entry.grade === Number(gradeFilter);
     const majorMatch = majorFilter === 'all' || entry.major === majorFilter;
@@ -66,17 +78,15 @@ export function PublicTimetableTable({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-4">
-        {/* モード切り替えを追加 */}
         <select
           value={viewMode}
-          onChange={(e) => setViewMode(e.target.value)}
+          onChange={(e) => setViewMode(e.target.value as 'public' | 'private')}
           className="px-4 py-2 border border-blue-500 bg-blue-50 font-bold rounded-lg focus:outline-none ring-2 ring-blue-100"
         >
-          <option value="public">🏫 全校時間割を表示</option>
+          <option value="public">🌍 全校時間割を表示</option>
           <option value="private">👤 自分専用を表示</option>
         </select>
 
-        {/* 学校表示の時だけ学年・専攻フィルタを出す */}
         {viewMode === 'public' && (
           <>
             <select
@@ -107,58 +117,28 @@ export function PublicTimetableTable({
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                時限
-              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">時限</th>
               {dayLabels.map((day) => (
-                <th
-                  key={day.value}
-                  className="px-4 py-3 text-left text-sm font-medium text-gray-700"
-                >
-                  {day.label}
-                </th>
+                <th key={day.value} className="px-4 py-3 text-left text-sm font-medium text-gray-700">{day.label}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {periods.map((period) => (
               <tr key={period}>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                  {period}限
-                </td>
+                <td className="px-4 py-3 text-sm font-medium text-gray-900">{period}限</td>
                 {dayLabels.map((day) => {
                   const slotEntries = getEntriesForSlot(day.value, period);
                   return (
-                    <td
-                      key={`${day.value}-${period}`}
-                      className={isWeekView ? 'px-3 py-2' : 'px-4 py-3'}
-                    >
+                    <td key={`${day.value}-${period}`} className="px-3 py-2">
                       {slotEntries.length === 0 ? (
                         <div className="text-sm text-gray-400">-</div>
                       ) : (
-                        <div className={isWeekView ? 'space-y-1' : 'space-y-2'}>
+                        <div className="space-y-1">
                           {slotEntries.map((entry) => (
-                            <div
-                              key={entry.id}
-                              className={`rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 ${
-                                isWeekView ? 'px-2 py-1 leading-tight' : 'px-2 py-1'
-                              }`}
-                            >
-                              <div className="font-medium">
-                                {entry.courseName}
-                              </div>
-                              {majorFilter === 'all' && (
-                                <div className="text-gray-500">
-                                  {(entry.grade ?? '-') + '年'} /{' '}
-                                  {entry.major ?? '-'}
-                                </div>
-                              )}
-                              {(entry.classroom || entry.instructor) && (
-                                <div className="text-gray-500">
-                                  {entry.classroom ?? '-'} /{' '}
-                                  {entry.instructor ?? '-'}
-                                </div>
-                              )}
+                            <div key={entry.id} className="rounded-md border border-gray-200 bg-gray-50 p-2 text-[10px] text-gray-700">
+                              <div className="font-bold">{entry.courseName}</div>
+                              <div>{entry.classroom} / {entry.instructor}</div>
                             </div>
                           ))}
                         </div>
