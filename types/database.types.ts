@@ -24,6 +24,7 @@ export interface Database {
           is_repeating: boolean;
           repeat_years: number | null;
           major: string | null;
+          onboarding_completed: boolean;
           current_status: string | null;
           status_updated_at: string | null;
           created_at: string;
@@ -40,6 +41,7 @@ export interface Database {
           is_repeating?: boolean;
           repeat_years?: number | null;
           major?: string | null;
+          onboarding_completed?: boolean;
           current_status?: string | null;
           status_updated_at?: string | null;
           created_at?: string;
@@ -56,6 +58,7 @@ export interface Database {
           is_repeating?: boolean;
           repeat_years?: number | null;
           major?: string | null;
+          onboarding_completed?: boolean;
           current_status?: string | null;
           status_updated_at?: string | null;
           created_at?: string;
@@ -86,17 +89,17 @@ export interface Database {
       };
       member_tags: {
         Row: {
-          member_id: string;
+          member_id: string | null;
           tag_id: string;
           created_at: string;
         };
         Insert: {
-          member_id: string;
+          member_id?: string | null;
           tag_id: string;
           created_at?: string;
         };
         Update: {
-          member_id?: string;
+          member_id?: string | null;
           tag_id?: string;
           created_at?: string;
         };
@@ -111,6 +114,8 @@ export interface Database {
           location: string | null;
           capacity: number | null;
           created_by: string | null;
+          online_url: string | null;
+          online_password: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -122,6 +127,8 @@ export interface Database {
           location?: string | null;
           capacity?: number | null;
           created_by?: string | null;
+          online_url?: string | null;
+          online_password?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -133,6 +140,8 @@ export interface Database {
           location?: string | null;
           capacity?: number | null;
           created_by?: string | null;
+          online_url?: string | null;
+          online_password?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -168,6 +177,11 @@ export interface Database {
           course_name: string;
           semester: "spring" | "fall" | null;
           year: number;
+          is_public: boolean | null;
+          grade: number | null;
+          major: string | null;
+          classroom: string | null;
+          instructor: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -179,6 +193,11 @@ export interface Database {
           course_name: string;
           semester?: "spring" | "fall" | null;
           year: number;
+          is_public?: boolean | null;
+          grade?: number | null;
+          major?: string | null;
+          classroom?: string | null;
+          instructor?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -190,6 +209,11 @@ export interface Database {
           course_name?: string;
           semester?: "spring" | "fall" | null;
           year?: number;
+          is_public?: boolean | null;
+          grade?: number | null;
+          major?: string | null;
+          classroom?: string | null;
+          instructor?: string | null;
           created_at?: string;
           updated_at?: string;
         };

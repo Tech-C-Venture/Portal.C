@@ -156,6 +156,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
       department: row.major ?? '',
       skills: tags?.skills ?? [], // タグテーブルから取得
       interests: tags?.interests ?? [], // タグテーブルから取得
+      onboardingCompleted: row.onboarding_completed ?? false,
       currentStatus: row.current_status
         ? {
             message: row.current_status,
@@ -182,6 +183,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
       is_repeating: member.isRepeating,
       repeat_years: member.repeatYears ?? null,
       major: member.department,
+      onboarding_completed: member.onboardingCompleted,
       current_status: member.currentStatus?.message,
       status_updated_at: member.currentStatus?.createdAt.toISOString(),
     };
@@ -200,6 +202,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
       is_repeating: member.isRepeating,
       repeat_years: member.repeatYears ?? null,
       major: member.department,
+      onboarding_completed: member.onboardingCompleted,
       current_status: member.currentStatus?.message,
       status_updated_at: member.currentStatus?.createdAt.toISOString(),
       updated_at: member.updatedAt.toISOString(),

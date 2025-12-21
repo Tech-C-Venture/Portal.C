@@ -24,6 +24,7 @@ interface UpdateMemberInput {
   isRepeating?: boolean;
   enrollmentYear?: number;
   repeatYears?: number | null;
+  onboardingCompleted?: boolean;
 }
 
 export class UpdateMemberProfileUseCase {
@@ -55,6 +56,7 @@ export class UpdateMemberProfileUseCase {
       isRepeating?: boolean;
       enrollmentYear?: number;
       repeatYears?: number;
+      onboardingCompleted?: boolean;
     } = {};
 
     if (input.name !== undefined) updates.name = input.name;
@@ -71,6 +73,9 @@ export class UpdateMemberProfileUseCase {
     if (input.enrollmentYear !== undefined) updates.enrollmentYear = input.enrollmentYear;
     if (input.repeatYears !== undefined) {
       updates.repeatYears = input.repeatYears ?? undefined;
+    }
+    if (input.onboardingCompleted !== undefined) {
+      updates.onboardingCompleted = input.onboardingCompleted;
     }
     if (input.currentStatusMessage !== undefined) {
       updates.currentStatus = CurrentStatus.create(input.currentStatusMessage);

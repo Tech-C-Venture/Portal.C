@@ -6,8 +6,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 
 export const metadata: Metadata = {
-  title: "Portal.C - Tech.C Venture",
-  description: "Tech.C Ventureのメンバー管理・イベント管理システム",
+  title: "Portal.C",
+  description: "Tech.C Venture メンバー管理・イベント管理システム",
 };
 
 export default async function RootLayout({
