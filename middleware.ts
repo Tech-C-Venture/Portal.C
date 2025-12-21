@@ -87,6 +87,11 @@ export async function middleware(req: NextRequest) {
     typeof token?.sub === "string" ? token.sub : sessionUserId ?? ""
   if (zitadelId) {
     const profileComplete = await isProfileComplete(zitadelId)
+    if (pathname.startsWith("/onboarding")) {
+      return profileComplete
+          ? NextResponse.redirect(new URL("/", req.url))
+          : NextResponse.next()
+    }
     if (!profileComplete) {
       return NextResponse.redirect(new URL("/onboarding", req.url))
     }

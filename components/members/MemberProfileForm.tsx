@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useMemo, useState } from 'react';
+import { useActionState, useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@openameba/spindle-ui';
@@ -207,8 +207,42 @@ export function MemberProfileForm({
     {
       error: null,
       success: null,
+      avatarUrl: member.avatarUrl ?? null,
     }
   );
+  const currentAvatarUrl = state.avatarUrl ?? member.avatarUrl ?? null;
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(currentAvatarUrl);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setLocalAvatarUrl(currentAvatarUrl);
+  }, [currentAvatarUrl]);
+
+  useEffect(
+    () => () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    },
+    []
+  );
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    objectUrlRef.current = objectUrl;
+    setLocalAvatarUrl(objectUrl);
+  };
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <form action={formAction} className="space-y-6">
@@ -226,6 +260,43 @@ export function MemberProfileForm({
           {state.success}
         </div>
       )}
+
+      <div>
+        <label className="block text-sm font-medium mb-2">アイコン画像</label>
+        <div className="mb-3 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={openFilePicker}
+            className="group relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="アイコン画像を変更"
+          >
+            {localAvatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={localAvatarUrl}
+                alt={`${member.name}のアイコン`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-lg text-gray-600 font-semibold">
+                {member.name.charAt(0)}
+              </span>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm font-semibold opacity-0 transition-opacity group-hover:opacity-100">
+              編集
+            </div>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            name="avatar"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarChange}
+            required={mode === 'onboarding' && !localAvatarUrl}
+          />
+        </div>
+      </div>
 
       <div>
         <label className="block text-sm font-medium mb-2">名前</label>
