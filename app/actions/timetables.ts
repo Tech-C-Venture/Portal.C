@@ -1,255 +1,71 @@
 'use server';
-/* eslint-disable no-restricted-imports */
 
-import { isAdmin } from '@/lib/auth';
-import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
 import { revalidatePath } from 'next/cache';
+import { container } from '@/infrastructure/di/setup';
+import { REPOSITORY_KEYS } from '@/infrastructure/di/keys';
+import type { IMemberRepository } from '@/application/ports/IMemberRepository';
+import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+import { getCurrentUser } from '@/lib/auth';
 
-export interface PublicTimetableFormState {
-  error: string | null;
-  success: string | null;
-}
+/**
+ * 公開されている時間割を自分のプライベート時間割に追加するサーバーアクション
+ * @param timetableId 追加する公開時間割のID
+ */
+export async function addCourseToMyTimetable(timetableId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    // 1. 現在のユーザー情報を取得
+    const user = await getCurrentUser();
+    if (!user?.id) {
+      return { success: false, message: 'ログインしていません。' };
+    }
 
-export interface TimeSlotFormState {
-  error: string | null;
-  success: string | null;
-}
+    // 2. ZITADEL IDからメンバーIDを取得
+    const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
+    const memberResult = await memberRepository.findByZitadelId(user.id);
 
-function parseTimeToMinutes(value: string): number | null {
-  const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(value);
-  if (!match) return null;
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  return hours * 60 + minutes;
-}
+    if (!memberResult.success || !memberResult.value) {
+      return { success: false, message: 'メンバー情報が見つかりません。' };
+    }
+    const memberId = memberResult.value.id;
 
-export async function createPublicTimetableAction(
-  _prevState: PublicTimetableFormState,
-  formData: FormData
-): Promise<PublicTimetableFormState> {
-  const admin = await isAdmin();
-  if (!admin) {
-    return { error: '管理者権限が必要です。', success: null };
+    // 3. Supabaseクライアントでprivate_timetablesテーブルにデータを挿入
+    const supabase = await DatabaseClient.getServerClient();
+
+    // 既に登録済みでないか確認
+    const { data: existing, error: existingError } = await supabase
+      .from('private_timetables')
+      .select('id')
+      .eq('member_id', memberId)
+      .eq('timetable_id', timetableId)
+      .single();
+
+    if (existingError && existingError.code !== 'PGRST116') { // PGRST116は行がない場合のエラーコード
+      throw new Error(`既存データの確認中にエラーが発生しました: ${existingError.message}`);
+    }
+    if (existing) {
+      return { success: false, message: 'すでに追加されています。' };
+    }
+
+    // データ挿入
+    const { error: insertError } = await supabase
+      .from('private_timetables')
+      .insert({
+        member_id: memberId,
+        timetable_id: timetableId,
+      });
+
+    if (insertError) {
+      throw new Error(`時間割の追加に失敗しました: ${insertError.message}`);
+    }
+
+    // 4. キャッシュを再検証してUIを更新
+    revalidatePath('/timetable');
+    
+    return { success: true, message: 'マイ時間割に追加しました！' };
+
+  } catch (error) {
+    console.error('addCourseToMyTimetable error:', error);
+    const errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました。';
+    return { success: false, message: errorMessage };
   }
-
-  const dayOfWeekRaw = (formData.get('dayOfWeek') as string | null)?.trim();
-  const timeSlotId = (formData.get('timeSlotId') as string | null)?.trim();
-  const courseName = (formData.get('courseName') as string | null)?.trim();
-  const gradeRaw = (formData.get('grade') as string | null)?.trim();
-  const major = (formData.get('major') as string | null)?.trim();
-  const classroom = (formData.get('classroom') as string | null)?.trim();
-  const instructor = (formData.get('instructor') as string | null)?.trim();
-
-  if (!dayOfWeekRaw || !timeSlotId || !courseName || !gradeRaw || !major) {
-    return { error: '必須項目を入力してください。', success: null };
-  }
-
-  const dayOfWeek = Number(dayOfWeekRaw);
-  const grade = Number(gradeRaw);
-
-  if (Number.isNaN(dayOfWeek) || Number.isNaN(grade)) {
-    return { error: '曜日・学年は数字で入力してください。', success: null };
-  }
-
-  const year = new Date().getFullYear();
-  const supabase = DatabaseClient.getAdminClient();
-  const { data: timeSlot, error: timeSlotError } = await (supabase as any)
-    .from('timetable_time_slots')
-    .select('id, period')
-    .eq('id', timeSlotId)
-    .maybeSingle();
-
-  if (timeSlotError) {
-    return { error: `時間帯の取得に失敗しました: ${timeSlotError.message}`, success: null };
-  }
-  if (!timeSlot) {
-    return { error: '選択した時間帯が見つかりませんでした。', success: null };
-  }
-
-  const { error } = await (supabase as any).from('timetables').insert({
-    member_id: null,
-    day_of_week: dayOfWeek,
-    period: timeSlot.period,
-    course_name: courseName,
-    semester: null,
-    year,
-    is_public: true,
-    grade,
-    major,
-    classroom: classroom || null,
-    instructor: instructor || null,
-    time_slot_id: timeSlot.id,
-  });
-
-  if (error) {
-    return { error: `登録に失敗しました: ${error.message}`, success: null };
-  }
-
-  revalidatePath('/timetable');
-  revalidatePath('/admin/timetables');
-
-  return { error: null, success: '時間割を登録しました。' };
-}
-
-export async function createTimeSlotAction(
-  _prevState: TimeSlotFormState,
-  formData: FormData
-): Promise<TimeSlotFormState> {
-  const admin = await isAdmin();
-  if (!admin) {
-    return { error: '管理者権限が必要です。', success: null };
-  }
-
-  const periodRaw = (formData.get('period') as string | null)?.trim();
-  const label = (formData.get('label') as string | null)?.trim();
-  const startTime = (formData.get('startTime') as string | null)?.trim();
-  const endTime = (formData.get('endTime') as string | null)?.trim();
-  const isActive = formData.get('isActive') === 'on';
-
-  if (!periodRaw || !label || !startTime || !endTime) {
-    return { error: '必須項目を入力してください。', success: null };
-  }
-
-  const period = Number(periodRaw);
-  if (Number.isNaN(period) || period < 1 || period > 10) {
-    return { error: '時限は1〜10の数字で入力してください。', success: null };
-  }
-
-  const startMinutes = parseTimeToMinutes(startTime);
-  const endMinutes = parseTimeToMinutes(endTime);
-  if (startMinutes === null || endMinutes === null) {
-    return { error: '時間はHH:MM形式で入力してください。', success: null };
-  }
-  if (startMinutes >= endMinutes) {
-    return { error: '開始時刻は終了時刻より前にしてください。', success: null };
-  }
-
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('timetable_time_slots')
-    .insert({
-      period,
-      label,
-      start_time: startTime,
-      end_time: endTime,
-      is_active: isActive,
-    });
-
-  if (error) {
-    return { error: `登録に失敗しました: ${error.message}`, success: null };
-  }
-
-  revalidatePath('/admin/timetables');
-
-  return { error: null, success: '時間帯を登録しました。' };
-}
-
-export async function updateTimeSlotAction(
-  _prevState: TimeSlotFormState,
-  formData: FormData
-): Promise<TimeSlotFormState> {
-  const admin = await isAdmin();
-  if (!admin) {
-    return { error: '管理者権限が必要です。', success: null };
-  }
-
-  const timeSlotId = (formData.get('timeSlotId') as string | null)?.trim();
-  const periodRaw = (formData.get('period') as string | null)?.trim();
-  const label = (formData.get('label') as string | null)?.trim();
-  const startTime = (formData.get('startTime') as string | null)?.trim();
-  const endTime = (formData.get('endTime') as string | null)?.trim();
-  const isActive = formData.get('isActive') === 'on';
-
-  if (!timeSlotId) {
-    return { error: '時間帯IDが取得できませんでした。', success: null };
-  }
-  if (!periodRaw || !label || !startTime || !endTime) {
-    return { error: '必須項目を入力してください。', success: null };
-  }
-
-  const period = Number(periodRaw);
-  if (Number.isNaN(period) || period < 1 || period > 10) {
-    return { error: '時限は1〜10の数字で入力してください。', success: null };
-  }
-
-  const startMinutes = parseTimeToMinutes(startTime);
-  const endMinutes = parseTimeToMinutes(endTime);
-  if (startMinutes === null || endMinutes === null) {
-    return { error: '時間はHH:MM形式で入力してください。', success: null };
-  }
-  if (startMinutes >= endMinutes) {
-    return { error: '開始時刻は終了時刻より前にしてください。', success: null };
-  }
-
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('timetable_time_slots')
-    .update({
-      period,
-      label,
-      start_time: startTime,
-      end_time: endTime,
-      is_active: isActive,
-    })
-    .eq('id', timeSlotId);
-
-  if (error) {
-    return { error: `更新に失敗しました: ${error.message}`, success: null };
-  }
-
-  revalidatePath('/admin/timetables');
-
-  return { error: null, success: '時間帯を更新しました。' };
-}
-
-export async function deleteTimeSlotAction(formData: FormData): Promise<void> {
-  const admin = await isAdmin();
-  if (!admin) {
-    throw new Error('管理者権限が必要です。');
-  }
-
-  const timeSlotId = (formData.get('timeSlotId') as string | null)?.trim();
-  if (!timeSlotId) {
-    throw new Error('時間帯IDが取得できませんでした。');
-  }
-
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('timetable_time_slots')
-    .delete()
-    .eq('id', timeSlotId);
-
-  if (error) {
-    throw new Error(`削除に失敗しました: ${error.message}`);
-  }
-
-  revalidatePath('/admin/timetables');
-}
-
-export async function deletePublicTimetableAction(
-  formData: FormData
-): Promise<void> {
-  const admin = await isAdmin();
-  if (!admin) {
-    throw new Error('管理者権限が必要です。');
-  }
-
-  const timetableId = (formData.get('timetableId') as string | null)?.trim();
-  if (!timetableId) {
-    throw new Error('時間割IDが取得できませんでした。');
-  }
-
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('timetables')
-    .delete()
-    .eq('id', timetableId)
-    .eq('is_public', true);
-
-  if (error) {
-    throw new Error(`削除に失敗しました: ${error.message}`);
-  }
-
-  revalidatePath('/timetable');
-  revalidatePath('/admin/timetables');
 }
