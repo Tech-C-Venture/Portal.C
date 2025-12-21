@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type PublicTimetableEntry = {
   id: string;
@@ -27,11 +27,17 @@ const periods = [1, 2, 3, 4, 5, 6, 7];
 
 export function PublicTimetableTable({
   entries,
+  defaultGrade,
+  defaultMajor,
 }: {
   entries: PublicTimetableEntry[];
+  defaultGrade?: number;
+  defaultMajor?: string;
 }) {
-  const [gradeFilter, setGradeFilter] = useState('all');
-  const [majorFilter, setMajorFilter] = useState('all');
+  const [gradeFilter, setGradeFilter] = useState(
+    defaultGrade ? String(defaultGrade) : ''
+  );
+  const [majorFilter, setMajorFilter] = useState(defaultMajor ?? '');
   const isWeekView = true;
 
   const grades = useMemo(
@@ -54,12 +60,23 @@ export function PublicTimetableTable({
     [entries]
   );
 
+  useEffect(() => {
+    if (grades.length > 0 && !grades.includes(Number(gradeFilter))) {
+      setGradeFilter(String(grades[0]));
+    }
+  }, [grades, gradeFilter]);
+
+  useEffect(() => {
+    if (majors.length > 0 && !majors.includes(majorFilter)) {
+      setMajorFilter(majors[0]);
+    }
+  }, [majors, majorFilter]);
+
   const filteredEntries = entries.filter((entry) => {
     const gradeMatch =
-      gradeFilter === 'all' ||
-      entry.grade === Number(gradeFilter);
+      !gradeFilter || entry.grade === Number(gradeFilter);
     const majorMatch =
-      majorFilter === 'all' || entry.major === majorFilter;
+      !majorFilter || entry.major === majorFilter;
     return gradeMatch && majorMatch;
   });
 
@@ -75,25 +92,33 @@ export function PublicTimetableTable({
           value={gradeFilter}
           onChange={(event) => setGradeFilter(event.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={grades.length === 0}
         >
-          <option value="all">全学年</option>
-          {grades.map((grade) => (
-            <option key={grade} value={String(grade)}>
-              {grade}年
-            </option>
-          ))}
+          {grades.length === 0 ? (
+            <option value="">学年未登録</option>
+          ) : (
+            grades.map((grade) => (
+              <option key={grade} value={String(grade)}>
+                {grade}年
+              </option>
+            ))
+          )}
         </select>
         <select
           value={majorFilter}
           onChange={(event) => setMajorFilter(event.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={majors.length === 0}
         >
-          <option value="all">全専攻</option>
-          {majors.map((major) => (
-            <option key={major} value={major}>
-              {major}
-            </option>
-          ))}
+          {majors.length === 0 ? (
+            <option value="">専攻未登録</option>
+          ) : (
+            majors.map((major) => (
+              <option key={major} value={major}>
+                {major}
+              </option>
+            ))
+          )}
         </select>
       </div>
 

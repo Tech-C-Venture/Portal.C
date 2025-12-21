@@ -1,11 +1,18 @@
-import { getPublicTimetables, getTimetableSummaries } from '@/app/admin/_data';
+import {
+  getPublicTimetables,
+  getTimeSlots,
+  getTimetableSummaries,
+} from '@/app/admin/_data';
 import { PublicTimetableForm } from '@/components/admin/PublicTimetableForm';
 import { PublicTimetableDeleteButton } from '@/components/admin/PublicTimetableDeleteButton';
+import { TimeSlotForm } from '@/components/admin/TimeSlotForm';
+import { TimeSlotTable } from '@/components/admin/TimeSlotTable';
 
 export default async function AdminTimetablesPage() {
-  const [timetableSummaries, publicTimetables] = await Promise.all([
+  const [timetableSummaries, publicTimetables, timeSlots] = await Promise.all([
     getTimetableSummaries(),
     getPublicTimetables(),
+    getTimeSlots(),
   ]);
   const dayLabels = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -20,7 +27,30 @@ export default async function AdminTimetablesPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">共通時間割の追加</h2>
         </div>
-        <PublicTimetableForm />
+        <PublicTimetableForm timeSlots={timeSlots} />
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">時間帯マスター</h2>
+          <span className="text-sm text-gray-500">
+            {timeSlots.length}件
+          </span>
+        </div>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              時間帯を追加
+            </h3>
+            <TimeSlotForm />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              登録済み時間帯
+            </h3>
+            <TimeSlotTable timeSlots={timeSlots} />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6">

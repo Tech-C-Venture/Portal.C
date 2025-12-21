@@ -115,6 +115,39 @@ export type PublicTimetableEntry = {
   instructor: string | null;
 };
 
+export type TimeSlotEntry = {
+  id: string;
+  period: number;
+  label: string;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+};
+
+function normalizeTimeValue(value: string | null): string {
+  if (!value) return '';
+  return value.length >= 5 ? value.slice(0, 5) : value;
+}
+
+export async function getTimeSlots(): Promise<TimeSlotEntry[]> {
+  const supabase = await DatabaseClient.getServerClient();
+  const { data } = await (supabase as any)
+    .from('timetable_time_slots')
+    .select('id, period, label, start_time, end_time, is_active')
+    .order('period', { ascending: true });
+
+  return (
+    data?.map((row: any) => ({
+      id: row.id,
+      period: row.period,
+      label: row.label,
+      startTime: normalizeTimeValue(String(row.start_time ?? '')),
+      endTime: normalizeTimeValue(String(row.end_time ?? '')),
+      isActive: row.is_active,
+    })) ?? []
+  );
+}
+
 export async function getPublicTimetables(): Promise<PublicTimetableEntry[]> {
   const supabase = await DatabaseClient.getServerClient();
   const { data } = await supabase
