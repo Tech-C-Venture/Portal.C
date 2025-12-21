@@ -245,7 +245,7 @@ export function MemberProfileForm({
   };
 
   return (
-    <form action={formAction} className="space-y-6" encType="multipart/form-data">
+    <form action={formAction} className="space-y-6">
       <input type="hidden" name="mode" value={mode} />
       {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
 

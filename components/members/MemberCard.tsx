@@ -7,6 +7,7 @@
 
 import { MemberDTO } from '@/application/dtos';
 import { FiMessageCircle } from 'react-icons/fi';
+import { MemberAvatar } from './MemberAvatar';
 
 interface MemberCardProps {
   member: MemberDTO;
@@ -17,19 +18,10 @@ export function MemberCard({ member }: MemberCardProps) {
   const isStatusValid = member.currentStatus
     ? new Date(member.currentStatus.expiresAt) > new Date()
     : false;
-  const avatarUrl = member.avatarUrl;
-
   return (
     <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
       <div className="flex items-center mb-4">
-        <div className="w-12 h-12 bg-gray-300 rounded-full mr-4 flex items-center justify-center text-white font-bold overflow-hidden">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt={`${member.name}のアイコン`} className="w-full h-full object-cover" />
-          ) : (
-            member.name.charAt(0)
-          )}
-        </div>
+        <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} className="mr-4" />
         <div>
           <h2 className="text-lg font-semibold">{member.name}</h2>
           <p className="text-sm text-gray-500">

@@ -26,6 +26,38 @@ export interface AdminGmailFormState {
   success: string | null;
 }
 
+async function signAvatarUrl(avatarUrl: string | null | undefined): Promise<string | null> {
+  if (!avatarUrl) return null;
+
+  try {
+    const url = new URL(avatarUrl);
+    const publicPrefix = '/storage/v1/object/public/';
+    const signedPrefix = '/storage/v1/object/sign/';
+    const prefix = url.pathname.startsWith(publicPrefix)
+      ? publicPrefix
+      : url.pathname.startsWith(signedPrefix)
+        ? signedPrefix
+        : null;
+
+    if (!prefix) return avatarUrl;
+
+    const rest = url.pathname.slice(prefix.length);
+    const [bucket, ...pathParts] = rest.split('/');
+    if (!bucket || pathParts.length === 0) return avatarUrl;
+
+    const path = pathParts.join('/');
+    const supabase = DatabaseClient.getAdminClient();
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(path, 60 * 60 * 24 * 365);
+    if (error || !data?.signedUrl) return avatarUrl;
+
+    return data.signedUrl;
+  } catch {
+    return avatarUrl;
+  }
+}
+
 export async function getMemberListAction(): Promise<MemberDTO[]> {
   const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
   const result = await memberRepository.findAll();
@@ -34,7 +66,14 @@ export async function getMemberListAction(): Promise<MemberDTO[]> {
     throw new Error(`Failed to fetch members: ${result.error.message}`);
   }
 
-  return MemberMapper.toDTOList(result.value);
+  const dtos = MemberMapper.toDTOList(result.value);
+  const signedDtos = await Promise.all(
+    dtos.map(async (member) => ({
+      ...member,
+      avatarUrl: await signAvatarUrl(member.avatarUrl),
+    }))
+  );
+  return signedDtos;
 }
 
 export async function getCurrentMemberProfileAction(): Promise<MemberDTO> {
@@ -54,7 +93,8 @@ export async function getCurrentMemberProfileAction(): Promise<MemberDTO> {
     throw new Error(`Member not found for zitadel_id: ${user.id}`);
   }
 
-  return MemberMapper.toDTO(result.value);
+  const dto = MemberMapper.toDTO(result.value);
+  return { ...dto, avatarUrl: await signAvatarUrl(dto.avatarUrl) };
 }
 
 export async function updateCurrentMemberProfileAction(
@@ -144,23 +184,13 @@ export async function updateCurrentMemberProfileAction(
 
   if (hasNewAvatar) {
     const supabase = await DatabaseClient.getServerClient();
-    const { data: supabaseAuth, error: supabaseAuthError } = await supabase.auth.getUser();
-
-    if (supabaseAuthError || !supabaseAuth?.user) {
-      return {
-        error: '認証済みのユーザー情報を取得できませんでした。ログインし直してください。',
-        success: null,
-        avatarUrl,
-      };
-    }
-
     const fileExtension =
       ((avatarFile as File).name?.split('.').pop() ||
         (avatarFile as File).type?.split('/').pop() ||
         'png')
         .toLowerCase()
         .replace(/[^a-z0-9]/g, '') || 'png';
-    const storagePath = `avatars/${supabaseAuth.user.id}.${fileExtension}`;
+    const storagePath = `avatars/${memberResult.value.id}.${fileExtension}`;
 
     const { error: uploadError } = await supabase.storage
       .from('TCV-images')
@@ -204,6 +234,7 @@ export async function updateCurrentMemberProfileAction(
   }
 
   const nextAvatarUrl = result.value.avatarUrl ?? avatarUrl ?? null;
+  const signedAvatarUrl = await signAvatarUrl(nextAvatarUrl);
 
   revalidatePath('/profile');
   revalidatePath('/onboarding');
@@ -214,7 +245,7 @@ export async function updateCurrentMemberProfileAction(
     redirect(redirectTo);
   }
 
-  return { error: null, success: '保存しました。', avatarUrl: nextAvatarUrl };
+  return { error: null, success: '保存しました。', avatarUrl: signedAvatarUrl };
 }
 
 export async function updateMemberGmailAction(
