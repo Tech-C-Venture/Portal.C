@@ -166,6 +166,9 @@ export async function updateCurrentMemberProfileAction(
       };
     }
     if (!studentId) return { error: '学籍番号を入力してください。', success: null, avatarUrl };
+    if (!gmailAddress) {
+      return { error: '私用Gmailアドレスを入力してください。', success: null, avatarUrl };
+    }
     if (!department) return { error: '所属専攻を入力してください。', success: null, avatarUrl };
     if (!enrollmentYear) {
       return { error: '入学年度を入力してください。', success: null, avatarUrl };
@@ -218,7 +221,7 @@ export async function updateCurrentMemberProfileAction(
   );
 
   const result = await useCase.execute(memberResult.value.id, {
-    studentId: studentId || undefined,
+    studentId: mode === 'onboarding' ? studentId || undefined : undefined,
     gmailAddress: gmailAddress || undefined,
     department: department || undefined,
     enrollmentYear,
