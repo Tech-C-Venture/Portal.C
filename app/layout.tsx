@@ -4,10 +4,12 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Providers } from "./providers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
+import { PwaRegister } from "@/components/PwaRegister";
 
 export const metadata: Metadata = {
   title: "Portal.C",
   description: "Tech.C Venture メンバー管理・イベント管理システム",
+  themeColor: "#0f172a",
 };
 
 export default async function RootLayout({
@@ -21,6 +23,7 @@ export default async function RootLayout({
   return (
     <html lang="ja">
       <body className="bg-gray-50 text-gray-900">
+        <PwaRegister />
         <Providers>
           {session && <Navigation roles={roles} />}
           <main className="container mx-auto min-h-screen px-4 py-8">
