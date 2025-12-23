@@ -105,7 +105,8 @@ async function ensureMemberOnSignIn(user: {
 
   if (data) {
     const normalizedName = user.name?.trim();
-    if (normalizedName && normalizedName !== data.name) {
+    const normalizedMemberName = data.name?.trim();
+    if (normalizedName && normalizedName !== normalizedMemberName) {
       const { error: updateError } = await supabase
         .from("members")
         .update({ name: normalizedName })
