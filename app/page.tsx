@@ -60,6 +60,51 @@ type TimetableRow = {
     instructor: string | null;
 };
 
+type TimeSlotRow = {
+    period: number;
+    start_time: string | null;
+    end_time: string | null;
+    label?: string | null;
+};
+
+function normalizeTimeValue(value: string | null): string {
+    if (!value) return "";
+    return value.length >= 5 ? value.slice(0, 5) : value;
+}
+
+async function getTimeSlotMap(): Promise<Map<number, string>> {
+    try {
+        const supabase = await DatabaseClient.getServerClient();
+        const { data, error } = await supabase
+            .from("timetable_time_slots")
+            .select("period, start_time, end_time, label")
+            .order("period", { ascending: true });
+
+        if (error) {
+            console.error("Failed to fetch time slots:", error);
+            return new Map();
+        }
+
+        const entries = ((data ?? []) as TimeSlotRow[])
+            .map((row) => {
+                const start = normalizeTimeValue(row.start_time);
+                const end = normalizeTimeValue(row.end_time);
+                const label = row.label?.trim() ?? "";
+                const range = start && end ? `${start}-${end}` : "";
+                return {
+                    period: row.period,
+                    value: range || label,
+                };
+            })
+            .filter((row) => row.value);
+
+        return new Map(entries.map((row) => [row.period, row.value]));
+    } catch (e) {
+        console.error("Error fetching time slots:", e);
+        return new Map();
+    }
+}
+
 async function getTodayTimetableRows(params: { major: string; grade: number; baseDate: Date }) {
     const { major, grade, baseDate } = params;
 
@@ -100,7 +145,6 @@ export default async function Home() {
         day: "2-digit",
         weekday: "short",
     });
-
 
     const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
 
@@ -180,6 +224,7 @@ export default async function Home() {
                 baseDate: now,
             })
             : [];
+    const timeSlotMap = await getTimeSlotMap();
 
     return (
         <div className="space-y-8">
@@ -382,7 +427,14 @@ export default async function Home() {
                         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {todayTimetable.map((t) => (
                                 <div key={t.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-                                    <p className="text-sm font-semibold text-gray-900">{t.period}限</p>
+                                    <p className="text-sm font-semibold text-gray-900">
+                                        {t.period}限
+                                        {timeSlotMap.get(t.period) && (
+                                            <span className="ml-2 text-xs font-medium text-gray-500">
+                                                {timeSlotMap.get(t.period)}
+                                            </span>
+                                        )}
+                                    </p>
                                     <p className="mt-1 text-sm text-gray-700">{t.course_name}</p>
                                     <p className="mt-1 text-xs text-gray-500">
                                         {[t.instructor, t.classroom].filter(Boolean).join(" / ") || "—"}
