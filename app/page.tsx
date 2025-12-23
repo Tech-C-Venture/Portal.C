@@ -75,7 +75,7 @@ function normalizeTimeValue(value: string | null): string {
 async function getTimeSlotMap(): Promise<Map<number, string>> {
     try {
         const supabase = await DatabaseClient.getServerClient();
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from("timetable_time_slots")
             .select("period, start_time, end_time, label")
             .order("period", { ascending: true });
