@@ -32,23 +32,33 @@ async function resolveEndSessionEndpoint(): Promise<string | null> {
   }
 }
 
-function clearAuthCookies(response: NextResponse) {
-  const cookieOptions = { maxAge: 0, path: "/" };
-  response.cookies.set("next-auth.session-token", "", cookieOptions);
-  response.cookies.set("__Secure-next-auth.session-token", "", cookieOptions);
-  response.cookies.set("next-auth.csrf-token", "", cookieOptions);
-  response.cookies.set("__Host-next-auth.csrf-token", "", cookieOptions);
-  response.cookies.set("next-auth.callback-url", "", cookieOptions);
+function clearAuthCookies(response: NextResponse, isSecure: boolean) {
+  const baseOptions = {
+    maxAge: 0,
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax" as const,
+  };
+
+  response.cookies.set("next-auth.session-token", "", baseOptions);
+  response.cookies.set("next-auth.csrf-token", "", baseOptions);
+  response.cookies.set("next-auth.callback-url", "", baseOptions);
+
+  const secureOptions = { ...baseOptions, secure: isSecure };
+  response.cookies.set("__Secure-next-auth.session-token", "", secureOptions);
+  response.cookies.set("__Secure-next-auth.callback-url", "", secureOptions);
+  response.cookies.set("__Host-next-auth.csrf-token", "", secureOptions);
 }
 
 export async function GET(request: NextRequest) {
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
   const endpoint = await resolveEndSessionEndpoint();
   const fallbackUrl = new URL("/login", request.url);
+  const isSecure = new URL(request.url).protocol === "https:";
 
   if (!endpoint) {
     const response = NextResponse.redirect(fallbackUrl);
-    clearAuthCookies(response);
+    clearAuthCookies(response, isSecure);
     return response;
   }
 
@@ -65,6 +75,6 @@ export async function GET(request: NextRequest) {
 
   const logoutUrl = `${endpoint}?${params.toString()}`;
   const response = NextResponse.redirect(logoutUrl);
-  clearAuthCookies(response);
+  clearAuthCookies(response, isSecure);
   return response;
 }
