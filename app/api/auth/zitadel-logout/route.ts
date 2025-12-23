@@ -13,7 +13,20 @@ async function resolveEndSessionEndpoint(): Promise<string | null> {
     const response = await fetch(`${issuer}/.well-known/openid-configuration`);
     if (!response.ok) return null;
     const config = (await response.json()) as { end_session_endpoint?: string };
-    return config.end_session_endpoint ?? null;
+    const discoveredEndpoint = config.end_session_endpoint ?? null;
+    if (!discoveredEndpoint) return null;
+
+    try {
+      const issuerUrl = new URL(issuer);
+      const endpointUrl = new URL(discoveredEndpoint);
+      if (issuerUrl.origin !== endpointUrl.origin) {
+        return null;
+      }
+    } catch {
+      return null;
+    }
+
+    return discoveredEndpoint;
   } catch {
     return null;
   }
