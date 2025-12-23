@@ -6,7 +6,6 @@ import { useFormStatus } from 'react-dom';
 import { Button } from '@openameba/spindle-ui';
 import '@openameba/spindle-ui/Button/Button.css';
 import type { MemberDTO } from '@/application/dtos';
-import { signOut } from 'next-auth/react';
 import {
   updateCurrentMemberProfileAction,
   type MemberProfileFormState,
@@ -36,7 +35,9 @@ function LogoutButton() {
       size="large"
       variant="outlined"
       layout="fullWidth"
-      onClick={() => signOut({ callbackUrl: "/login" })}
+      onClick={() => {
+        window.location.href = "/api/auth/zitadel-logout";
+      }}
     >
       ログアウト
     </Button>

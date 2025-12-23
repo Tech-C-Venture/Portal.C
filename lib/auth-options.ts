@@ -95,7 +95,7 @@ async function ensureMemberOnSignIn(user: {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("members")
-    .select("id")
+    .select("id, name")
     .eq("zitadel_id", user.id)
     .maybeSingle();
 
@@ -103,7 +103,19 @@ async function ensureMemberOnSignIn(user: {
     throw new Error(`Failed to check member: ${error.message}`);
   }
 
-  if (data) return;
+  if (data) {
+    const normalizedName = user.name?.trim();
+    if (normalizedName && normalizedName !== data.name) {
+      const { error: updateError } = await supabase
+        .from("members")
+        .update({ name: normalizedName })
+        .eq("id", data.id);
+      if (updateError) {
+        throw new Error(`Failed to update member name: ${updateError.message}`);
+      }
+    }
+    return;
+  }
 
   const enrollmentYear = new Date().getFullYear();
   const { error: insertError } = await supabase.from("members").insert({
