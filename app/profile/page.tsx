@@ -10,6 +10,16 @@ export default async function ProfilePage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">プロフィール</h1>
         <p className="text-gray-600">あなたの情報を編集</p>
+        <div className="mt-4">
+          <a
+            href="https://tech-c-venture-hvfvnm.us1.zitadel.cloud/ui/console"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            TCV認証基盤の設定をする
+          </a>
+        </div>
       </div>
 
       {needsOnboarding && (

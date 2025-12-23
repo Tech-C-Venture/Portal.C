@@ -102,6 +102,7 @@ cp .env.example .env
 # ZITADEL認証
 ZITADEL_ISSUER=https://your-zitadel-instance.zitadel.cloud
 ZITADEL_CLIENT_ID=your_client_id
+ZITADEL_END_SESSION_ENDPOINT=https://your-zitadel-instance.zitadel.cloud/oauth/v2/end_session  # 未設定でも自動取得可
 
 # NextAuth
 NEXTAUTH_SECRET=your_secret_key_here  # openssl rand -base64 32 で生成
@@ -114,6 +115,14 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
 **注意**: 環境変数の実際の値は、プロジェクトリードまたは運営メンバーから入手してください。
+
+#### ZITADELの追加設定
+
+- **ログインコールバック**: ZITADELのRedirect URIsに`http://localhost:3000/api/auth/callback/zitadel`を登録
+- **ログアウト後の戻り先**: ZITADELのPost Logout Redirect URIsに`http://localhost:3000/login`を登録
+- **ログアウトURL**: `/api/auth/zitadel-logout` がZITADELの`end_session_endpoint`へリダイレクトする
+- **表示名の同期**: ZITADELの表示名が変わると、次回サインイン時に`members.name`が更新される
+- **TCV認証基盤の設定**: プロフィール画面から`https://tech-c-venture-hvfvnm.us1.zitadel.cloud/ui/console`へ遷移できる
 
 ### 5. Supabaseのセットアップ
 

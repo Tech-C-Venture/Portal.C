@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 interface ExtendedProfile {
   sub: string;
   name?: string;
+  given_name?: string;
+  family_name?: string;
+  preferred_username?: string;
   email?: string;
   picture?: string;
   roles?: string[];
@@ -69,6 +72,47 @@ async function fetchUserInfoRoles(
   }
 }
 
+function resolveDisplayName(
+  profile: ExtendedProfile | null | undefined,
+  fallback: string | null
+): string | null {
+  const explicit = profile?.name?.trim();
+  if (explicit) return explicit;
+  const given = profile?.given_name?.trim();
+  const family = profile?.family_name?.trim();
+  if (given || family) {
+    return [family, given].filter(Boolean).join(" ").trim();
+  }
+  const preferred = profile?.preferred_username?.trim();
+  if (preferred) return preferred;
+  const fallbackValue = fallback?.trim();
+  return fallbackValue || null;
+}
+
+async function fetchUserInfoName(
+  endpoint: string,
+  accessToken?: string | null
+): Promise<string | null> {
+  if (!accessToken) return null;
+
+  try {
+    const response = await fetch(endpoint, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const profile = (await response.json()) as ExtendedProfile;
+    return resolveDisplayName(profile, null);
+  } catch {
+    return null;
+  }
+}
+
 function requireEnv(value: string | undefined, name: string): string {
   if (!value) {
     throw new Error(`${name} must be set`);
@@ -83,19 +127,31 @@ const userInfoEndpoint = requireEnv(
   "ZITADEL_USERINFO_ENDPOINT"
 );
 
+async function resolveUserName(
+  user: { name?: string | null },
+  profile?: ExtendedProfile | null,
+  accessToken?: string | null
+): Promise<string | null> {
+  const candidate = resolveDisplayName(profile, user.name ?? null);
+  if (candidate) return candidate;
+  return await fetchUserInfoName(userInfoEndpoint, accessToken);
+}
+
 async function ensureMemberOnSignIn(user: {
   id?: string;
   name?: string | null;
   email?: string | null;
-}) {
+}, profile?: ExtendedProfile | null, accessToken?: string | null) {
   if (!user?.id || !user.email) {
     throw new Error("ZITADEL user id/email is missing");
   }
 
   const supabase = createAdminClient();
+  const resolvedName = await resolveUserName(user, profile, accessToken);
+  const normalizedName = resolvedName?.trim() || null;
   const { data, error } = await supabase
     .from("members")
-    .select("id")
+    .select("id, name")
     .eq("zitadel_id", user.id)
     .maybeSingle();
 
@@ -103,13 +159,25 @@ async function ensureMemberOnSignIn(user: {
     throw new Error(`Failed to check member: ${error.message}`);
   }
 
-  if (data) return;
+  if (data) {
+    const normalizedMemberName = data.name?.trim();
+    if (normalizedName && normalizedName !== normalizedMemberName) {
+      const { error: updateError } = await supabase
+        .from("members")
+        .update({ name: normalizedName })
+        .eq("id", data.id);
+      if (updateError) {
+        throw new Error(`Failed to update member name: ${updateError.message}`);
+      }
+    }
+    return;
+  }
 
   const enrollmentYear = new Date().getFullYear();
   const { error: insertError } = await supabase.from("members").insert({
     zitadel_id: user.id,
     student_id: null,
-    name: user.name ?? user.email,
+    name: normalizedName ?? user.email,
     school_email: user.email,
     enrollment_year: enrollmentYear,
     major: null,
@@ -141,7 +209,7 @@ export const authOptions: NextAuthOptions = {
         const extendedProfile = profile as ExtendedProfile;
         return {
           id: extendedProfile.sub,
-          name: extendedProfile.name,
+          name: resolveDisplayName(extendedProfile, null),
           email: extendedProfile.email,
           image: extendedProfile.picture,
           roles: extractRoles(extendedProfile),
@@ -181,8 +249,12 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async signIn({ user }) {
-      await ensureMemberOnSignIn(user);
+    async signIn({ user, profile, account }) {
+      await ensureMemberOnSignIn(
+        user,
+        profile as ExtendedProfile | null,
+        (account?.access_token as string | null) ?? null
+      );
       return true;
     },
   },
