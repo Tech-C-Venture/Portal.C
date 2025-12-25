@@ -1,3 +1,21 @@
+jest.mock('next-auth/next', () => ({
+  getServerSession: jest.fn().mockResolvedValue({
+    user: {
+      id: 'test-user-id',
+      roles: ['admin'],
+    },
+  }),
+}));
+
+jest.mock('@/lib/auth-options', () => ({
+  authOptions: {
+    secret: 'test-secret',
+    providers: [], // No actual providers needed for this test
+    callbacks: {},
+    pages: { signIn: '/login' },
+  },
+}));
+
 jest.mock('@/infrastructure/di/setup', () => {
   const resolve = jest.fn();
   return {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import React from 'react';
 import "./globals.css";
 import { Navigation } from "@/components/layout/Navigation";
 import { Providers } from "./providers";

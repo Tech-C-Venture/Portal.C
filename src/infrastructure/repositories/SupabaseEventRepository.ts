@@ -94,6 +94,7 @@ export class SupabaseEventRepository implements IEventRepository {
         return [];
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return data.map((row: any) => row.member_id);
     } catch {
       return [];
@@ -145,6 +146,7 @@ export class SupabaseEventRepository implements IEventRepository {
     try {
       const supabase = await this.getClient();
       const insertData = this.toInsert(event);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from('events')
         .insert(insertData)
@@ -165,6 +167,7 @@ export class SupabaseEventRepository implements IEventRepository {
     try {
       const supabase = await this.getClient();
       const updateData = this.toUpdate(event);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from('events')
         .update(updateData)
@@ -204,6 +207,7 @@ export class SupabaseEventRepository implements IEventRepository {
   async registerMember(eventId: string, memberId: string): Promise<Result<void>> {
     try {
       const supabase = await this.getClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any).rpc('register_for_event', {
         p_event_id: eventId,
         p_member_id: memberId,
@@ -225,6 +229,7 @@ export class SupabaseEventRepository implements IEventRepository {
   async unregisterMember(eventId: string, memberId: string): Promise<Result<void>> {
     try {
       const supabase = await this.getClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any).rpc('unregister_from_event', {
         p_event_id: eventId,
         p_member_id: memberId,

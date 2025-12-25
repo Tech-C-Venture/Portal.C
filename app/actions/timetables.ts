@@ -53,6 +53,7 @@ export async function createPublicTimetableAction(
 
   const year = new Date().getFullYear();
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: timeSlot, error: timeSlotError } = await (supabase as any)
     .from('timetable_time_slots')
     .select('id, period')
@@ -66,6 +67,7 @@ export async function createPublicTimetableAction(
     return { error: '選択した時間帯が見つかりませんでした。', success: null };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from('timetables').insert({
     member_id: null,
     day_of_week: dayOfWeek,
@@ -125,6 +127,7 @@ export async function createTimeSlotAction(
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('timetable_time_slots')
     .insert({
@@ -182,6 +185,7 @@ export async function updateTimeSlotAction(
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('timetable_time_slots')
     .update({
@@ -214,6 +218,7 @@ export async function deleteTimeSlotAction(formData: FormData): Promise<void> {
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('timetable_time_slots')
     .delete()
@@ -240,6 +245,7 @@ export async function deletePublicTimetableAction(
   }
 
   const supabase = DatabaseClient.getAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('timetables')
     .delete()
