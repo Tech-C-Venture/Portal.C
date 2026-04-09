@@ -40,8 +40,8 @@ describe('Layer dependency lint rules', () => {
 
   test('flags application -> infrastructure dependency', () => {
     const result = runEslint(
-      `import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
-       export const client = DatabaseClient;`,
+      `import { DatastoreClient } from '@/infrastructure/database/DatastoreClient';
+       export const client = DatastoreClient;`,
       'src/application/example.ts'
     );
     expect(result.status).not.toBe(0);
@@ -49,8 +49,8 @@ describe('Layer dependency lint rules', () => {
 
   test('flags presentation -> infrastructure dependency', () => {
     const result = runEslint(
-      `import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
-       export const client = DatabaseClient;`,
+      `import { DatastoreClient } from '@/infrastructure/database/DatastoreClient';
+       export const client = DatastoreClient;`,
       'app/example.tsx'
     );
     expect(result.status).not.toBe(0);

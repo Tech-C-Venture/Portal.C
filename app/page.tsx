@@ -20,7 +20,7 @@ import type { Event } from "@/domain/entities/Event";
 import { isMemberRegistered } from "@/domain/entities/Event";
 import { getCurrentUser } from "@/lib/auth";
 import { hasValidStatus, calculateGrade } from "@/domain/entities/Member";
-import { DatabaseClient } from "@/infrastructure/database/DatabaseClient";
+import { getDb } from "@/lib/firebase/admin";
 import { FiMapPin, FiUsers, FiMessageCircle } from "react-icons/fi";
 
 async function getEvents(): Promise<Event[]> {
@@ -60,13 +60,6 @@ type TimetableRow = {
     instructor: string | null;
 };
 
-type TimeSlotRow = {
-    period: number;
-    start_time: string | null;
-    end_time: string | null;
-    label?: string | null;
-};
-
 function normalizeTimeValue(value: string | null): string {
     if (!value) return "";
     return value.length >= 5 ? value.slice(0, 5) : value;
@@ -74,25 +67,21 @@ function normalizeTimeValue(value: string | null): string {
 
 async function getTimeSlotMap(): Promise<Map<number, string>> {
     try {
-        const supabase = await DatabaseClient.getServerClient();
-        const { data, error } = await (supabase as any)
-            .from("timetable_time_slots")
-            .select("period, start_time, end_time, label")
-            .order("period", { ascending: true });
+        const db = getDb();
+        const snap = await db
+            .collection("timetable_time_slots")
+            .orderBy("period", "asc")
+            .get();
 
-        if (error) {
-            console.error("Failed to fetch time slots:", error);
-            return new Map();
-        }
-
-        const entries = ((data ?? []) as TimeSlotRow[])
-            .map((row) => {
-                const start = normalizeTimeValue(row.start_time);
-                const end = normalizeTimeValue(row.end_time);
-                const label = row.label?.trim() ?? "";
+        const entries = snap.docs
+            .map((doc) => {
+                const data = doc.data();
+                const start = normalizeTimeValue(data.start_time ?? null);
+                const end = normalizeTimeValue(data.end_time ?? null);
+                const label = (data.label as string)?.trim() ?? "";
                 const range = start && end ? `${start}-${end}` : "";
                 return {
-                    period: row.period,
+                    period: data.period as number,
                     value: range || label,
                 };
             })
@@ -108,28 +97,36 @@ async function getTimeSlotMap(): Promise<Map<number, string>> {
 async function getTodayTimetableRows(params: { major: string; grade: number; baseDate: Date }) {
     const { major, grade, baseDate } = params;
 
-    // 日曜(0)/土曜(6)は基本表示なし（必要なら後で変更できます）
+    // 日曜(0)/土曜(6)は基本表示なし
     const dayOfWeek = baseDate.getDay();
     if (dayOfWeek === 0 || dayOfWeek === 6) return [];
 
     try {
-        const supabase = await DatabaseClient.getServerClient();
+        const db = getDb();
+        const snap = await db
+            .collection("timetables")
+            .where("major", "==", major)
+            .where("grade", "==", grade)
+            .where("is_public", "==", true)
+            .where("day_of_week", "==", dayOfWeek)
+            .get();
 
-        const { data, error } = await supabase
-            .from("timetables")
-            .select("id, day_of_week, period, course_name, classroom, instructor")
-            .eq("major", major)
-            .eq("grade", grade)
-            .eq("is_public", true)
-            .eq("day_of_week", dayOfWeek)
-            .order("period", { ascending: true });
+        const rows = snap.docs
+            .map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    day_of_week: data.day_of_week,
+                    period: data.period,
+                    course_name: data.course_name,
+                    classroom: data.classroom ?? null,
+                    instructor: data.instructor ?? null,
+                } as TimetableRow;
+            })
+            .filter((r) => typeof r.period === "number")
+            .sort((a, b) => a.period - b.period);
 
-        if (error) {
-            console.error("Failed to fetch timetables:", error);
-            return [];
-        }
-
-        return ((data ?? []) as TimetableRow[]).filter((r) => typeof r.period === "number");
+        return rows;
     } catch (e) {
         console.error("Error fetching timetables:", e);
         return [];
@@ -387,7 +384,6 @@ export default async function Home() {
                                                 )}
                                             </div>
 
-                                            {/* 💬 → react-icons に置換 */}
                                             <p className="mt-2 text-sm text-gray-700 inline-flex items-center gap-1">
                                                 <FiMessageCircle className="h-4 w-4" aria-hidden />
                                                 {s.message}

@@ -12,7 +12,7 @@ import type { UpdateMemberProfileUseCase } from '@/application/use-cases/UpdateM
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/auth';
-import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+import { getDb, getFirebaseStorage } from '@/lib/firebase/admin';
 import { Email } from '@/domain/value-objects/Email';
 
 export interface MemberProfileFormState {
@@ -32,29 +32,34 @@ async function signAvatarUrl(
   if (!avatarUrl) return undefined;
 
   try {
-    const url = new URL(avatarUrl);
-    const publicPrefix = '/storage/v1/object/public/';
-    const signedPrefix = '/storage/v1/object/sign/';
-    const prefix = url.pathname.startsWith(publicPrefix)
-      ? publicPrefix
-      : url.pathname.startsWith(signedPrefix)
-        ? signedPrefix
-        : null;
+    // Firebase Storage URLの場合、署名付きURLを生成
+    if (avatarUrl.includes('storage.googleapis.com') || avatarUrl.startsWith('gs://')) {
+      const storage = getFirebaseStorage();
+      const bucket = storage.bucket();
+      // gs:// URLからパスを抽出
+      let filePath = avatarUrl;
+      if (avatarUrl.startsWith('gs://')) {
+        filePath = avatarUrl.replace(/^gs:\/\/[^/]+\//, '');
+      } else {
+        // HTTPS URLからパスを抽出
+        const url = new URL(avatarUrl);
+        const pathMatch = url.pathname.match(/\/o\/(.+?)(\?|$)/);
+        if (pathMatch) {
+          filePath = decodeURIComponent(pathMatch[1]);
+        } else {
+          return avatarUrl;
+        }
+      }
 
-    if (!prefix) return avatarUrl;
+      const file = bucket.file(filePath);
+      const [signedUrl] = await file.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + 365 * 24 * 60 * 60 * 1000,
+      });
+      return signedUrl;
+    }
 
-    const rest = url.pathname.slice(prefix.length);
-    const [bucket, ...pathParts] = rest.split('/');
-    if (!bucket || pathParts.length === 0) return avatarUrl;
-
-    const path = pathParts.join('/');
-    const supabase = DatabaseClient.getAdminClient();
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(path, 60 * 60 * 24 * 365);
-    if (error || !data?.signedUrl) return avatarUrl;
-
-    return data.signedUrl;
+    return avatarUrl;
   } catch {
     return avatarUrl;
   }
@@ -188,32 +193,38 @@ export async function updateCurrentMemberProfileAction(
   }
 
   if (hasNewAvatar) {
-    const supabase = await DatabaseClient.getServerClient();
-    const fileExtension =
-      ((avatarFile as File).name?.split('.').pop() ||
-        (avatarFile as File).type?.split('/').pop() ||
-        'png')
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '') || 'png';
-    const storagePath = `avatars/${memberResult.value.id}.${fileExtension}`;
+    try {
+      const storage = getFirebaseStorage();
+      const bucket = storage.bucket();
+      const fileExtension =
+        ((avatarFile as File).name?.split('.').pop() ||
+          (avatarFile as File).type?.split('/').pop() ||
+          'png')
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '') || 'png';
+      const storagePath = `avatars/${memberResult.value.id}.${fileExtension}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('TCV-images')
-      .upload(storagePath, avatarFile as File, {
-        upsert: true,
-        contentType: (avatarFile as File).type || undefined,
+      const buffer = Buffer.from(await (avatarFile as File).arrayBuffer());
+      const file = bucket.file(storagePath);
+      await file.save(buffer, {
+        metadata: {
+          contentType: (avatarFile as File).type || 'image/png',
+        },
       });
 
-    if (uploadError) {
+      // 公開URLを取得（または署名付きURL）
+      const [signedUrl] = await file.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + 365 * 24 * 60 * 60 * 1000,
+      });
+      avatarUrl = signedUrl;
+    } catch (uploadError) {
       return {
-        error: `アイコンのアップロードに失敗しました: ${uploadError.message}`,
+        error: `アイコンのアップロードに失敗しました: ${(uploadError as Error).message}`,
         success: null,
         avatarUrl,
       };
     }
-
-    const { data } = supabase.storage.from('TCV-images').getPublicUrl(storagePath);
-    avatarUrl = data.publicUrl;
   }
 
   const useCase = container.resolve<UpdateMemberProfileUseCase>(
@@ -279,21 +290,21 @@ export async function updateMemberGmailAction(
     return { error: (error as Error).message, success: null };
   }
 
-  const supabase = DatabaseClient.getAdminClient();
-  const { data, error } = await (supabase as any)
-    .from('members')
-    .update({ gmail_address: gmailRaw.toLowerCase() })
-    .eq('school_email', schoolEmailRaw.toLowerCase())
-    .select('id');
+  const db = getDb();
+  const snap = await db
+    .collection('members')
+    .where('school_email', '==', schoolEmailRaw.toLowerCase())
+    .get();
 
-  if (error) {
-    return { error: `更新に失敗しました: ${error.message}`, success: null };
-  }
-
-  const updatedCount = Array.isArray(data) ? data.length : 0;
-  if (updatedCount === 0) {
+  if (snap.empty) {
     return { error: '該当するメンバーが見つかりませんでした。', success: null };
   }
 
-  return { error: null, success: `私用Gmailを更新しました（${updatedCount}件）。` };
+  const batch = db.batch();
+  snap.docs.forEach((doc) => {
+    batch.update(doc.ref, { gmail_address: gmailRaw.toLowerCase() });
+  });
+  await batch.commit();
+
+  return { error: null, success: `私用Gmailを更新しました（${snap.size}件）。` };
 }

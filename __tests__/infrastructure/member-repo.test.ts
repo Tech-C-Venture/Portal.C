@@ -1,69 +1,81 @@
-import { SupabaseMemberRepository } from '@/infrastructure/repositories/SupabaseMemberRepository';
+import { FirestoreMemberRepository } from '@/infrastructure/repositories/FirestoreMemberRepository';
 import type { Member } from '@/domain/entities/Member';
 
-jest.mock('@/infrastructure/database/DatabaseClient', () => {
-  let inserted: any = null;
+const mockMemberDoc = {
+  zitadel_id: 'S2024001',
+  student_id: null,
+  name: 'Alice',
+  school_email: 'alice@example.ed.jp',
+  gmail_address: null,
+  enrollment_year: 2023,
+  is_repeating: false,
+  repeat_years: null,
+  major: 'CS',
+  onboarding_completed: false,
+  current_status: null,
+  status_updated_at: null,
+  avatar_url: null,
+  skills: [],
+  interests: [],
+  created_at: { toDate: () => new Date() },
+  updated_at: { toDate: () => new Date() },
+};
 
-  const table = {
-    row: {
-      id: 'member-1',
-      zitadel_id: 'S2024001',
-      name: 'Alice',
-      school_email: 'alice@example.ed.jp',
-      gmail_address: null,
-      enrollment_year: 2023,
-      is_repeating: false,
-      major: 'CS',
-      current_status: null,
-      status_updated_at: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
+let lastSetData: any = null;
+
+jest.mock('@/lib/firebase/admin', () => {
+  const mockDoc = {
+    id: 'member-1',
+    exists: true,
+    data: () => ({ ...mockMemberDoc }),
+    ref: { update: jest.fn() },
   };
 
-  const query = {
-    data: table.row,
-    error: null,
-    select() {
-      return this;
-    },
-    eq() {
-      return this;
-    },
-    single: async () => ({ data: table.row, error: null }),
-    insert: (payload: any) => {
-      inserted = payload;
-      return query;
-    },
-    update: () => query,
-    delete: () => query,
+  const mockCollection = {
+    doc: (id: string) => ({
+      get: async () => mockDoc,
+      set: async (data: any) => { lastSetData = data; },
+      delete: async () => {},
+    }),
+    where: () => ({
+      limit: () => ({
+        get: async () => ({
+          empty: false,
+          docs: [mockDoc],
+        }),
+      }),
+      get: async () => ({
+        empty: false,
+        docs: [mockDoc],
+      }),
+    }),
+    get: async () => ({
+      docs: [mockDoc],
+    }),
+    add: async (data: any) => { lastSetData = data; return { id: 'new-id' }; },
   };
 
   return {
-    DatabaseClient: {
-      async getServerClient() {
-        return {
-          from: () => query,
-        };
-      },
-      __getInserted: () => inserted,
-      __reset: () => {
-        inserted = null;
-      },
-    },
+    getDb: () => ({
+      collection: () => mockCollection,
+      batch: () => ({
+        set: jest.fn(),
+        delete: jest.fn(),
+        commit: async () => {},
+      }),
+    }),
+    getFirebaseStorage: () => ({}),
   };
 });
 
-const { DatabaseClient } = jest.requireMock('@/infrastructure/database/DatabaseClient');
-
-describe('SupabaseMemberRepository mappings', () => {
-  const repo = new SupabaseMemberRepository();
+describe('FirestoreMemberRepository mappings', () => {
+  const repo = new FirestoreMemberRepository();
 
   beforeEach(() => {
-    DatabaseClient.__reset();
+    lastSetData = null;
   });
 
-  test('findById maps DB row to domain entity', async () => {
+  test('findById maps Firestore doc to domain entity', async () => {
     const result = await repo.findById('member-1');
     expect(result.success).toBe(true);
     if (result.success && result.value) {
@@ -73,15 +85,14 @@ describe('SupabaseMemberRepository mappings', () => {
     }
   });
 
-  test('create maps domain entity to insert payload', async () => {
+  test('create maps domain entity to Firestore document', async () => {
     const memberResult = await repo.findById('member-1');
     if (!memberResult.success || !memberResult.value) {
       throw new Error('failed to setup member');
     }
     const saveResult = await repo.create(memberResult.value);
     expect(saveResult.success).toBe(true);
-    const inserted = DatabaseClient.__getInserted();
-    expect(inserted).toMatchObject({
+    expect(lastSetData).toMatchObject({
       school_email: 'alice@example.ed.jp',
       enrollment_year: 2023,
     });

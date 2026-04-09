@@ -1,3 +1,3 @@
-import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+import { DatastoreClient } from '@/infrastructure/database/DatastoreClient';
 
-export const client = DatabaseClient;
+export const client = DatastoreClient;

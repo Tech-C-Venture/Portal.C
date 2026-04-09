@@ -5,7 +5,7 @@
 
 import { Container } from '../container';
 import { REPOSITORY_KEYS, USE_CASE_KEYS } from '../keys';
-import { SupabaseMemberRepository } from '../../repositories/SupabaseMemberRepository';
+import { FirestoreMemberRepository } from '../../repositories/FirestoreMemberRepository';
 import { GetMemberProfileUseCase } from '@/application/use-cases/GetMemberProfileUseCase';
 import { UpdateMemberProfileUseCase } from '@/application/use-cases/UpdateMemberProfileUseCase';
 
@@ -13,7 +13,7 @@ export function memberModule(container: Container): Container {
   // Repository
   container.bindSingleton(
     REPOSITORY_KEYS.MEMBER,
-    () => new SupabaseMemberRepository()
+    () => new FirestoreMemberRepository()
   );
 
   // Use Cases

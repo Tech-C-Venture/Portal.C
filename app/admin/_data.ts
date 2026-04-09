@@ -6,7 +6,7 @@ import type { EventDTO } from '@/application/dtos/EventDTO';
 import type { MemberDTO } from '@/application/dtos/MemberDTO';
 import { EventMapper } from '@/application/mappers/EventMapper';
 import { MemberMapper } from '@/application/mappers/MemberMapper';
-import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+import { getDb } from '@/lib/firebase/admin';
 
 export type EventWithParticipants = {
   event: EventDTO;
@@ -78,22 +78,52 @@ export async function getEventParticipantsByEventId(
 }
 
 export async function getTimetableSummaries(): Promise<TimetableSummary[]> {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await supabase
-    .from('timetable_by_grade_major')
-    .select(
-      'member_id, member_name, current_grade, major, day_of_week, period, course_name, semester, year'
-    );
+  const db = getDb();
+  // timetable_by_grade_major ビューは存在しないため、timetablesとmembersからJOIN相当の処理を行う
+  const timetableSnap = await db
+    .collection('timetables')
+    .where('member_id', '!=', null)
+    .get();
+
+  const memberIds = new Set<string>();
+  for (const doc of timetableSnap.docs) {
+    const memberId = doc.data().member_id;
+    if (memberId) memberIds.add(memberId);
+  }
+
+  // メンバー情報を一括取得
+  const memberMap = new Map<string, { name: string; grade: number; major: string | null }>();
+  if (memberIds.size > 0) {
+    const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
+    const membersResult = await memberRepository.findAll();
+    if (membersResult.success) {
+      for (const m of membersResult.value) {
+        const { calculateGrade } = await import('@/domain/entities/Member');
+        memberMap.set(m.id, {
+          name: m.name,
+          grade: calculateGrade(m),
+          major: m.department || null,
+        });
+      }
+    }
+  }
 
   const timetableMap = new Map<string, TimetableSummary>();
-  for (const row of data ?? []) {
-    const current = timetableMap.get(row.member_id);
+  for (const doc of timetableSnap.docs) {
+    const data = doc.data();
+    const memberId = data.member_id;
+    if (!memberId) continue;
+
+    const member = memberMap.get(memberId);
+    if (!member) continue;
+
+    const current = timetableMap.get(memberId);
     if (!current) {
-      timetableMap.set(row.member_id, {
-        memberId: row.member_id,
-        memberName: row.member_name,
-        grade: row.current_grade,
-        major: row.major,
+      timetableMap.set(memberId, {
+        memberId,
+        memberName: member.name,
+        grade: member.grade,
+        major: member.major,
         slotCount: 1,
       });
     } else {
@@ -130,62 +160,67 @@ function normalizeTimeValue(value: string | null): string {
 }
 
 export async function getTimeSlots(): Promise<TimeSlotEntry[]> {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await (supabase as any)
-    .from('timetable_time_slots')
-    .select('id, period, label, start_time, end_time, is_active')
-    .order('period', { ascending: true });
+  const db = getDb();
+  const snap = await db
+    .collection('timetable_time_slots')
+    .orderBy('period', 'asc')
+    .get();
 
-  return (
-    data?.map((row: any) => ({
-      id: row.id,
-      period: row.period,
-      label: row.label,
-      startTime: normalizeTimeValue(String(row.start_time ?? '')),
-      endTime: normalizeTimeValue(String(row.end_time ?? '')),
-      isActive: row.is_active,
-    })) ?? []
-  );
+  return snap.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      period: data.period,
+      label: data.label,
+      startTime: normalizeTimeValue(String(data.start_time ?? '')),
+      endTime: normalizeTimeValue(String(data.end_time ?? '')),
+      isActive: data.is_active,
+    };
+  });
 }
 
 export async function getPublicTimetables(): Promise<PublicTimetableEntry[]> {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await supabase
-    .from('timetables')
-    .select(
-      'id, day_of_week, period, course_name, grade, major, classroom, instructor'
-    )
-    .eq('is_public', true)
-    .order('grade', { ascending: true })
-    .order('major', { ascending: true })
-    .order('day_of_week', { ascending: true })
-    .order('period', { ascending: true });
+  const db = getDb();
+  const snap = await db
+    .collection('timetables')
+    .where('is_public', '==', true)
+    .get();
 
-  return (
-    data?.map((row) => ({
-      id: row.id,
-      dayOfWeek: row.day_of_week,
-      period: row.period,
-      courseName: row.course_name,
-      grade: row.grade,
-      major: row.major,
-      classroom: row.classroom,
-      instructor: row.instructor,
-    })) ?? []
-  );
+  const entries = snap.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      dayOfWeek: data.day_of_week,
+      period: data.period,
+      courseName: data.course_name,
+      grade: data.grade ?? null,
+      major: data.major ?? null,
+      classroom: data.classroom ?? null,
+      instructor: data.instructor ?? null,
+    };
+  });
+
+  // Firestoreはmulti-field orderByに複合インデックスが必要なため、JS側でソート
+  entries.sort((a, b) => {
+    if ((a.grade ?? 0) !== (b.grade ?? 0)) return (a.grade ?? 0) - (b.grade ?? 0);
+    if ((a.major ?? '') !== (b.major ?? '')) return (a.major ?? '').localeCompare(b.major ?? '');
+    if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
+    return a.period - b.period;
+  });
+
+  return entries;
 }
 
 export async function getParticipationCounts(): Promise<Map<string, number>> {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await supabase
-    .from('event_participants')
-    .select('member_id');
+  const db = getDb();
+  const snap = await db.collection('event_participants').get();
 
   const participationCounts = new Map<string, number>();
-  for (const row of data ?? []) {
+  for (const doc of snap.docs) {
+    const memberId = doc.data().member_id;
     participationCounts.set(
-      row.member_id,
-      (participationCounts.get(row.member_id) ?? 0) + 1
+      memberId,
+      (participationCounts.get(memberId) ?? 0) + 1
     );
   }
 
@@ -205,25 +240,42 @@ export type EventParticipationStat = {
 export async function getEventParticipationStats(): Promise<
   EventParticipationStat[]
 > {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await supabase
-    .from('event_participation_stats')
-    .select(
-      'event_id, title, event_date, capacity, registered_count, participated_count, available_spots'
-    )
-    .order('event_date', { ascending: false });
+  const db = getDb();
 
-  return (
-    data?.map((row) => ({
-      eventId: row.event_id,
-      title: row.title,
-      eventDate: row.event_date,
-      capacity: row.capacity,
-      registeredCount: row.registered_count,
-      participatedCount: row.participated_count,
-      availableSpots: row.available_spots,
-    })) ?? []
-  );
+  // イベント一覧取得
+  const eventsSnap = await db
+    .collection('events')
+    .orderBy('event_date', 'desc')
+    .get();
+
+  // 全参加者取得
+  const participantsSnap = await db.collection('event_participants').get();
+
+  // イベントごとに集計
+  const participantsByEvent = new Map<string, { registered: number; participated: number }>();
+  for (const doc of participantsSnap.docs) {
+    const data = doc.data();
+    const eventId = data.event_id;
+    const current = participantsByEvent.get(eventId) ?? { registered: 0, participated: 0 };
+    current.registered += 1;
+    if (data.participated) current.participated += 1;
+    participantsByEvent.set(eventId, current);
+  }
+
+  return eventsSnap.docs.map((doc) => {
+    const data = doc.data();
+    const stats = participantsByEvent.get(doc.id) ?? { registered: 0, participated: 0 };
+    const capacity = data.capacity ?? null;
+    return {
+      eventId: doc.id,
+      title: data.title,
+      eventDate: data.event_date?.toDate()?.toISOString() ?? '',
+      capacity,
+      registeredCount: stats.registered,
+      participatedCount: stats.participated,
+      availableSpots: capacity !== null ? Math.max(0, capacity - stats.registered) : null,
+    };
+  });
 }
 
 export type MemberParticipation = {
@@ -238,37 +290,56 @@ export type MemberParticipation = {
 export async function getMemberParticipations(
   memberId: string
 ): Promise<MemberParticipation[]> {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await supabase
-    .from('event_participants')
-    .select(
-      'event_id, registered_at, participated, events (id, title, event_date, location)'
-    )
-    .eq('member_id', memberId)
-    .order('registered_at', { ascending: false });
+  const db = getDb();
+  const snap = await db
+    .collection('event_participants')
+    .where('member_id', '==', memberId)
+    .get();
 
-  return (
-    data?.map((row: any) => ({
-      eventId: row.event_id,
-      title: row.events?.title ?? '不明なイベント',
-      eventDate: row.events?.event_date ?? row.registered_at,
-      location: row.events?.location ?? null,
-      registeredAt: row.registered_at,
-      participated: Boolean(row.participated),
-    })) ?? []
-  );
+  if (snap.empty) return [];
+
+  // イベント情報を一括取得
+  const eventIds = snap.docs.map((doc) => doc.data().event_id);
+  const uniqueEventIds = [...new Set(eventIds)];
+  const eventMap = new Map<string, { title: string; event_date: any; location: string | null }>();
+
+  for (const eventId of uniqueEventIds) {
+    const eventSnap = await db.collection('events').doc(eventId).get();
+    if (eventSnap.exists) {
+      const data = eventSnap.data()!;
+      eventMap.set(eventId, {
+        title: data.title,
+        event_date: data.event_date,
+        location: data.location ?? null,
+      });
+    }
+  }
+
+  const results = snap.docs.map((doc) => {
+    const data = doc.data();
+    const event = eventMap.get(data.event_id);
+    return {
+      eventId: data.event_id,
+      title: event?.title ?? '不明なイベント',
+      eventDate: event?.event_date?.toDate()?.toISOString() ?? data.registered_at?.toDate()?.toISOString() ?? '',
+      location: event?.location ?? null,
+      registeredAt: data.registered_at?.toDate()?.toISOString() ?? '',
+      participated: Boolean(data.participated),
+    };
+  });
+
+  // registered_atで降順ソート
+  results.sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
+
+  return results;
 }
 
 export async function getAverageParticipationRate(): Promise<number | null> {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await supabase
-    .from('event_participation_stats')
-    .select('capacity, registered_count');
+  const stats = await getEventParticipationStats();
 
-  // Note: Unbounded events should be summarized via average participants.
-  const capacityRates = (data ?? [])
-    .filter((row) => row.capacity && row.capacity > 0)
-    .map((row) => row.registered_count / (row.capacity ?? 1));
+  const capacityRates = stats
+    .filter((s) => s.capacity && s.capacity > 0)
+    .map((s) => s.registeredCount / (s.capacity ?? 1));
 
   if (capacityRates.length === 0) {
     return null;
@@ -282,12 +353,9 @@ export async function getAverageParticipationRate(): Promise<number | null> {
 }
 
 export async function getAverageParticipants(): Promise<number | null> {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await supabase
-    .from('event_participation_stats')
-    .select('capacity, registered_count');
+  const stats = await getEventParticipationStats();
 
-  const counts = (data ?? []).map((row) => row.registered_count);
+  const counts = stats.map((s) => s.registeredCount);
 
   if (counts.length === 0) {
     return null;

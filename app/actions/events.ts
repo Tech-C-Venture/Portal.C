@@ -7,8 +7,9 @@ import type { IMemberRepository } from '@/application/ports/IMemberRepository';
 import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+import { getDb } from '@/lib/firebase/admin';
 import { createEvent } from '@/domain/entities/Event';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 export interface CreateEventFormState {
   error: string | null;
@@ -103,23 +104,22 @@ export async function createEventAction(
     return { error: (error as Error).message, success: null };
   }
 
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('events')
-    .insert({
-      id: eventId,
+  const db = getDb();
+  try {
+    await db.collection('events').doc(eventId).set({
       title,
-      description,
-      event_date: startDate.toISOString(),
-      location,
+      description: description || null,
+      event_date: Timestamp.fromDate(startDate),
+      location: location || null,
       capacity: capacity ?? null,
       online_url: onlineUrl ?? null,
       online_password: onlinePassword ?? null,
       created_by: createdBy,
+      created_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     });
-
-  if (error) {
-    return { error: `Failed to create event: ${error.message}`, success: null };
+  } catch (error) {
+    return { error: `Failed to create event: ${(error as Error).message}`, success: null };
   }
 
   revalidatePath('/admin');
@@ -151,42 +151,38 @@ export async function registerForEventAction(
   }
 
   const memberId = memberResult.value.id;
-  const supabase = DatabaseClient.getAdminClient();
+  const db = getDb();
 
-  const { data: stats, error: statsError } = await supabase
-    .from('event_participation_stats')
-    .select('capacity, registered_count')
-    .eq('event_id', eventId)
-    .maybeSingle();
-
-  if (statsError) {
-    return { error: `参加登録に失敗しました: ${statsError.message}`, success: null };
-  }
-  if (!stats) {
+  // イベントの定員チェック
+  const eventSnap = await db.collection('events').doc(eventId).get();
+  if (!eventSnap.exists) {
     return { error: 'イベントが見つかりませんでした。', success: null };
   }
-  if (stats.capacity !== null && stats.registered_count >= stats.capacity) {
-    return { error: 'このイベントは満員です。', success: null };
+  const eventData = eventSnap.data()!;
+
+  if (eventData.capacity !== null && eventData.capacity !== undefined) {
+    const participantsSnap = await db
+      .collection('event_participants')
+      .where('event_id', '==', eventId)
+      .get();
+    if (participantsSnap.size >= eventData.capacity) {
+      return { error: 'このイベントは満員です。', success: null };
+    }
   }
 
-  const { data: existing } = await supabase
-    .from('event_participants')
-    .select('member_id')
-    .eq('event_id', eventId)
-    .eq('member_id', memberId)
-    .maybeSingle();
-
-  if (existing) {
+  // 重複チェック
+  const docId = `${eventId}_${memberId}`;
+  const existingSnap = await db.collection('event_participants').doc(docId).get();
+  if (existingSnap.exists) {
     return { error: 'すでに参加登録済みです。', success: null };
   }
 
-  const { error: insertError } = await supabase
-    .from('event_participants')
-    .insert({ event_id: eventId, member_id: memberId });
-
-  if (insertError) {
-    return { error: `参加登録に失敗しました: ${insertError.message}`, success: null };
-  }
+  await db.collection('event_participants').doc(docId).set({
+    event_id: eventId,
+    member_id: memberId,
+    registered_at: FieldValue.serverTimestamp(),
+    participated: false,
+  });
 
   revalidatePath('/events');
   revalidatePath('/admin');
@@ -217,31 +213,15 @@ export async function unregisterFromEventAction(
   }
 
   const memberId = memberResult.value.id;
-  const supabase = DatabaseClient.getAdminClient();
+  const db = getDb();
+  const docId = `${eventId}_${memberId}`;
+  const existingSnap = await db.collection('event_participants').doc(docId).get();
 
-  const { data: existing } = await supabase
-    .from('event_participants')
-    .select('member_id')
-    .eq('event_id', eventId)
-    .eq('member_id', memberId)
-    .maybeSingle();
-
-  if (!existing) {
+  if (!existingSnap.exists) {
     return { error: '参加登録が見つかりませんでした。', success: null };
   }
 
-  const { error: deleteError } = await supabase
-    .from('event_participants')
-    .delete()
-    .eq('event_id', eventId)
-    .eq('member_id', memberId);
-
-  if (deleteError) {
-    return {
-      error: `キャンセルに失敗しました: ${deleteError.message}`,
-      success: null,
-    };
-  }
+  await db.collection('event_participants').doc(docId).delete();
 
   revalidatePath('/events');
   revalidatePath('/admin');
@@ -309,22 +289,20 @@ export async function updateEventAction(
     return { error: (error as Error).message, success: null };
   }
 
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('events')
-    .update({
+  const db = getDb();
+  try {
+    await db.collection('events').doc(eventId).update({
       title,
-      description,
-      event_date: startDate.toISOString(),
-      location,
+      description: description || null,
+      event_date: Timestamp.fromDate(startDate),
+      location: location || null,
       capacity: capacity ?? null,
       online_url: onlineUrl ?? null,
       online_password: onlinePassword ?? null,
-    })
-    .eq('id', eventId);
-
-  if (error) {
-    return { error: `更新に失敗しました: ${error.message}`, success: null };
+      updated_at: FieldValue.serverTimestamp(),
+    });
+  } catch (error) {
+    return { error: `更新に失敗しました: ${(error as Error).message}`, success: null };
   }
 
   revalidatePath('/events');
@@ -347,15 +325,18 @@ export async function deleteEventAction(
     throw new Error('イベントIDが取得できませんでした。');
   }
 
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('events')
-    .delete()
-    .eq('id', eventId);
+  const db = getDb();
 
-  if (error) {
-    throw new Error(`削除に失敗しました: ${error.message}`);
-  }
+  // 参加者レコードも削除
+  const participantSnap = await db
+    .collection('event_participants')
+    .where('event_id', '==', eventId)
+    .get();
+
+  const batch = db.batch();
+  participantSnap.docs.forEach((doc) => batch.delete(doc.ref));
+  batch.delete(db.collection('events').doc(eventId));
+  await batch.commit();
 
   revalidatePath('/events');
   revalidatePath('/admin');

@@ -3,7 +3,7 @@ import "./globals.css";
 import { Navigation } from "@/components/layout/Navigation";
 import { Providers } from "./providers";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth-options";
+import { getAuthOptions } from "@/lib/auth-options";
 
 export const metadata: Metadata = {
   title: "Portal.C",
@@ -15,7 +15,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(getAuthOptions());
   const roles = session?.user?.roles;
 
   return (

@@ -2,8 +2,9 @@
 /* eslint-disable no-restricted-imports */
 
 import { isAdmin } from '@/lib/auth';
-import { DatabaseClient } from '@/infrastructure/database/DatabaseClient';
+import { getDb } from '@/lib/firebase/admin';
 import { revalidatePath } from 'next/cache';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export interface PublicTimetableFormState {
   error: string | null;
@@ -52,37 +53,38 @@ export async function createPublicTimetableAction(
   }
 
   const year = new Date().getFullYear();
-  const supabase = DatabaseClient.getAdminClient();
-  const { data: timeSlot, error: timeSlotError } = await (supabase as any)
-    .from('timetable_time_slots')
-    .select('id, period')
-    .eq('id', timeSlotId)
-    .maybeSingle();
+  const db = getDb();
 
-  if (timeSlotError) {
-    return { error: `時間帯の取得に失敗しました: ${timeSlotError.message}`, success: null };
-  }
-  if (!timeSlot) {
+  const timeSlotSnap = await db
+    .collection('timetable_time_slots')
+    .doc(timeSlotId)
+    .get();
+
+  if (!timeSlotSnap.exists) {
     return { error: '選択した時間帯が見つかりませんでした。', success: null };
   }
 
-  const { error } = await (supabase as any).from('timetables').insert({
-    member_id: null,
-    day_of_week: dayOfWeek,
-    period: timeSlot.period,
-    course_name: courseName,
-    semester: null,
-    year,
-    is_public: true,
-    grade,
-    major,
-    classroom: classroom || null,
-    instructor: instructor || null,
-    time_slot_id: timeSlot.id,
-  });
+  const timeSlot = timeSlotSnap.data()!;
 
-  if (error) {
-    return { error: `登録に失敗しました: ${error.message}`, success: null };
+  try {
+    await db.collection('timetables').add({
+      member_id: null,
+      day_of_week: dayOfWeek,
+      period: timeSlot.period,
+      course_name: courseName,
+      semester: null,
+      year,
+      is_public: true,
+      grade,
+      major,
+      classroom: classroom || null,
+      instructor: instructor || null,
+      time_slot_id: timeSlot.id ?? timeSlotId,
+      created_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
+    });
+  } catch (error) {
+    return { error: `登録に失敗しました: ${(error as Error).message}`, success: null };
   }
 
   revalidatePath('/timetable');
@@ -124,19 +126,19 @@ export async function createTimeSlotAction(
     return { error: '開始時刻は終了時刻より前にしてください。', success: null };
   }
 
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('timetable_time_slots')
-    .insert({
+  const db = getDb();
+  try {
+    await db.collection('timetable_time_slots').add({
       period,
       label,
       start_time: startTime,
       end_time: endTime,
       is_active: isActive,
+      created_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     });
-
-  if (error) {
-    return { error: `登録に失敗しました: ${error.message}`, success: null };
+  } catch (error) {
+    return { error: `登録に失敗しました: ${(error as Error).message}`, success: null };
   }
 
   revalidatePath('/admin/timetables');
@@ -181,20 +183,18 @@ export async function updateTimeSlotAction(
     return { error: '開始時刻は終了時刻より前にしてください。', success: null };
   }
 
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('timetable_time_slots')
-    .update({
+  const db = getDb();
+  try {
+    await db.collection('timetable_time_slots').doc(timeSlotId).update({
       period,
       label,
       start_time: startTime,
       end_time: endTime,
       is_active: isActive,
-    })
-    .eq('id', timeSlotId);
-
-  if (error) {
-    return { error: `更新に失敗しました: ${error.message}`, success: null };
+      updated_at: FieldValue.serverTimestamp(),
+    });
+  } catch (error) {
+    return { error: `更新に失敗しました: ${(error as Error).message}`, success: null };
   }
 
   revalidatePath('/admin/timetables');
@@ -213,15 +213,8 @@ export async function deleteTimeSlotAction(formData: FormData): Promise<void> {
     throw new Error('時間帯IDが取得できませんでした。');
   }
 
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('timetable_time_slots')
-    .delete()
-    .eq('id', timeSlotId);
-
-  if (error) {
-    throw new Error(`削除に失敗しました: ${error.message}`);
-  }
+  const db = getDb();
+  await db.collection('timetable_time_slots').doc(timeSlotId).delete();
 
   revalidatePath('/admin/timetables');
 }
@@ -239,16 +232,14 @@ export async function deletePublicTimetableAction(
     throw new Error('時間割IDが取得できませんでした。');
   }
 
-  const supabase = DatabaseClient.getAdminClient();
-  const { error } = await (supabase as any)
-    .from('timetables')
-    .delete()
-    .eq('id', timetableId)
-    .eq('is_public', true);
+  const db = getDb();
+  const docSnap = await db.collection('timetables').doc(timetableId).get();
 
-  if (error) {
-    throw new Error(`削除に失敗しました: ${error.message}`);
+  if (!docSnap.exists || !docSnap.data()?.is_public) {
+    throw new Error('公開時間割が見つかりませんでした。');
   }
+
+  await db.collection('timetables').doc(timetableId).delete();
 
   revalidatePath('/timetable');
   revalidatePath('/admin/timetables');
