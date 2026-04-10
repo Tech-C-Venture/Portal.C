@@ -53,6 +53,12 @@ export default async function AdminLayout({
             >
               メンバーHR
             </Link>
+            <Link
+              href="/admin/invite"
+              className="rounded-full border border-gray-200 px-3 py-1 hover:bg-gray-50"
+            >
+              メンバー招待
+            </Link>
           </nav>
         </div>
       </div>
