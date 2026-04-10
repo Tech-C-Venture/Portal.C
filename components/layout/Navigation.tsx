@@ -1,10 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+
+const LOGO_URL = `https://firebasestorage.googleapis.com/v0/b/${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}/o/logos%2Flogo.png?alt=media`;
 
 type NavigationProps = {
     roles?: string[];
@@ -55,13 +56,12 @@ export function Navigation({ roles }: NavigationProps) {
                         <div className="flex h-16 items-center justify-between">
                             <Link href="/" className="relative z-10 flex items-center gap-2">
                                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent1 ring-1 ring-border shadow-soft overflow-hidden">
-                                    <Image
-                                    src="/images/logo.png"
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                    src={LOGO_URL}
                                     alt="Portal.C"
                                     width={36}
                                     height={36}
-                                    priority
-                                    unoptimized
                                     />
                                 </span>
                                 <span className="text-lg font-semibold tracking-wide text-primary">
