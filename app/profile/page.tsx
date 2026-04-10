@@ -1,8 +1,12 @@
 import { getCurrentMemberProfileAction } from "@/app/actions/members";
 import { MemberProfileForm } from "@/components/members/MemberProfileForm";
+import { getDepartmentNames } from "@/app/admin/_data";
 
 export default async function ProfilePage() {
-  const member = await getCurrentMemberProfileAction();
+  const [member, departmentNames] = await Promise.all([
+    getCurrentMemberProfileAction(),
+    getDepartmentNames(),
+  ]);
   const needsOnboarding = !member.onboardingCompleted;
 
   return (
@@ -34,7 +38,7 @@ export default async function ProfilePage() {
       )}
 
       <div className="max-w-2xl bg-white rounded-lg shadow-md p-8">
-        <MemberProfileForm member={member} mode="profile" submitLabel="保存" />
+        <MemberProfileForm member={member} mode="profile" submitLabel="保存" departmentNames={departmentNames} />
       </div>
     </div>
   );

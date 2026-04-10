@@ -1,8 +1,12 @@
 import { getCurrentMemberProfileAction } from "@/app/actions/members";
 import { MemberProfileForm } from "@/components/members/MemberProfileForm";
+import { getDepartmentNames } from "@/app/admin/_data";
 
 export default async function OnboardingPage() {
-  const member = await getCurrentMemberProfileAction();
+  const [member, departmentNames] = await Promise.all([
+    getCurrentMemberProfileAction(),
+    getDepartmentNames(),
+  ]);
 
   return (
     <div className="rounded-xl bg-gray-50 p-6 text-gray-900">
@@ -17,6 +21,7 @@ export default async function OnboardingPage() {
           mode="onboarding"
           redirectTo="/"
           submitLabel="はじめる"
+          departmentNames={departmentNames}
         />
       </div>
     </div>

@@ -9,7 +9,6 @@ import {
   type PublicTimetableFormState,
 } from '@/app/actions/timetables';
 import type { TimeSlotEntry } from '@/app/admin/_data';
-import { departmentOptions } from '@/lib/constants/departments';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -22,8 +21,10 @@ function SubmitButton() {
 
 export function PublicTimetableForm({
   timeSlots,
+  departmentNames,
 }: {
   timeSlots: TimeSlotEntry[];
+  departmentNames: string[];
 }) {
   const [state, formAction] = useActionState<PublicTimetableFormState, FormData>(
     createPublicTimetableAction,
@@ -120,7 +121,7 @@ export function PublicTimetableForm({
           required
         >
           <option value="">選択</option>
-          {departmentOptions.map((option) => (
+          {departmentNames.map((option) => (
             <option key={option} value={option}>
               {option}
             </option>
