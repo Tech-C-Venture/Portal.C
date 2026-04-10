@@ -6,7 +6,7 @@ import { getDb } from '@/lib/firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { FieldValue } from 'firebase-admin/firestore';
 import { parseCsv, validateCsvHeaders, type CsvRowError } from '@/lib/csv';
-import { departmentOptions } from '@/lib/constants/departments';
+import { getDepartmentNames } from '@/app/admin/_data';
 import ExcelJS from 'exceljs';
 
 export interface PublicTimetableFormState {
@@ -263,9 +263,7 @@ const DAY_LABEL_TO_NUMBER: Record<string, number> = {
 const TIMETABLE_CSV_HEADERS = ['学年', '専攻', '曜日', '時限', '教科名', '教室', '担当講師'];
 const TIME_SLOT_CSV_HEADERS = ['時限', 'ラベル', '開始時刻', '終了時刻', '有効'];
 
-const validDepartments = new Set<string>(departmentOptions);
-
-function validateTimetableRows(rows: string[][]): CsvRowError[] {
+function validateTimetableRows(rows: string[][], validDepartments: Set<string>): CsvRowError[] {
   const errors: CsvRowError[] = [];
 
   for (let i = 0; i < rows.length; i++) {
@@ -285,7 +283,7 @@ function validateTimetableRows(rows: string[][]): CsvRowError[] {
     }
 
     if (!major || !validDepartments.has(major)) {
-      errors.push({ row: rowNum, message: `専攻が不正です: "${major}"。有効な専攻名: ${departmentOptions.join(', ')}` });
+      errors.push({ row: rowNum, message: `専攻が不正です: "${major}"。有効な専攻名: ${[...validDepartments].join(', ')}` });
     }
 
     if (!(dayStr in DAY_LABEL_TO_NUMBER)) {
@@ -423,6 +421,10 @@ export async function uploadPublicTimetableExcelAction(
     return { error: 'Excelファイルの読み込みに失敗しました。正しい.xlsxファイルを選択してください。', errors: null, success: null };
   }
 
+  // 専攻マスターを動的取得
+  const departmentNames = await getDepartmentNames();
+  const validDepartments = new Set<string>(departmentNames);
+
   // 全シートからデータを抽出・バリデーション
   type ParsedEntry = {
     grade: number;
@@ -450,7 +452,7 @@ export async function uploadPublicTimetableExcelAction(
       allErrors.push({ row: 0, message: `シート「${sheet.name}」: 学年は1〜4の範囲で指定してください。` });
     }
     if (!validDepartments.has(major)) {
-      allErrors.push({ row: 0, message: `シート「${sheet.name}」: 専攻が不正です。有効な専攻名: ${departmentOptions.join(', ')}` });
+      allErrors.push({ row: 0, message: `シート「${sheet.name}」: 専攻が不正です。有効な専攻名: ${[...validDepartments].join(', ')}` });
     }
 
     // ヘッダー行を除いたデータ行を抽出
@@ -609,4 +611,82 @@ export async function uploadTimeSlotsCsvAction(
   revalidatePath('/admin/timetables');
 
   return { error: null, errors: null, success: `${rows.length}件の時間帯マスターを登録しました。` };
+}
+
+const DEPARTMENT_CSV_HEADERS = ['専攻名'];
+
+export async function uploadDepartmentsCsvAction(
+  _prevState: CsvUploadState,
+  formData: FormData
+): Promise<CsvUploadState> {
+  const admin = await isAdmin();
+  if (!admin) {
+    return { error: '管理者権限が必要です。', errors: null, success: null };
+  }
+
+  const file = formData.get('file') as File | null;
+  if (!file || !file.name.endsWith('.csv')) {
+    return { error: 'CSVファイルを選択してください。', errors: null, success: null };
+  }
+
+  const text = await file.text();
+  const { headers, rows } = parseCsv(text);
+
+  const headerCheck = validateCsvHeaders(headers, DEPARTMENT_CSV_HEADERS);
+  if (!headerCheck.valid) {
+    return { error: headerCheck.message!, errors: null, success: null };
+  }
+
+  if (rows.length === 0) {
+    return { error: 'データ行がありません。', errors: null, success: null };
+  }
+
+  // バリデーション: 専攻名が空でないこと、重複がないこと
+  const errors: CsvRowError[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < rows.length; i++) {
+    const name = rows[i][0]?.trim();
+    if (!name) {
+      errors.push({ row: i + 1, message: '専攻名が空です。' });
+      continue;
+    }
+    if (seen.has(name)) {
+      errors.push({ row: i + 1, message: `専攻名が重複しています: "${name}"` });
+    }
+    seen.add(name);
+  }
+
+  if (errors.length > 0) {
+    return { error: null, errors, success: null };
+  }
+
+  const db = getDb();
+
+  try {
+    const batch = db.batch();
+
+    // 既存の専攻マスターを全削除
+    const existingSnap = await db.collection('departments').get();
+    for (const doc of existingSnap.docs) {
+      batch.delete(doc.ref);
+    }
+
+    // 新規データを登録
+    for (const row of rows) {
+      const ref = db.collection('departments').doc();
+      batch.set(ref, {
+        name: row[0].trim(),
+        created_at: FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+  } catch (error) {
+    return { error: `登録に失敗しました: ${(error as Error).message}`, errors: null, success: null };
+  }
+
+  revalidatePath('/admin/timetables');
+
+  return { error: null, errors: null, success: `${rows.length}件の専攻マスターを登録しました。` };
 }

@@ -154,6 +154,11 @@ export type TimeSlotEntry = {
   isActive: boolean;
 };
 
+export type DepartmentEntry = {
+  id: string;
+  name: string;
+};
+
 function normalizeTimeValue(value: string | null): string {
   if (!value) return '';
   return value.length >= 5 ? value.slice(0, 5) : value;
@@ -364,4 +369,23 @@ export async function getAverageParticipants(): Promise<number | null> {
   return Math.round(
     counts.reduce((sum, value) => sum + value, 0) / counts.length
   );
+}
+
+export async function getDepartments(): Promise<DepartmentEntry[]> {
+  const db = getDb();
+  const snap = await db
+    .collection('departments')
+    .orderBy('name', 'asc')
+    .get();
+
+  return snap.docs.map((doc) => ({
+    id: doc.id,
+    name: doc.data().name,
+  }));
+}
+
+/** 専攻名の一覧を文字列配列で返す（フォームやバリデーション用） */
+export async function getDepartmentNames(): Promise<string[]> {
+  const departments = await getDepartments();
+  return departments.map((d) => d.name);
 }

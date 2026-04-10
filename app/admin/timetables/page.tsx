@@ -2,6 +2,7 @@ import {
   getPublicTimetables,
   getTimeSlots,
   getTimetableSummaries,
+  getDepartments,
 } from '@/app/admin/_data';
 import { PublicTimetableForm } from '@/components/admin/PublicTimetableForm';
 import { PublicTimetableDeleteButton } from '@/components/admin/PublicTimetableDeleteButton';
@@ -11,13 +12,15 @@ import { CsvUploadForm } from '@/components/admin/CsvUploadForm';
 import {
   uploadPublicTimetableExcelAction,
   uploadTimeSlotsCsvAction,
+  uploadDepartmentsCsvAction,
 } from '@/app/actions/timetables';
 
 export default async function AdminTimetablesPage() {
-  const [timetableSummaries, publicTimetables, timeSlots] = await Promise.all([
+  const [timetableSummaries, publicTimetables, timeSlots, departments] = await Promise.all([
     getTimetableSummaries(),
     getPublicTimetables(),
     getTimeSlots(),
+    getDepartments(),
   ]);
   const dayLabels = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -32,7 +35,7 @@ export default async function AdminTimetablesPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">共通時間割の追加</h2>
         </div>
-        <PublicTimetableForm timeSlots={timeSlots} />
+        <PublicTimetableForm timeSlots={timeSlots} departmentNames={departments.map((d) => d.name)} />
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -111,6 +114,55 @@ export default async function AdminTimetablesPage() {
                   action={uploadTimeSlotsCsvAction}
                   label="時間帯マスターをアップロード"
                   confirmMessage="既存の時間帯マスターデータを全て削除し、CSVの内容で上書きします。よろしいですか？"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">専攻マスター</h2>
+          <span className="text-sm text-gray-500">
+            {departments.length}件
+          </span>
+        </div>
+        <div className="space-y-4">
+          {departments.length > 0 && (
+            <ul className="text-sm text-gray-700 list-disc list-inside">
+              {departments.map((d) => (
+                <li key={d.id}>{d.name}</li>
+              ))}
+            </ul>
+          )}
+          {departments.length === 0 && (
+            <p className="text-sm text-gray-500">
+              まだ専攻が登録されていません。
+            </p>
+          )}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              CSV管理
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <a
+                  href="/api/admin/csv/departments"
+                  download
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+                >
+                  専攻マスターCSVをダウンロード
+                </a>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-2">
+                  CSVカラム: 専攻名
+                </p>
+                <CsvUploadForm
+                  action={uploadDepartmentsCsvAction}
+                  label="専攻マスターをアップロード"
+                  confirmMessage="既存の専攻マスターデータを全て削除し、CSVの内容で上書きします。よろしいですか？"
                 />
               </div>
             </div>

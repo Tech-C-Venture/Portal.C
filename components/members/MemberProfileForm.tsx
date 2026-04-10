@@ -10,13 +10,12 @@ import {
   updateCurrentMemberProfileAction,
   type MemberProfileFormState,
 } from '@/app/actions/members';
-import { departmentOptions } from '@/lib/constants/departments';
-
 interface MemberProfileFormProps {
   member: MemberDTO;
   mode: 'profile' | 'onboarding';
   redirectTo?: string;
   submitLabel: string;
+  departmentNames: string[];
 }
 
 function SubmitButton({ label }: { label: string }) {
@@ -403,7 +402,7 @@ export function MemberProfileForm({
               required
             >
               <option value="">選択</option>
-              {departmentOptions.map((option) => (
+              {departmentNames.map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
