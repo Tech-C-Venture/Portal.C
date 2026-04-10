@@ -418,7 +418,7 @@ export async function uploadPublicTimetableExcelAction(
   const workbook = new ExcelJS.Workbook();
 
   try {
-    await workbook.xlsx.load(Buffer.from(arrayBuffer));
+    await workbook.xlsx.load(arrayBuffer);
   } catch {
     return { error: 'Excelファイルの読み込みに失敗しました。正しい.xlsxファイルを選択してください。', errors: null, success: null };
   }
