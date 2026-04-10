@@ -1,6 +1,6 @@
 /**
  * ZITADEL Admin API client for user management.
- * Uses a service user PAT to authenticate against the ZITADEL v2 API.
+ * Uses a service user PAT to authenticate against the ZITADEL Management API.
  */
 
 interface CreateUserResponse {
@@ -10,7 +10,6 @@ interface CreateUserResponse {
     changeDate: string;
     resourceOwner: string;
   };
-  emailCode?: string;
 }
 
 interface ZitadelErrorDetail {
@@ -43,7 +42,7 @@ export async function createZitadelUser(
 ): Promise<{ userId: string }> {
   const { issuer, pat } = getConfig();
 
-  const response = await fetch(`${issuer}/v2/users/human`, {
+  const response = await fetch(`${issuer}/management/v1/users/human`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -52,12 +51,12 @@ export async function createZitadelUser(
     body: JSON.stringify({
       userName: username,
       profile: {
-        givenName,
-        familyName,
+        firstName: givenName,
+        lastName: familyName,
       },
       email: {
         email,
-        sendCode: {},
+        isEmailVerified: false,
       },
     }),
   });
