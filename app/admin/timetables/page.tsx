@@ -15,6 +15,8 @@ import {
   uploadDepartmentsCsvAction,
 } from '@/app/actions/timetables';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminTimetablesPage() {
   const [timetableSummaries, publicTimetables, timeSlots, departments] = await Promise.all([
     getTimetableSummaries(),
