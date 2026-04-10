@@ -17,6 +17,38 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+function Section({
+  title,
+  badge,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  badge?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details
+      open={defaultOpen || undefined}
+      className="bg-white rounded-lg shadow-md group"
+    >
+      <summary className="flex items-center justify-between p-6 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+        <div className="flex items-center gap-3">
+          <span className="text-gray-400 transition-transform group-open:rotate-90">&#9654;</span>
+          <h2 className="text-xl font-semibold">{title}</h2>
+        </div>
+        {badge && (
+          <span className="text-sm text-gray-500">{badge}</span>
+        )}
+      </summary>
+      <div className="px-6 pb-6">
+        {children}
+      </div>
+    </details>
+  );
+}
+
 export default async function AdminTimetablesPage() {
   const [timetableSummaries, publicTimetables, timeSlots, departments] = await Promise.all([
     getTimetableSummaries(),
@@ -33,17 +65,11 @@ export default async function AdminTimetablesPage() {
         <p className="text-gray-600">時間割登録メンバーの一覧です。</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">共通時間割の追加</h2>
-        </div>
+      <Section title="共通時間割の追加" defaultOpen>
         <PublicTimetableForm timeSlots={timeSlots} departmentNames={departments.map((d) => d.name)} />
-      </div>
+      </Section>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">共通時間割 Excel管理</h2>
-        </div>
+      <Section title="共通時間割 Excel管理" defaultOpen>
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-2">
@@ -72,15 +98,9 @@ export default async function AdminTimetablesPage() {
             />
           </div>
         </div>
-      </div>
+      </Section>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">時間帯マスター</h2>
-          <span className="text-sm text-gray-500">
-            {timeSlots.length}件
-          </span>
-        </div>
+      <Section title="時間帯マスター" badge={`${timeSlots.length}件`}>
         <div className="space-y-6">
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
@@ -121,15 +141,9 @@ export default async function AdminTimetablesPage() {
             </div>
           </div>
         </div>
-      </div>
+      </Section>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">専攻マスター</h2>
-          <span className="text-sm text-gray-500">
-            {departments.length}件
-          </span>
-        </div>
+      <Section title="専攻マスター" badge={`${departments.length}件`}>
         <div className="space-y-4">
           {departments.length > 0 && (
             <ul className="text-sm text-gray-700 list-disc list-inside">
@@ -170,15 +184,9 @@ export default async function AdminTimetablesPage() {
             </div>
           </div>
         </div>
-      </div>
+      </Section>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">共通時間割一覧</h2>
-          <span className="text-sm text-gray-500">
-            {publicTimetables.length}件
-          </span>
-        </div>
+      <Section title="共通時間割一覧" badge={`${publicTimetables.length}件`}>
         {publicTimetables.length === 0 ? (
           <p className="text-sm text-gray-500">
             まだ共通時間割が登録されていません。
@@ -241,15 +249,9 @@ export default async function AdminTimetablesPage() {
             </table>
           </div>
         )}
-      </div>
+      </Section>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">登録メンバー</h2>
-          <span className="text-sm text-gray-500">
-            {timetableSummaries.length}名
-          </span>
-        </div>
+      <Section title="登録メンバー" badge={`${timetableSummaries.length}名`}>
         {timetableSummaries.length === 0 ? (
           <p className="text-sm text-gray-500">
             まだ時間割の登録がありません。
@@ -288,7 +290,7 @@ export default async function AdminTimetablesPage() {
             </table>
           </div>
         )}
-      </div>
+      </Section>
     </div>
   );
 }
