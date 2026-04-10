@@ -22,11 +22,20 @@ export async function inviteUserAction(
   const email = (formData.get('email') as string | null)?.trim();
 
   if (!givenName) {
-    return { error: '名（givenName）を入力してください。', success: null };
+    return { error: '名（Given Name）を入力してください。', success: null };
   }
   if (!familyName) {
-    return { error: '姓（familyName）を入力してください。', success: null };
+    return { error: '姓（Family Name）を入力してください。', success: null };
   }
+
+  const asciiOnly = /^[a-zA-Z]+$/;
+  if (!asciiOnly.test(givenName)) {
+    return { error: '名は英字（a-z）のみで入力してください。', success: null };
+  }
+  if (!asciiOnly.test(familyName)) {
+    return { error: '姓は英字（a-z）のみで入力してください。', success: null };
+  }
+
   if (!email) {
     return { error: 'メールアドレスを入力してください。', success: null };
   }
@@ -36,9 +45,11 @@ export async function inviteUserAction(
     return { error: 'メールアドレスの形式が正しくありません。', success: null };
   }
 
+  const username = `${givenName.toLowerCase()}.${familyName.toLowerCase()}`;
+
   let userId: string;
   try {
-    const result = await createZitadelUser(givenName, familyName, email);
+    const result = await createZitadelUser(givenName, familyName, email, username);
     userId = result.userId;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'ユーザー作成に失敗しました。';

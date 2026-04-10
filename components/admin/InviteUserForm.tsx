@@ -43,26 +43,34 @@ export function InviteUserForm() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium mb-2">姓</label>
+          <label className="block text-sm font-medium mb-2">姓（英字）</label>
           <input
             type="text"
             name="familyName"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="山田"
+            placeholder="Yamada"
+            pattern="[a-zA-Z]+"
+            title="英字のみ入力してください"
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">名</label>
+          <label className="block text-sm font-medium mb-2">名（英字）</label>
           <input
             type="text"
             name="givenName"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="太郎"
+            placeholder="Taro"
+            pattern="[a-zA-Z]+"
+            title="英字のみ入力してください"
             required
           />
         </div>
       </div>
+
+      <p className="text-xs text-gray-500">
+        ログイン名は自動生成されます（例: taro.yamada）
+      </p>
 
       <div>
         <label className="block text-sm font-medium mb-2">メールアドレス</label>

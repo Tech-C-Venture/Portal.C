@@ -38,7 +38,8 @@ function getConfig() {
 export async function createZitadelUser(
   givenName: string,
   familyName: string,
-  email: string
+  email: string,
+  username: string
 ): Promise<{ userId: string }> {
   const { issuer, pat } = getConfig();
 
@@ -49,6 +50,7 @@ export async function createZitadelUser(
       Authorization: `Bearer ${pat}`,
     },
     body: JSON.stringify({
+      userName: username,
       profile: {
         givenName,
         familyName,
