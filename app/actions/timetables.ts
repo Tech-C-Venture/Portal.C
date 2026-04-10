@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { FieldValue } from 'firebase-admin/firestore';
 import { parseCsv, validateCsvHeaders, type CsvRowError } from '@/lib/csv';
 import { departmentOptions } from '@/lib/constants/departments';
+import ExcelJS from 'exceljs';
 
 export interface PublicTimetableFormState {
   error: string | null;
@@ -350,7 +351,56 @@ function validateTimeSlotRows(rows: string[][]): CsvRowError[] {
   return errors;
 }
 
-export async function uploadPublicTimetableCsvAction(
+/** シート名「{grade}年_{major}」から学年と専攻をパースする */
+function parseSheetName(name: string): { grade: number; major: string } | null {
+  const match = /^(\d+)年_(.+)$/.exec(name);
+  if (!match) return null;
+  return { grade: Number(match[1]), major: match[2] };
+}
+
+/** Excelのセル値を安全に文字列化する */
+function cellToString(value: ExcelJS.CellValue): string {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+/** Excelの各シートの行をバリデーションする（学年・専攻はシート名から取得済み） */
+function validateTimetableSheetRows(
+  rows: string[][],
+  sheetLabel: string
+): CsvRowError[] {
+  const errors: CsvRowError[] = [];
+  const EXPECTED_HEADERS = ['曜日', '時限', '教科名', '教室', '担当講師'];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNum = i + 1;
+
+    if (row.length < 3) {
+      errors.push({ row: rowNum, message: `[${sheetLabel}] カラム数が不足しています。` });
+      continue;
+    }
+
+    const [dayStr, periodStr, courseName] = row;
+
+    if (!(dayStr in DAY_LABEL_TO_NUMBER)) {
+      errors.push({ row: rowNum, message: `[${sheetLabel}] 曜日が不正です: "${dayStr}"。日/月/火/水/木/金/土 のいずれかを指定してください。` });
+    }
+
+    const period = Number(periodStr);
+    if (Number.isNaN(period) || period < 1 || period > 10) {
+      errors.push({ row: rowNum, message: `[${sheetLabel}] 時限が不正です: "${periodStr}"。1〜10の数字を指定してください。` });
+    }
+
+    if (!courseName || courseName.trim().length === 0) {
+      errors.push({ row: rowNum, message: `[${sheetLabel}] 教科名が空です。` });
+    }
+  }
+
+  return errors;
+}
+
+export async function uploadPublicTimetableExcelAction(
   _prevState: CsvUploadState,
   formData: FormData
 ): Promise<CsvUploadState> {
@@ -360,25 +410,84 @@ export async function uploadPublicTimetableCsvAction(
   }
 
   const file = formData.get('file') as File | null;
-  if (!file || !file.name.endsWith('.csv')) {
-    return { error: 'CSVファイルを選択してください。', errors: null, success: null };
+  if (!file || !file.name.endsWith('.xlsx')) {
+    return { error: 'Excelファイル（.xlsx）を選択してください。', errors: null, success: null };
   }
 
-  const text = await file.text();
-  const { headers, rows } = parseCsv(text);
+  const arrayBuffer = await file.arrayBuffer();
+  const workbook = new ExcelJS.Workbook();
 
-  const headerCheck = validateCsvHeaders(headers, TIMETABLE_CSV_HEADERS);
-  if (!headerCheck.valid) {
-    return { error: headerCheck.message!, errors: null, success: null };
+  try {
+    await workbook.xlsx.load(Buffer.from(arrayBuffer));
+  } catch {
+    return { error: 'Excelファイルの読み込みに失敗しました。正しい.xlsxファイルを選択してください。', errors: null, success: null };
   }
 
-  if (rows.length === 0) {
+  // 全シートからデータを抽出・バリデーション
+  type ParsedEntry = {
+    grade: number;
+    major: string;
+    dayStr: string;
+    period: number;
+    courseName: string;
+    classroom: string;
+    instructor: string;
+  };
+
+  const allEntries: ParsedEntry[] = [];
+  const allErrors: CsvRowError[] = [];
+
+  for (const sheet of workbook.worksheets) {
+    const parsed = parseSheetName(sheet.name);
+    if (!parsed) {
+      allErrors.push({ row: 0, message: `シート名「${sheet.name}」が不正です。「{学年}年_{専攻}」の形式にしてください（例: 1年_AIエンジニア専攻）。` });
+      continue;
+    }
+
+    const { grade, major } = parsed;
+
+    if (grade < 1 || grade > 4) {
+      allErrors.push({ row: 0, message: `シート「${sheet.name}」: 学年は1〜4の範囲で指定してください。` });
+    }
+    if (!validDepartments.has(major)) {
+      allErrors.push({ row: 0, message: `シート「${sheet.name}」: 専攻が不正です。有効な専攻名: ${departmentOptions.join(', ')}` });
+    }
+
+    // ヘッダー行を除いたデータ行を抽出
+    const rows: string[][] = [];
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // ヘッダー行スキップ
+      const values = [1, 2, 3, 4, 5].map((col) => cellToString(row.getCell(col).value));
+      // 全セル空の行はスキップ
+      if (values.every((v) => v === '')) return;
+      rows.push(values);
+    });
+
+    const sheetErrors = validateTimetableSheetRows(rows, sheet.name);
+    allErrors.push(...sheetErrors);
+
+    if (sheetErrors.length === 0) {
+      for (const row of rows) {
+        const [dayStr, periodStr, courseName, classroom, instructor] = row;
+        allEntries.push({
+          grade,
+          major,
+          dayStr,
+          period: Number(periodStr),
+          courseName: courseName.trim(),
+          classroom: classroom ?? '',
+          instructor: instructor ?? '',
+        });
+      }
+    }
+  }
+
+  if (allErrors.length > 0) {
+    return { error: null, errors: allErrors, success: null };
+  }
+
+  if (allEntries.length === 0) {
     return { error: 'データ行がありません。', errors: null, success: null };
-  }
-
-  const rowErrors = validateTimetableRows(rows);
-  if (rowErrors.length > 0) {
-    return { error: null, errors: rowErrors, success: null };
   }
 
   const db = getDb();
@@ -404,23 +513,21 @@ export async function uploadPublicTimetableCsvAction(
     }
 
     // 新規データを登録
-    for (const row of rows) {
-      const [gradeStr, major, dayStr, periodStr, courseName, classroom, instructor] = row;
-      const period = Number(periodStr);
+    for (const entry of allEntries) {
       const ref = db.collection('timetables').doc();
       batch.set(ref, {
         member_id: null,
-        day_of_week: DAY_LABEL_TO_NUMBER[dayStr],
-        period,
-        course_name: courseName.trim(),
+        day_of_week: DAY_LABEL_TO_NUMBER[entry.dayStr],
+        period: entry.period,
+        course_name: entry.courseName,
         semester: null,
         year,
         is_public: true,
-        grade: Number(gradeStr),
-        major,
-        classroom: classroom?.trim() || null,
-        instructor: instructor?.trim() || null,
-        time_slot_id: periodToTimeSlotId.get(period) ?? null,
+        grade: entry.grade,
+        major: entry.major,
+        classroom: entry.classroom || null,
+        instructor: entry.instructor || null,
+        time_slot_id: periodToTimeSlotId.get(entry.period) ?? null,
         created_at: FieldValue.serverTimestamp(),
         updated_at: FieldValue.serverTimestamp(),
       });
@@ -434,7 +541,7 @@ export async function uploadPublicTimetableCsvAction(
   revalidatePath('/timetable');
   revalidatePath('/admin/timetables');
 
-  return { error: null, errors: null, success: `${rows.length}件の共通時間割を登録しました。` };
+  return { error: null, errors: null, success: `${allEntries.length}件の共通時間割を登録しました。` };
 }
 
 export async function uploadTimeSlotsCsvAction(

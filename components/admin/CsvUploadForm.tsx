@@ -17,10 +17,12 @@ export function CsvUploadForm({
   action,
   label,
   confirmMessage,
+  accept = '.csv',
 }: {
   action: (state: CsvUploadState, formData: FormData) => Promise<CsvUploadState>;
   label: string;
   confirmMessage: string;
+  accept?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -61,7 +63,7 @@ export function CsvUploadForm({
           <ul className="list-disc list-inside space-y-1">
             {state.errors.map((err, i) => (
               <li key={i}>
-                {err.row}行目: {err.message}
+                {err.row > 0 ? `${err.row}行目: ` : ''}{err.message}
               </li>
             ))}
           </ul>
@@ -75,11 +77,11 @@ export function CsvUploadForm({
 
       <div className="flex items-center gap-3">
         <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
-          <span>{fileName || 'CSVファイルを選択'}</span>
+          <span>{fileName || 'ファイルを選択'}</span>
           <input
             type="file"
             name="file"
-            accept=".csv"
+            accept={accept}
             className="hidden"
             required
             onChange={(e) => {
