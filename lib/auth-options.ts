@@ -121,16 +121,18 @@ function requireEnv(value: string | undefined, name: string): string {
   return value;
 }
 
-const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+function isBuildPhase() {
+  return process.env.NEXT_PHASE === 'phase-production-build';
+}
 
 function getIssuer() {
-  return isBuildPhase ? 'https://build-placeholder' : requireEnv(process.env.ZITADEL_ISSUER, "ZITADEL_ISSUER");
+  return isBuildPhase() ? 'https://build-placeholder' : requireEnv(process.env.ZITADEL_ISSUER, "ZITADEL_ISSUER");
 }
 function getClientId() {
-  return isBuildPhase ? 'build-placeholder' : requireEnv(process.env.ZITADEL_CLIENT_ID, "ZITADEL_CLIENT_ID");
+  return isBuildPhase() ? 'build-placeholder' : requireEnv(process.env.ZITADEL_CLIENT_ID, "ZITADEL_CLIENT_ID");
 }
 function getUserInfoEndpoint() {
-  return isBuildPhase ? 'https://build-placeholder/userinfo' : requireEnv(process.env.ZITADEL_USERINFO_ENDPOINT, "ZITADEL_USERINFO_ENDPOINT");
+  return isBuildPhase() ? 'https://build-placeholder/userinfo' : requireEnv(process.env.ZITADEL_USERINFO_ENDPOINT, "ZITADEL_USERINFO_ENDPOINT");
 }
 
 async function resolveUserName(
