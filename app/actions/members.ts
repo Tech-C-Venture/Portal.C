@@ -308,3 +308,63 @@ export async function updateMemberGmailAction(
 
   return { error: null, success: `私用Gmailを更新しました（${snap.size}件）。` };
 }
+
+export interface DeleteMemberFormState {
+  error: string | null;
+  success: string | null;
+}
+
+export async function deleteMemberAction(
+  _prevState: DeleteMemberFormState,
+  formData: FormData
+): Promise<DeleteMemberFormState> {
+  const admin = await isAdmin();
+  if (!admin) {
+    return { error: '管理者権限が必要です。', success: null };
+  }
+
+  const memberId = (formData.get('memberId') as string | null)?.trim();
+  if (!memberId) {
+    return { error: 'メンバーIDが取得できませんでした。', success: null };
+  }
+
+  const memberRepository = container.resolve<IMemberRepository>(REPOSITORY_KEYS.MEMBER);
+  const memberResult = await memberRepository.findById(memberId);
+  if (!memberResult.success) {
+    return { error: `メンバー取得に失敗しました: ${memberResult.error.message}`, success: null };
+  }
+  if (!memberResult.value) {
+    return { error: 'メンバーが見つかりませんでした。', success: null };
+  }
+
+  const memberName = memberResult.value.name;
+  const memberEmail = memberResult.value.schoolEmail?.value ?? '';
+
+  // イベント参加記録も削除
+  const db = getDb();
+  const participantSnap = await db
+    .collection('event_participants')
+    .where('member_id', '==', memberId)
+    .get();
+
+  if (!participantSnap.empty) {
+    const batch = db.batch();
+    participantSnap.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+  }
+
+  const deleteResult = await memberRepository.delete(memberId);
+  if (!deleteResult.success) {
+    return { error: `削除に失敗しました: ${deleteResult.error.message}`, success: null };
+  }
+
+  revalidatePath('/admin/invite');
+  revalidatePath('/admin/hr');
+
+  return {
+    error: null,
+    success: `${memberName}（${memberEmail}）を削除しました。`,
+  };
+}
