@@ -1,6 +1,19 @@
 import NextAuth from "next-auth";
-import { authOptions } from "@/lib/auth-options";
+import { getAuthOptions } from "@/lib/auth-options";
 
-const handler = NextAuth(authOptions);
+let _handler: ReturnType<typeof NextAuth> | null = null;
 
-export { handler as GET, handler as POST };
+function getHandler() {
+  if (!_handler) {
+    _handler = NextAuth(getAuthOptions());
+  }
+  return _handler;
+}
+
+export function GET(...args: Parameters<ReturnType<typeof NextAuth>>) {
+  return getHandler()(...args);
+}
+
+export function POST(...args: Parameters<ReturnType<typeof NextAuth>>) {
+  return getHandler()(...args);
+}

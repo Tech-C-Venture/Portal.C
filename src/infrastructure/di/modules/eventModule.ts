@@ -5,7 +5,7 @@
 
 import { Container } from '../container';
 import { REPOSITORY_KEYS, USE_CASE_KEYS } from '../keys';
-import { SupabaseEventRepository } from '../../repositories/SupabaseEventRepository';
+import { FirestoreEventRepository } from '../../repositories/FirestoreEventRepository';
 import { GetEventListUseCase } from '@/application/use-cases/GetEventListUseCase';
 import { RegisterForEventUseCase } from '@/application/use-cases/RegisterForEventUseCase';
 import { CreateEventUseCase } from '@/application/use-cases/CreateEventUseCase';
@@ -14,7 +14,7 @@ export function eventModule(container: Container): Container {
   // Repository
   container.bindSingleton(
     REPOSITORY_KEYS.EVENT,
-    () => new SupabaseEventRepository()
+    () => new FirestoreEventRepository()
   );
 
   // Use Cases

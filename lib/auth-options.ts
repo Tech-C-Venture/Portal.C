@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import type { JWT } from "next-auth/jwt";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getDb } from "@/lib/firebase/admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 interface ExtendedProfile {
   sub: string;
@@ -120,12 +121,19 @@ function requireEnv(value: string | undefined, name: string): string {
   return value;
 }
 
-const issuer = requireEnv(process.env.ZITADEL_ISSUER, "ZITADEL_ISSUER");
-const clientId = requireEnv(process.env.ZITADEL_CLIENT_ID, "ZITADEL_CLIENT_ID");
-const userInfoEndpoint = requireEnv(
-  process.env.ZITADEL_USERINFO_ENDPOINT,
-  "ZITADEL_USERINFO_ENDPOINT"
-);
+function isBuildPhase() {
+  return process.env.NEXT_PHASE === 'phase-production-build';
+}
+
+function getIssuer() {
+  return isBuildPhase() ? 'https://build-placeholder' : requireEnv(process.env.ZITADEL_ISSUER, "ZITADEL_ISSUER");
+}
+function getClientId() {
+  return isBuildPhase() ? 'build-placeholder' : requireEnv(process.env.ZITADEL_CLIENT_ID, "ZITADEL_CLIENT_ID");
+}
+function getUserInfoEndpoint() {
+  return isBuildPhase() ? 'https://build-placeholder/userinfo' : requireEnv(process.env.ZITADEL_USERINFO_ENDPOINT, "ZITADEL_USERINFO_ENDPOINT");
+}
 
 async function resolveUserName(
   user: { name?: string | null },
@@ -134,7 +142,7 @@ async function resolveUserName(
 ): Promise<string | null> {
   const candidate = resolveDisplayName(profile, user.name ?? null);
   if (candidate) return candidate;
-  return await fetchUserInfoName(userInfoEndpoint, accessToken);
+  return await fetchUserInfoName(getUserInfoEndpoint(), accessToken);
 }
 
 async function ensureMemberOnSignIn(user: {
@@ -146,56 +154,63 @@ async function ensureMemberOnSignIn(user: {
     throw new Error("ZITADEL user id/email is missing");
   }
 
-  const supabase = createAdminClient();
+  const db = getDb();
+  const membersRef = db.collection("members");
   const resolvedName = await resolveUserName(user, profile, accessToken);
   const normalizedName = resolvedName?.trim() || null;
-  const { data, error } = await supabase
-    .from("members")
-    .select("id, name")
-    .eq("zitadel_id", user.id)
-    .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to check member: ${error.message}`);
-  }
+  // zitadel_idで既存メンバーを検索
+  const snap = await membersRef
+    .where("zitadel_id", "==", user.id)
+    .limit(1)
+    .get();
 
-  if (data) {
-    const normalizedMemberName = data.name?.trim();
+  if (!snap.empty) {
+    const doc = snap.docs[0];
+    const data = doc.data();
+    const normalizedMemberName = (data.name as string)?.trim();
     if (normalizedName && normalizedName !== normalizedMemberName) {
-      const { error: updateError } = await supabase
-        .from("members")
-        .update({ name: normalizedName })
-        .eq("id", data.id);
-      if (updateError) {
-        throw new Error(`Failed to update member name: ${updateError.message}`);
-      }
+      await doc.ref.update({ name: normalizedName });
     }
     return;
   }
 
+  // 新規メンバー作成
   const enrollmentYear = new Date().getFullYear();
-  const { error: insertError } = await supabase.from("members").insert({
+  const newId = crypto.randomUUID();
+  await membersRef.doc(newId).set({
     zitadel_id: user.id,
     student_id: null,
     name: normalizedName ?? user.email,
     school_email: user.email,
+    gmail_address: null,
     enrollment_year: enrollmentYear,
+    is_repeating: false,
+    repeat_years: null,
     major: null,
+    onboarding_completed: false,
+    current_status: null,
+    status_updated_at: null,
+    avatar_url: null,
+    skills: [],
+    interests: [],
+    created_at: FieldValue.serverTimestamp(),
+    updated_at: FieldValue.serverTimestamp(),
   });
-
-  if (insertError && insertError.code !== "23505") {
-    throw new Error(`Failed to create member: ${insertError.message}`);
-  }
 }
 
-export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
-  providers: [
-    {
-      id: "zitadel",
-      name: "ZITADEL",
-      type: "oauth",
-      wellKnown: `${issuer}/.well-known/openid-configuration`,
+let _authOptions: NextAuthOptions | null = null;
+
+export function getAuthOptions(): NextAuthOptions {
+  if (_authOptions) return _authOptions;
+  _authOptions = {
+    secret: process.env.NEXTAUTH_SECRET,
+    providers: [
+      {
+        id: "zitadel",
+        name: "ZITADEL",
+        type: "oauth",
+        wellKnown: `${getIssuer()}/.well-known/openid-configuration`,
       authorization: {
         params: { scope: "openid email profile urn:zitadel:iam:org:project:roles" },
       },
@@ -204,7 +219,7 @@ export const authOptions: NextAuthOptions = {
       client: {
         token_endpoint_auth_method: "none",
       },
-      clientId,
+      clientId: getClientId(),
       profile(profile) {
         const extendedProfile = profile as ExtendedProfile;
         return {
@@ -232,7 +247,7 @@ export const authOptions: NextAuthOptions = {
 
       if (!token.roles || token.roles.length === 0) {
         const userInfoRoles = await fetchUserInfoRoles(
-          userInfoEndpoint,
+          getUserInfoEndpoint(),
           token.accessToken as string | null
         );
         if (userInfoRoles.length > 0) {
@@ -250,15 +265,23 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, profile, account }) {
-      await ensureMemberOnSignIn(
-        user,
-        profile as ExtendedProfile | null,
-        (account?.access_token as string | null) ?? null
-      );
+      try {
+        await ensureMemberOnSignIn(
+          user,
+          profile as ExtendedProfile | null,
+          (account?.access_token as string | null) ?? null
+        );
+      } catch (error) {
+        console.error("[auth] ensureMemberOnSignIn failed:", error);
+        // Firestoreエラーでもログイン自体はブロックしない
+      }
       return true;
     },
   },
   pages: {
     signIn: "/login",
   },
-};
+  };
+  return _authOptions;
+}
+

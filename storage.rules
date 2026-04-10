@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Portal.C Firebase Storage セキュリティルール
+// アバター画像の保存用。Admin SDK経由でアップロード、署名付きURLで読み取り。
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // logosディレクトリ: 公開読み取り、書き込みはAdmin SDKのみ
+    match /logos/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // avatarsディレクトリ: 公開読み取り、書き込みはAdmin SDKのみ
+    match /avatars/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // その他のパスは全て拒否
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

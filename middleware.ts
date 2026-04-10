@@ -2,40 +2,26 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 
-async function isProfileComplete(zitadelId: string): Promise<boolean> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+async function isProfileComplete(req: NextRequest, zitadelId: string): Promise<boolean> {
+  try {
+    const checkUrl = new URL("/api/check-onboarding", req.url)
+    checkUrl.searchParams.set("zitadelId", zitadelId)
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+    const response = await fetch(checkUrl.toString(), {
+      headers: {
+        cookie: req.headers.get("cookie") ?? "",
+      },
+    })
+
+    if (!response.ok) {
+      return true
+    }
+
+    const data = (await response.json()) as { complete: boolean }
+    return data.complete
+  } catch {
     return true
   }
-
-  const memberUrl = new URL(`${supabaseUrl}/rest/v1/members`)
-  memberUrl.searchParams.set("select", "id,onboarding_completed")
-  memberUrl.searchParams.set("zitadel_id", `eq.${encodeURIComponent(zitadelId)}`)
-  memberUrl.searchParams.set("limit", "1")
-
-  const memberResponse = await fetch(memberUrl.toString(), {
-    headers: {
-      apikey: supabaseAnonKey,
-      Authorization: `Bearer ${supabaseAnonKey}`,
-      Accept: "application/json",
-    },
-  })
-
-  if (!memberResponse.ok) {
-    return true
-  }
-
-  const data = (await memberResponse.json()) as Array<{
-    id: string
-    onboarding_completed: boolean | null
-  }>
-
-  const member = data[0]
-  if (!member) return false
-
-  return Boolean(member.onboarding_completed)
 }
 
 async function getSessionUserId(req: NextRequest): Promise<string | null> {
@@ -54,6 +40,19 @@ async function getSessionUserId(req: NextRequest): Promise<string | null> {
 }
 
 export async function middleware(req: NextRequest) {
+  // OPTIONSプリフライトリクエストには即座に200を返す
+  if (req.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": req.headers.get("origin") ?? "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": req.headers.get("access-control-request-headers") ?? "*",
+        "Access-Control-Max-Age": "86400",
+      },
+    })
+  }
+
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const { pathname } = req.nextUrl
   const hasSessionCookie = Boolean(
@@ -86,7 +85,7 @@ export async function middleware(req: NextRequest) {
   const zitadelId =
     typeof token?.sub === "string" ? token.sub : sessionUserId ?? ""
   if (zitadelId) {
-    const profileComplete = await isProfileComplete(zitadelId)
+    const profileComplete = await isProfileComplete(req, zitadelId)
     if (pathname.startsWith("/onboarding")) {
       return profileComplete
           ? NextResponse.redirect(new URL("/", req.url))

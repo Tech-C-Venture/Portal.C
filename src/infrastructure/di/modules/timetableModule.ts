@@ -5,14 +5,14 @@
 
 import { Container } from '../container';
 import { REPOSITORY_KEYS, USE_CASE_KEYS } from '../keys';
-import { SupabaseTimetableRepository } from '../../repositories/SupabaseTimetableRepository';
+import { FirestoreTimetableRepository } from '../../repositories/FirestoreTimetableRepository';
 import { GetTimetableUseCase } from '@/application/use-cases/GetTimetableUseCase';
 
 export function timetableModule(container: Container): Container {
   // Repository
   container.bindSingleton(
     REPOSITORY_KEYS.TIMETABLE,
-    () => new SupabaseTimetableRepository()
+    () => new FirestoreTimetableRepository()
   );
 
   // Use Cases

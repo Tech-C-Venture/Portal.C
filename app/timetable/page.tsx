@@ -1,29 +1,28 @@
 /* eslint-disable no-restricted-imports */
-import { DatabaseClient } from "@/infrastructure/database/DatabaseClient";
+import { getDb } from "@/lib/firebase/admin";
 import { PublicTimetableTable } from "@/components/timetable/PublicTimetableTable";
 import { getCurrentMemberProfileAction } from "@/app/actions/members";
 
 async function getPublicTimetables() {
-  const supabase = await DatabaseClient.getServerClient();
-  const { data } = await supabase
-    .from("timetables")
-    .select(
-      "id, day_of_week, period, course_name, grade, major, classroom, instructor"
-    )
-    .eq("is_public", true);
+  const db = getDb();
+  const snap = await db
+    .collection("timetables")
+    .where("is_public", "==", true)
+    .get();
 
-  return (
-    data?.map((row) => ({
-      id: row.id,
-      dayOfWeek: row.day_of_week,
-      period: row.period,
-      courseName: row.course_name,
-      grade: row.grade,
-      major: row.major,
-      classroom: row.classroom,
-      instructor: row.instructor,
-    })) ?? []
-  );
+  return snap.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      dayOfWeek: data.day_of_week,
+      period: data.period,
+      courseName: data.course_name,
+      grade: data.grade ?? null,
+      major: data.major ?? null,
+      classroom: data.classroom ?? null,
+      instructor: data.instructor ?? null,
+    };
+  });
 }
 
 export default async function TimetablePage() {
