@@ -110,6 +110,15 @@ export default async function AdminPage() {
             基本情報・イベント参加数の確認
           </p>
         </Link>
+        <Link
+          href="/admin/invite"
+          className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+        >
+          <h2 className="text-lg font-semibold mb-2">メンバー招待</h2>
+          <p className="text-sm text-gray-600">
+            新しいメンバーをZITADELに登録・招待
+          </p>
+        </Link>
       </div>
     </div>
   );

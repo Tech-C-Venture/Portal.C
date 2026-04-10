@@ -1,22 +1,22 @@
 {
   "feature_name": "zitadel-user-invitation",
   "created_at": "2026-04-10T11:55:00.000Z",
-  "updated_at": "2026-04-10T11:55:00.000Z",
+  "updated_at": "2026-04-10T12:05:00.000Z",
   "language": "en",
-  "phase": "initialized",
+  "phase": "implementation",
   "approvals": {
     "requirements": {
-      "generated": false,
-      "approved": false
+      "generated": true,
+      "approved": true
     },
     "design": {
-      "generated": false,
-      "approved": false
+      "generated": true,
+      "approved": true
     },
     "tasks": {
-      "generated": false,
-      "approved": false
+      "generated": true,
+      "approved": true
     }
   },
-  "ready_for_implementation": false
+  "ready_for_implementation": true
 }
