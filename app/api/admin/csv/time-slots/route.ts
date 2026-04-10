@@ -2,6 +2,8 @@ import { isAdmin } from '@/lib/auth';
 import { getTimeSlots } from '@/app/admin/_data';
 import { generateCsv, type CsvColumnDef } from '@/lib/csv';
 
+export const dynamic = 'force-dynamic';
+
 type TimeSlotRow = {
   period: number;
   label: string;
