@@ -20,6 +20,12 @@ export interface CsvRowError {
   readonly message: string;
 }
 
+export interface CsvUploadState {
+  error: string | null;
+  errors: CsvRowError[] | null;
+  success: string | null;
+}
+
 /**
  * フィールド値をCSV用にエスケープする
  * カンマ・ダブルクォート・改行が含まれる場合はダブルクォートで囲む

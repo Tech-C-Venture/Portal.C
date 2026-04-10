@@ -3,7 +3,7 @@
 import { useActionState, useRef, useState } from 'react';
 import { Button } from '@openameba/spindle-ui';
 import '@openameba/spindle-ui/Button/Button.css';
-import type { CsvUploadState } from '@/app/actions/timetables';
+import type { CsvUploadState } from '@/lib/csv';
 
 function SubmitButton({ pending, label }: { pending: boolean; label: string }) {
   return (

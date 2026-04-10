@@ -1,6 +1,7 @@
 import { isAdmin } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { InviteUserForm } from "@/components/admin/InviteUserForm";
+import { CsvInviteForm } from "@/components/admin/CsvInviteForm";
 
 export default async function AdminInvitePage() {
   const admin = await isAdmin();
@@ -19,7 +20,13 @@ export default async function AdminInvitePage() {
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 max-w-lg">
+        <h2 className="text-lg font-semibold mb-4">個別招待</h2>
         <InviteUserForm />
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6 max-w-lg">
+        <h2 className="text-lg font-semibold mb-4">CSV一括招待</h2>
+        <CsvInviteForm />
       </div>
     </div>
   );
