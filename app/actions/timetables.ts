@@ -5,6 +5,8 @@ import { isAdmin } from '@/lib/auth';
 import { getDb } from '@/lib/firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { FieldValue } from 'firebase-admin/firestore';
+import { parseCsv, validateCsvHeaders, type CsvRowError } from '@/lib/csv';
+import { departmentOptions } from '@/lib/constants/departments';
 
 export interface PublicTimetableFormState {
   error: string | null;
@@ -243,4 +245,261 @@ export async function deletePublicTimetableAction(
 
   revalidatePath('/timetable');
   revalidatePath('/admin/timetables');
+}
+
+// --- CSV Upload ---
+
+export interface CsvUploadState {
+  error: string | null;
+  errors: CsvRowError[] | null;
+  success: string | null;
+}
+
+const DAY_LABEL_TO_NUMBER: Record<string, number> = {
+  '日': 0, '月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6,
+};
+
+const TIMETABLE_CSV_HEADERS = ['学年', '専攻', '曜日', '時限', '教科名', '教室', '担当講師'];
+const TIME_SLOT_CSV_HEADERS = ['時限', 'ラベル', '開始時刻', '終了時刻', '有効'];
+
+const validDepartments = new Set<string>(departmentOptions);
+
+function validateTimetableRows(rows: string[][]): CsvRowError[] {
+  const errors: CsvRowError[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNum = i + 1;
+
+    if (row.length < 5) {
+      errors.push({ row: rowNum, message: 'カラム数が不足しています。' });
+      continue;
+    }
+
+    const [gradeStr, major, dayStr, periodStr, courseName] = row;
+
+    const grade = Number(gradeStr);
+    if (Number.isNaN(grade) || grade < 1 || grade > 4) {
+      errors.push({ row: rowNum, message: `学年が不正です: "${gradeStr}"。1〜4の数字を指定してください。` });
+    }
+
+    if (!major || !validDepartments.has(major)) {
+      errors.push({ row: rowNum, message: `専攻が不正です: "${major}"。有効な専攻名: ${departmentOptions.join(', ')}` });
+    }
+
+    if (!(dayStr in DAY_LABEL_TO_NUMBER)) {
+      errors.push({ row: rowNum, message: `曜日が不正です: "${dayStr}"。日/月/火/水/木/金/土 のいずれかを指定してください。` });
+    }
+
+    const period = Number(periodStr);
+    if (Number.isNaN(period) || period < 1 || period > 10) {
+      errors.push({ row: rowNum, message: `時限が不正です: "${periodStr}"。1〜10の数字を指定してください。` });
+    }
+
+    if (!courseName || courseName.trim().length === 0) {
+      errors.push({ row: rowNum, message: '教科名が空です。' });
+    }
+  }
+
+  return errors;
+}
+
+function validateTimeSlotRows(rows: string[][]): CsvRowError[] {
+  const errors: CsvRowError[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNum = i + 1;
+
+    if (row.length < 5) {
+      errors.push({ row: rowNum, message: 'カラム数が不足しています。' });
+      continue;
+    }
+
+    const [periodStr, label, startTime, endTime, isActiveStr] = row;
+
+    const period = Number(periodStr);
+    if (Number.isNaN(period) || period < 1 || period > 10) {
+      errors.push({ row: rowNum, message: `時限が不正です: "${periodStr}"。1〜10の数字を指定してください。` });
+    }
+
+    if (!label || label.trim().length === 0) {
+      errors.push({ row: rowNum, message: 'ラベルが空です。' });
+    }
+
+    const startMinutes = parseTimeToMinutes(startTime);
+    if (startMinutes === null) {
+      errors.push({ row: rowNum, message: `開始時刻の形式が不正です: "${startTime}"。HH:MM形式で指定してください。` });
+    }
+
+    const endMinutes = parseTimeToMinutes(endTime);
+    if (endMinutes === null) {
+      errors.push({ row: rowNum, message: `終了時刻の形式が不正です: "${endTime}"。HH:MM形式で指定してください。` });
+    }
+
+    if (startMinutes !== null && endMinutes !== null && startMinutes >= endMinutes) {
+      errors.push({ row: rowNum, message: '開始時刻は終了時刻より前にしてください。' });
+    }
+
+    const validBooleans = ['true', 'false', '1', '0'];
+    if (!validBooleans.includes(isActiveStr.toLowerCase())) {
+      errors.push({ row: rowNum, message: `有効フラグが不正です: "${isActiveStr}"。true/false/1/0 のいずれかを指定してください。` });
+    }
+  }
+
+  return errors;
+}
+
+export async function uploadPublicTimetableCsvAction(
+  _prevState: CsvUploadState,
+  formData: FormData
+): Promise<CsvUploadState> {
+  const admin = await isAdmin();
+  if (!admin) {
+    return { error: '管理者権限が必要です。', errors: null, success: null };
+  }
+
+  const file = formData.get('file') as File | null;
+  if (!file || !file.name.endsWith('.csv')) {
+    return { error: 'CSVファイルを選択してください。', errors: null, success: null };
+  }
+
+  const text = await file.text();
+  const { headers, rows } = parseCsv(text);
+
+  const headerCheck = validateCsvHeaders(headers, TIMETABLE_CSV_HEADERS);
+  if (!headerCheck.valid) {
+    return { error: headerCheck.message!, errors: null, success: null };
+  }
+
+  if (rows.length === 0) {
+    return { error: 'データ行がありません。', errors: null, success: null };
+  }
+
+  const rowErrors = validateTimetableRows(rows);
+  if (rowErrors.length > 0) {
+    return { error: null, errors: rowErrors, success: null };
+  }
+
+  const db = getDb();
+  const year = new Date().getFullYear();
+
+  // 時間帯マスターから時限→IDのマッピングを取得
+  const timeSlotsSnap = await db.collection('timetable_time_slots').get();
+  const periodToTimeSlotId = new Map<number, string>();
+  for (const doc of timeSlotsSnap.docs) {
+    periodToTimeSlotId.set(doc.data().period, doc.id);
+  }
+
+  try {
+    const batch = db.batch();
+
+    // 既存の共通時間割を全削除
+    const existingSnap = await db
+      .collection('timetables')
+      .where('is_public', '==', true)
+      .get();
+    for (const doc of existingSnap.docs) {
+      batch.delete(doc.ref);
+    }
+
+    // 新規データを登録
+    for (const row of rows) {
+      const [gradeStr, major, dayStr, periodStr, courseName, classroom, instructor] = row;
+      const period = Number(periodStr);
+      const ref = db.collection('timetables').doc();
+      batch.set(ref, {
+        member_id: null,
+        day_of_week: DAY_LABEL_TO_NUMBER[dayStr],
+        period,
+        course_name: courseName.trim(),
+        semester: null,
+        year,
+        is_public: true,
+        grade: Number(gradeStr),
+        major,
+        classroom: classroom?.trim() || null,
+        instructor: instructor?.trim() || null,
+        time_slot_id: periodToTimeSlotId.get(period) ?? null,
+        created_at: FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+  } catch (error) {
+    return { error: `登録に失敗しました: ${(error as Error).message}`, errors: null, success: null };
+  }
+
+  revalidatePath('/timetable');
+  revalidatePath('/admin/timetables');
+
+  return { error: null, errors: null, success: `${rows.length}件の共通時間割を登録しました。` };
+}
+
+export async function uploadTimeSlotsCsvAction(
+  _prevState: CsvUploadState,
+  formData: FormData
+): Promise<CsvUploadState> {
+  const admin = await isAdmin();
+  if (!admin) {
+    return { error: '管理者権限が必要です。', errors: null, success: null };
+  }
+
+  const file = formData.get('file') as File | null;
+  if (!file || !file.name.endsWith('.csv')) {
+    return { error: 'CSVファイルを選択してください。', errors: null, success: null };
+  }
+
+  const text = await file.text();
+  const { headers, rows } = parseCsv(text);
+
+  const headerCheck = validateCsvHeaders(headers, TIME_SLOT_CSV_HEADERS);
+  if (!headerCheck.valid) {
+    return { error: headerCheck.message!, errors: null, success: null };
+  }
+
+  if (rows.length === 0) {
+    return { error: 'データ行がありません。', errors: null, success: null };
+  }
+
+  const rowErrors = validateTimeSlotRows(rows);
+  if (rowErrors.length > 0) {
+    return { error: null, errors: rowErrors, success: null };
+  }
+
+  const db = getDb();
+
+  try {
+    const batch = db.batch();
+
+    // 既存の時間帯マスターを全削除
+    const existingSnap = await db.collection('timetable_time_slots').get();
+    for (const doc of existingSnap.docs) {
+      batch.delete(doc.ref);
+    }
+
+    // 新規データを登録
+    for (const row of rows) {
+      const [periodStr, label, startTime, endTime, isActiveStr] = row;
+      const ref = db.collection('timetable_time_slots').doc();
+      batch.set(ref, {
+        period: Number(periodStr),
+        label: label.trim(),
+        start_time: startTime.trim(),
+        end_time: endTime.trim(),
+        is_active: isActiveStr.toLowerCase() === 'true' || isActiveStr === '1',
+        created_at: FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+  } catch (error) {
+    return { error: `登録に失敗しました: ${(error as Error).message}`, errors: null, success: null };
+  }
+
+  revalidatePath('/admin/timetables');
+
+  return { error: null, errors: null, success: `${rows.length}件の時間帯マスターを登録しました。` };
 }

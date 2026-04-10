@@ -7,6 +7,11 @@ import { PublicTimetableForm } from '@/components/admin/PublicTimetableForm';
 import { PublicTimetableDeleteButton } from '@/components/admin/PublicTimetableDeleteButton';
 import { TimeSlotForm } from '@/components/admin/TimeSlotForm';
 import { TimeSlotTable } from '@/components/admin/TimeSlotTable';
+import { CsvUploadForm } from '@/components/admin/CsvUploadForm';
+import {
+  uploadPublicTimetableCsvAction,
+  uploadTimeSlotsCsvAction,
+} from '@/app/actions/timetables';
 
 export default async function AdminTimetablesPage() {
   const [timetableSummaries, publicTimetables, timeSlots] = await Promise.all([
@@ -32,6 +37,39 @@ export default async function AdminTimetablesPage() {
 
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">共通時間割 CSV管理</h2>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              ダウンロード
+            </h3>
+            <a
+              href="/api/admin/csv/timetables"
+              download
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+            >
+              共通時間割CSVをダウンロード
+            </a>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              アップロード（一括上書き）
+            </h3>
+            <p className="text-xs text-gray-500 mb-2">
+              CSVカラム: 学年, 専攻, 曜日, 時限, 教科名, 教室, 担当講師
+            </p>
+            <CsvUploadForm
+              action={uploadPublicTimetableCsvAction}
+              label="共通時間割をアップロード"
+              confirmMessage="既存の共通時間割データを全て削除し、CSVの内容で上書きします。よろしいですか？"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">時間帯マスター</h2>
           <span className="text-sm text-gray-500">
             {timeSlots.length}件
@@ -49,6 +87,32 @@ export default async function AdminTimetablesPage() {
               登録済み時間帯
             </h3>
             <TimeSlotTable timeSlots={timeSlots} />
+          </div>
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              CSV管理
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <a
+                  href="/api/admin/csv/time-slots"
+                  download
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+                >
+                  時間帯マスターCSVをダウンロード
+                </a>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-2">
+                  CSVカラム: 時限, ラベル, 開始時刻, 終了時刻, 有効
+                </p>
+                <CsvUploadForm
+                  action={uploadTimeSlotsCsvAction}
+                  label="時間帯マスターをアップロード"
+                  confirmMessage="既存の時間帯マスターデータを全て削除し、CSVの内容で上書きします。よろしいですか？"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
