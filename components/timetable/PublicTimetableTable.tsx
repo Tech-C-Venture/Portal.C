@@ -38,7 +38,7 @@ export function PublicTimetableTable({
     defaultGrade ? String(defaultGrade) : ''
   );
   const [majorFilter, setMajorFilter] = useState(defaultMajor ?? '');
-  const isWeekView = true;
+  const [selectedDay, setSelectedDay] = useState(() => new Date().getDay());
 
   const grades = useMemo(
     () =>
@@ -85,6 +85,9 @@ export function PublicTimetableTable({
       (entry) => entry.dayOfWeek === day && entry.period === period
     );
 
+  const selectedDayLabel = dayLabels.find((d) => d.value === selectedDay)?.label ?? '';
+  const today = new Date().getDay();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-4">
@@ -122,7 +125,91 @@ export function PublicTimetableTable({
         </select>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* Day selector buttons - tablet and below only */}
+      <div className="flex justify-center gap-2 lg:hidden">
+        {dayLabels.map((day) => (
+          <button
+            key={day.value}
+            type="button"
+            onClick={() => setSelectedDay(day.value)}
+            className={`relative w-10 h-10 rounded-full text-sm font-medium transition-colors ${
+              selectedDay === day.value
+                ? 'bg-blue-500 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {day.label}
+            {day.value === today && (
+              <span
+                className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${
+                  selectedDay === day.value ? 'bg-white' : 'bg-blue-500'
+                }`}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Daily view - tablet and below */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden lg:hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                時限
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                {selectedDayLabel}曜日
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {periods.map((period) => {
+              const slotEntries = getEntriesForSlot(selectedDay, period);
+              return (
+                <tr key={period}>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 w-16">
+                    {period}限
+                  </td>
+                  <td className="px-4 py-3">
+                    {slotEntries.length === 0 ? (
+                      <div className="text-sm text-gray-400">-</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {slotEntries.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                          >
+                            <div className="font-medium">
+                              {entry.courseName}
+                            </div>
+                            {majorFilter === 'all' && (
+                              <div className="text-gray-500 text-xs mt-1">
+                                {(entry.grade ?? '-') + '年'} /{' '}
+                                {entry.major ?? '-'}
+                              </div>
+                            )}
+                            {(entry.classroom || entry.instructor) && (
+                              <div className="text-gray-500 text-xs mt-1">
+                                {entry.classroom ?? '-'} /{' '}
+                                {entry.instructor ?? '-'}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Weekly view - PC only */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden hidden lg:block">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -150,18 +237,16 @@ export function PublicTimetableTable({
                   return (
                     <td
                       key={`${day.value}-${period}`}
-                      className={isWeekView ? 'px-3 py-2' : 'px-4 py-3'}
+                      className="px-3 py-2"
                     >
                       {slotEntries.length === 0 ? (
                         <div className="text-sm text-gray-400">-</div>
                       ) : (
-                        <div className={isWeekView ? 'space-y-1' : 'space-y-2'}>
+                        <div className="space-y-1">
                           {slotEntries.map((entry) => (
                             <div
                               key={entry.id}
-                              className={`rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 ${
-                                isWeekView ? 'px-2 py-1 leading-tight' : 'px-2 py-1'
-                              }`}
+                              className="rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 px-2 py-1 leading-tight"
                             >
                               <div className="font-medium">
                                 {entry.courseName}
