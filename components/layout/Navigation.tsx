@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 
-const FIREBASE_STORAGE_BUCKET = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '';
-const LOGO_URL = 'https://firebasestorage.googleapis.com/v0/b/' + FIREBASE_STORAGE_BUCKET + '/o/logos%2Flogo.png?alt=media';
+const LOGO_URL = 'https://firebasestorage.googleapis.com/v0/b/tech-c-venture.firebasestorage.app/o/logos%2Flogo.png?alt=media';
 
 type NavigationProps = {
     roles?: string[];
