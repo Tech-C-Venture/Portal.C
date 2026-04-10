@@ -5,7 +5,7 @@ import { isAdmin } from '@/lib/auth';
 import { getDb } from '@/lib/firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { FieldValue } from 'firebase-admin/firestore';
-import { parseCsv, validateCsvHeaders, type CsvRowError } from '@/lib/csv';
+import { parseCsv, validateCsvHeaders, type CsvRowError, type CsvUploadState } from '@/lib/csv';
 import { getDepartmentNames } from '@/app/admin/_data';
 import ExcelJS from 'exceljs';
 
@@ -250,11 +250,8 @@ export async function deletePublicTimetableAction(
 
 // --- CSV Upload ---
 
-export interface CsvUploadState {
-  error: string | null;
-  errors: CsvRowError[] | null;
-  success: string | null;
-}
+// CsvUploadState is re-exported from @/lib/csv
+export type { CsvUploadState } from '@/lib/csv';
 
 const DAY_LABEL_TO_NUMBER: Record<string, number> = {
   '日': 0, '月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6,
