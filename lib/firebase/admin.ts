@@ -22,13 +22,14 @@ function getFirebaseApp(): App {
   }
 
   if (clientEmail && privateKey) {
+    console.log('[firebase] Initializing with service account credentials');
     return initializeApp({
       credential: cert({ projectId, clientEmail, privateKey }),
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
     });
   }
 
-  // GOOGLE_APPLICATION_CREDENTIALS が設定されている場合は自動認証
+  console.warn('[firebase] FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY missing, using default credentials');
   return initializeApp({
     projectId,
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,

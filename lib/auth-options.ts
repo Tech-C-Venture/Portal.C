@@ -265,11 +265,16 @@ export function getAuthOptions(): NextAuthOptions {
       return session;
     },
     async signIn({ user, profile, account }) {
-      await ensureMemberOnSignIn(
-        user,
-        profile as ExtendedProfile | null,
-        (account?.access_token as string | null) ?? null
-      );
+      try {
+        await ensureMemberOnSignIn(
+          user,
+          profile as ExtendedProfile | null,
+          (account?.access_token as string | null) ?? null
+        );
+      } catch (error) {
+        console.error("[auth] ensureMemberOnSignIn failed:", error);
+        // Firestoreエラーでもログイン自体はブロックしない
+      }
       return true;
     },
   },
