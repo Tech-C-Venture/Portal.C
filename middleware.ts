@@ -40,6 +40,19 @@ async function getSessionUserId(req: NextRequest): Promise<string | null> {
 }
 
 export async function middleware(req: NextRequest) {
+  // OPTIONSプリフライトリクエストには即座に200を返す
+  if (req.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": req.headers.get("origin") ?? "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": req.headers.get("access-control-request-headers") ?? "*",
+        "Access-Control-Max-Age": "86400",
+      },
+    })
+  }
+
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const { pathname } = req.nextUrl
   const hasSessionCookie = Boolean(
