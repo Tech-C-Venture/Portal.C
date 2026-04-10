@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Portal.C Firestore セキュリティルール
+// 全アクセスはサーバーサイド (Firebase Admin SDK) 経由のため、
+// クライアント直接アクセスは原則拒否する。
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== members =====
+    match /members/{memberId} {
+      // Admin SDK経由のみ。クライアント直接アクセスは不可
+      allow read, write: if false;
+    }
+
+    // ===== tags =====
+    match /tags/{tagId} {
+      allow read, write: if false;
+    }
+
+    // ===== events =====
+    match /events/{eventId} {
+      allow read, write: if false;
+    }
+
+    // ===== event_participants =====
+    match /event_participants/{participantId} {
+      allow read, write: if false;
+    }
+
+    // ===== timetables =====
+    match /timetables/{timetableId} {
+      allow read, write: if false;
+    }
+
+    // ===== timetable_time_slots =====
+    match /timetable_time_slots/{slotId} {
+      allow read, write: if false;
+    }
+
+    // 未定義コレクションへのアクセスも拒否
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

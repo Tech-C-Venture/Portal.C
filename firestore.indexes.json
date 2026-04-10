@@ -1,0 +1,85 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "timetables",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "major", "order": "ASCENDING" },
+        { "fieldPath": "grade", "order": "ASCENDING" },
+        { "fieldPath": "is_public", "order": "ASCENDING" },
+        { "fieldPath": "day_of_week", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "timetables",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "member_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "members",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "zitadel_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "members",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "school_email", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "members",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "student_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "event_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "event_participants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "event_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "event_participants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "member_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "timetables",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_public", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "timetable_time_slots",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "period", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tags",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
