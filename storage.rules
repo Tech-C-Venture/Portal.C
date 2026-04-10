@@ -6,7 +6,13 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // avatarsディレクトリ: Admin SDK経由のみ書き込み、読み取りは認証ユーザー
+    // logosディレクトリ: 公開読み取り、書き込みはAdmin SDKのみ
+    match /logos/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // avatarsディレクトリ: 公開読み取り、書き込みはAdmin SDKのみ
     match /avatars/{fileName} {
       allow read: if true;
       allow write: if false;
