@@ -198,6 +198,7 @@ export function MemberProfileForm({
   mode,
   redirectTo,
   submitLabel,
+  departmentNames,
 }: MemberProfileFormProps) {
   const isOnboarding = mode === 'onboarding';
   const requiredMark = <span className="ml-1 text-rose-500">*</span>;
