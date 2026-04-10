@@ -55,7 +55,7 @@ export async function createZitadelUser(
       },
       email: {
         email,
-        sendCode: {},
+        isVerified: true,
       },
     }),
   });
@@ -68,6 +68,32 @@ export async function createZitadelUser(
 
   const data = (await response.json()) as CreateUserResponse;
   return { userId: data.userId };
+}
+
+export async function sendPasswordResetEmail(
+  userId: string
+): Promise<void> {
+  const { issuer, pat } = getConfig();
+
+  const response = await fetch(
+    `${issuer}/v2/users/${userId}/password_reset`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${pat}`,
+      },
+      body: JSON.stringify({
+        sendLink: {},
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorBody = (await response.json().catch(() => null)) as ZitadelErrorResponse | null;
+    const message = errorBody?.message ?? `Password reset email failed: ${response.status}`;
+    throw new Error(message);
+  }
 }
 
 export async function assignUserGrant(

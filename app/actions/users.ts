@@ -1,7 +1,7 @@
 'use server';
 
 import { isAdmin } from '@/lib/auth';
-import { createZitadelUser, assignUserGrant } from '@/lib/zitadel/admin-api';
+import { createZitadelUser, assignUserGrant, sendPasswordResetEmail } from '@/lib/zitadel/admin-api';
 
 export interface InviteUserFormState {
   error: string | null;
@@ -55,8 +55,18 @@ export async function inviteUserAction(
     };
   }
 
+  try {
+    await sendPasswordResetEmail(userId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'メール送信に失敗しました。';
+    return {
+      error: null,
+      success: `ユーザー（${email}）を作成・ロール付与しましたが、パスワード設定メールの送信に失敗しました: ${message}。ZITADELコンソールから手動で再送してください。`,
+    };
+  }
+
   return {
     error: null,
-    success: `${familyName} ${givenName}（${email}）を招待しました。認証メールが送信されます。`,
+    success: `${familyName} ${givenName}（${email}）を招待しました。パスワード設定メールが送信されます。`,
   };
 }
