@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { FiCalendar, FiGlobe, FiKey, FiMapPin, FiUsers } from 'react-icons/fi';
+import { RichTextContent } from '@/components/editor/RichTextContent';
 import {
   getEventById,
   getEventParticipantsByEventId,
@@ -60,9 +61,13 @@ export default async function AdminEventParticipantsDetailPage({
       <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
         <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
           <h2 className="text-xl font-semibold mb-2">{event.title}</h2>
-          <p className="text-gray-600 mb-4">
-            {event.description || '詳細が登録されていません。'}
-          </p>
+          <div className="mb-4">
+            {event.description ? (
+              <RichTextContent html={event.description} className="text-gray-600" />
+            ) : (
+              <p className="text-gray-600">詳細が登録されていません。</p>
+            )}
+          </div>
           <div className="space-y-2 text-sm text-gray-500">
             <p className="flex items-center gap-2">
               <FiCalendar className="h-4 w-4" aria-hidden />

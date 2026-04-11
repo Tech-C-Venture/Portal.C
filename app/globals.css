@@ -38,6 +38,101 @@ body {
   }
 }
 
+/* ─── Rich Text Editor / Display ─── */
+.prose-editor,
+.event-description-content {
+  color: #374151; /* gray-700 */
+  line-height: 1.7;
+}
+.prose-editor:focus {
+  outline: none;
+}
+.prose-editor h2,
+.event-description-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.prose-editor h3,
+.event-description-content h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+}
+.prose-editor p,
+.event-description-content p {
+  margin-bottom: 0.6rem;
+}
+.prose-editor ul,
+.event-description-content ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.6rem;
+}
+.prose-editor ol,
+.event-description-content ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 0.6rem;
+}
+.prose-editor li,
+.event-description-content li {
+  margin-bottom: 0.15rem;
+}
+.prose-editor blockquote,
+.event-description-content blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 1rem;
+  color: #6b7280;
+  margin-bottom: 0.6rem;
+}
+.prose-editor pre,
+.event-description-content pre {
+  background: #f3f4f6;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  margin-bottom: 0.6rem;
+}
+.prose-editor code,
+.event-description-content code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+.prose-editor a,
+.event-description-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.prose-editor a:hover,
+.event-description-content a:hover {
+  color: #1d4ed8;
+}
+.prose-editor strong,
+.event-description-content strong {
+  font-weight: 700;
+}
+.prose-editor em,
+.event-description-content em {
+  font-style: italic;
+}
+.prose-editor s,
+.event-description-content s {
+  text-decoration: line-through;
+}
+
+/* Tiptap placeholder */
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
 /* 使い回し用：ふわっと動く背景（prefers-reduced-motion対応は各コンポーネント側で止めます） */
 @keyframes float-slow {
   0% {

@@ -105,7 +105,7 @@ export function OpenEventsCarousel({ events }: Props) {
               </div>
 
               <p className="mt-4 text-sm text-primary/80 line-clamp-3">
-                {current.description}
+                {current.description?.replace(/<[^>]*>/g, '') ?? ''}
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-3">

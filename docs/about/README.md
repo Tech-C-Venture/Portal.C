@@ -45,6 +45,7 @@ Portal.Cは、Tech.C Ventureのメンバー管理とイベント管理を行うW
 ### Specification (SDD)
 プロジェクトの仕様書とガイドライン
 
+- [cc-sdd 使い方ガイド](cc-sdd-usage.md) - SDDワークフローの手順
 - **Steering**: プロジェクト全体のガイドライン
   - Product, Tech, Structure
 - **Specs**: 機能仕様書
