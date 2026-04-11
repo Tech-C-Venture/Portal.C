@@ -13,6 +13,7 @@ import type { IEventRepository } from '@/application/ports/IEventRepository';
 import type { IMemberRepository } from '@/application/ports/IMemberRepository';
 import { getCurrentUser } from '@/lib/auth';
 import { EventRegisterButton } from '@/components/events/EventRegisterButton';
+import { RichTextContent } from '@/components/editor/RichTextContent';
 import { SiGooglemeet } from 'react-icons/si';
 import { TbBrandZoom } from 'react-icons/tb';
 
@@ -100,9 +101,11 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         <div className="grid gap-6 lg:grid-cols-[1.6fr,1fr]">
           <div>
             <h2 className="text-lg font-semibold mb-3">詳細</h2>
-            <p className="whitespace-pre-line text-gray-700">
-              {eventDto.description || '詳細が登録されていません。'}
-            </p>
+            {eventDto.description ? (
+              <RichTextContent html={eventDto.description} />
+            ) : (
+              <p className="text-gray-700">詳細が登録されていません。</p>
+            )}
           </div>
           <div className="space-y-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
             <div>

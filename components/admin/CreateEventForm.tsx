@@ -8,6 +8,7 @@ import {
   createEventAction,
   type CreateEventFormState,
 } from '@/app/actions/events';
+import { RichTextEditor } from '@/components/editor/RichTextEditor';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -52,13 +53,7 @@ export function CreateEventForm() {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-2">説明</label>
-        <textarea
-          name="description"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          rows={3}
-          placeholder="イベントの説明"
-        />
+        <RichTextEditor name="description" placeholder="イベントの説明" />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>

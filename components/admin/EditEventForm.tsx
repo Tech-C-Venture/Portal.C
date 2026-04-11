@@ -8,6 +8,7 @@ import {
   updateEventAction,
   type UpdateEventFormState,
 } from '@/app/actions/events';
+import { RichTextEditor } from '@/components/editor/RichTextEditor';
 
 type EditEventFormProps = {
   eventId: string;
@@ -74,13 +75,7 @@ export function EditEventForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-2">説明</label>
-        <textarea
-          name="description"
-          defaultValue={description}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          rows={4}
-        />
+        <RichTextEditor name="description" defaultValue={description} />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
