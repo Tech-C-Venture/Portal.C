@@ -1,7 +1,6 @@
 /**
  * LogoLoading コンポーネント
- * ブレイルアートロゴをrequestAnimationFrameで
- * 中心から放射状に滑らかに描画するローディング画面
+ * ブレイルアートロゴを左から右へ波打つように描画するローディング画面
  */
 
 'use client';
@@ -47,37 +46,33 @@ const LINES = RAW_LINES.map((l) => {
   return chars;
 });
 const ROWS = LINES.length;
-const COLS = MAX_W;
 
-// 視覚的中心を非空白文字の重心から算出
-let _sx = 0, _sy = 0, _n = 0;
+// 非空白文字のx範囲を取得
+let MIN_X = MAX_W;
+let MAX_X = 0;
 for (let y = 0; y < ROWS; y++) {
-  for (let x = 0; x < COLS; x++) {
-    if (LINES[y][x] !== BLANK) { _sx += x; _sy += y; _n++; }
-  }
-}
-const CX = _n > 0 ? _sx / _n : COLS / 2;
-const CY = _n > 0 ? _sy / _n : ROWS / 2;
-
-// 非空白文字の最大距離（文字アスペクト比補正: 縦≈横の2倍）
-const ASPECT = 2.0;
-let MAX_DIST = 0;
-for (let y = 0; y < ROWS; y++) {
-  for (let x = 0; x < COLS; x++) {
+  for (let x = 0; x < MAX_W; x++) {
     if (LINES[y][x] !== BLANK) {
-      const d = Math.hypot(x - CX, (y - CY) * ASPECT);
-      if (d > MAX_DIST) MAX_DIST = d;
+      if (x < MIN_X) MIN_X = x;
+      if (x > MAX_X) MAX_X = x;
     }
   }
 }
 
-function renderFrame(radius: number): string {
-  return LINES.map((chars, y) =>
-    chars.map((ch, x) => {
+// 波の幅（ソフトエッジ）
+const WAVE_WIDTH = 6;
+const WAVE_AMP = 3;
+const WAVE_FREQ = 0.5;
+
+function renderWaveFrame(waveFront: number): string {
+  return LINES.map((chars, y) => {
+    const waveOffset = Math.sin(y * WAVE_FREQ) * WAVE_AMP;
+    return chars.map((ch, x) => {
       if (ch === BLANK) return BLANK;
-      return Math.hypot(x - CX, (y - CY) * ASPECT) <= radius ? ch : BLANK;
-    }).join('')
-  ).join('\n');
+      const edge = waveFront + waveOffset;
+      return x <= edge ? ch : BLANK;
+    }).join('');
+  }).join('\n');
 }
 
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
@@ -95,14 +90,18 @@ export function LogoLoading({ message = '読み込み中...' }: LogoLoadingProps
   const tick = useCallback((ts: number) => {
     if (!t0.current) t0.current = ts;
     const elapsed = ts - t0.current;
-    const duration = 1000;
+    const duration = 1200;
 
     if (elapsed < duration) {
       const progress = easeOutCubic(Math.min(elapsed / duration, 1));
-      setText(renderFrame(progress * MAX_DIST));
+      // 波の先端をMIN_X - マージンからMAX_X + マージンまで動かす
+      const start = MIN_X - WAVE_AMP - WAVE_WIDTH;
+      const end = MAX_X + WAVE_AMP + WAVE_WIDTH;
+      const front = start + progress * (end - start);
+      setText(renderWaveFrame(front));
       raf.current = requestAnimationFrame(tick);
     } else {
-      setText(renderFrame(MAX_DIST));
+      setText(renderWaveFrame(MAX_X + WAVE_AMP + WAVE_WIDTH));
       setDone(true);
     }
   }, []);
@@ -113,7 +112,7 @@ export function LogoLoading({ message = '読み込み中...' }: LogoLoadingProps
     ).matches;
 
     if (prefersReducedMotion) {
-      setText(renderFrame(MAX_DIST));
+      setText(renderWaveFrame(MAX_X + WAVE_AMP + WAVE_WIDTH));
       setDone(true);
       return;
     }
@@ -130,7 +129,7 @@ export function LogoLoading({ message = '読み込み中...' }: LogoLoadingProps
         aria-label="Portal.C ロゴ"
       >
         <pre
-          className="select-none text-center font-mono text-[10px] leading-[1.2] text-primary sm:text-xs sm:leading-[1.25]"
+          className="select-none text-center font-mono text-[10px] leading-[1.2] text-gray-900 sm:text-xs sm:leading-[1.25]"
           aria-hidden
         >
           {text}
