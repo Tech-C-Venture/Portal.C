@@ -60,7 +60,7 @@ const CX = _n > 0 ? _sx / _n : COLS / 2;
 const CY = _n > 0 ? _sy / _n : ROWS / 2;
 
 // 非空白文字の最大距離（文字アスペクト比補正: 縦≈横の2倍）
-const ASPECT = 1.8;
+const ASPECT = 2.0;
 let MAX_DIST = 0;
 for (let y = 0; y < ROWS; y++) {
   for (let x = 0; x < COLS; x++) {
@@ -130,7 +130,7 @@ export function LogoLoading({ message = '読み込み中...' }: LogoLoadingProps
         aria-label="Portal.C ロゴ"
       >
         <pre
-          className="select-none text-center font-mono text-[10px] leading-[1.1] text-primary sm:text-xs sm:leading-[1.15]"
+          className="select-none text-center font-mono text-[10px] leading-[1.2] text-primary sm:text-xs sm:leading-[1.25]"
           aria-hidden
         >
           {text}
