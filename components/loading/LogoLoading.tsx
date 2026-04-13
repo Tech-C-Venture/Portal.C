@@ -41,8 +41,12 @@ export function LogoLoading({ message = '読み込み中...' }: LogoLoadingProps
           {LOGO_LINES.map((line, i) => (
             <span
               key={i}
-              className="logo-wave-line block"
-              style={{ animationDelay: `${i * 0.1}s` }}
+              className="block"
+              style={{
+                animation: 'logo-line-wave 2s ease-in-out infinite',
+                animationDelay: `${i * 0.1}s`,
+                color: '#1f1f1f',
+              }}
             >
               {line}
             </span>
