@@ -134,35 +134,40 @@ body {
 }
 
 /* ─── Logo Loading Animation ─── */
-@keyframes logo-wave-sweep {
+@keyframes logo-shine {
   0% {
-    background-position: 100% 100%;
+    transform: translateX(-100%) translateY(-100%);
   }
   100% {
-    background-position: 0% 0%;
+    transform: translateX(100%) translateY(100%);
   }
 }
 .logo-wave {
+  position: relative;
+  overflow: hidden;
+  color: #1a1a1a;
+}
+.logo-wave::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
   background: linear-gradient(
     135deg,
-    #1a1a1a 0%,
-    #1a1a1a 35%,
-    #666 50%,
-    #1a1a1a 65%,
-    #1a1a1a 100%
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 60%,
+    transparent 100%
   );
-  background-size: 300% 300%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: logo-wave-sweep 2s ease-in-out infinite;
+  animation: logo-shine 2s ease-in-out infinite;
+  pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .logo-wave {
+  .logo-wave::after {
     animation: none !important;
-    background: none;
-    -webkit-text-fill-color: #1a1a1a;
-    color: #1a1a1a;
+    display: none;
   }
 }
 
