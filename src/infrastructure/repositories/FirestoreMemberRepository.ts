@@ -25,6 +25,7 @@ interface MemberDoc {
   avatar_url: string | null;
   skills: string[];
   interests: string[];
+  roles?: string[];
   created_at: Timestamp;
   updated_at: Timestamp;
 }
@@ -95,6 +96,7 @@ export class FirestoreMemberRepository implements IMemberRepository {
           }
         : undefined,
       avatarUrl: doc.avatar_url ?? undefined,
+      roles: doc.roles ?? [],
       createdAt: doc.created_at?.toDate() ?? new Date(),
       updatedAt: doc.updated_at?.toDate() ?? new Date(),
     });
@@ -122,6 +124,7 @@ export class FirestoreMemberRepository implements IMemberRepository {
       avatar_url: member.avatarUrl ?? null,
       skills: [...member.skills],
       interests: [...member.interests],
+      roles: [...member.roles],
       created_at: Timestamp.fromDate(member.createdAt),
       updated_at: Timestamp.fromDate(member.updatedAt),
     };

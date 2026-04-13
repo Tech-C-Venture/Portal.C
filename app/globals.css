@@ -133,6 +133,26 @@ body {
   pointer-events: none;
 }
 
+/* ─── Logo Loading Animation ─── */
+@keyframes logo-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.97);
+  }
+}
+.logo-loading-pulse {
+  animation: logo-pulse 2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-loading-pulse {
+    animation: none !important;
+  }
+}
+
 /* 使い回し用：ふわっと動く背景（prefers-reduced-motion対応は各コンポーネント側で止めます） */
 @keyframes float-slow {
   0% {

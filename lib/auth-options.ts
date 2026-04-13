@@ -149,7 +149,7 @@ async function ensureMemberOnSignIn(user: {
   id?: string;
   name?: string | null;
   email?: string | null;
-}, profile?: ExtendedProfile | null, accessToken?: string | null) {
+}, profile?: ExtendedProfile | null, accessToken?: string | null, roles?: string[]) {
   if (!user?.id || !user.email) {
     throw new Error("ZITADEL user id/email is missing");
   }
@@ -169,8 +169,15 @@ async function ensureMemberOnSignIn(user: {
     const doc = snap.docs[0];
     const data = doc.data();
     const normalizedMemberName = (data.name as string)?.trim();
+    const updates: Record<string, unknown> = {};
     if (normalizedName && normalizedName !== normalizedMemberName) {
-      await doc.ref.update({ name: normalizedName });
+      updates.name = normalizedName;
+    }
+    if (roles && roles.length > 0) {
+      updates.roles = roles;
+    }
+    if (Object.keys(updates).length > 0) {
+      await doc.ref.update(updates);
     }
     return;
   }
@@ -194,6 +201,7 @@ async function ensureMemberOnSignIn(user: {
     avatar_url: null,
     skills: [],
     interests: [],
+    roles: roles ?? [],
     created_at: FieldValue.serverTimestamp(),
     updated_at: FieldValue.serverTimestamp(),
   });
@@ -266,10 +274,12 @@ export function getAuthOptions(): NextAuthOptions {
     },
     async signIn({ user, profile, account }) {
       try {
+        const signInRoles = extractRoles(profile as ExtendedProfile | null);
         await ensureMemberOnSignIn(
           user,
           profile as ExtendedProfile | null,
-          (account?.access_token as string | null) ?? null
+          (account?.access_token as string | null) ?? null,
+          signInRoles
         );
       } catch (error) {
         console.error("[auth] ensureMemberOnSignIn failed:", error);

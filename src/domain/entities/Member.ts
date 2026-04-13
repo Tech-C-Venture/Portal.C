@@ -23,6 +23,7 @@ export interface Member {
   readonly onboardingCompleted: boolean;
   readonly currentStatus?: CurrentStatus;
   readonly avatarUrl?: string;
+  readonly roles: readonly string[];
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -46,6 +47,7 @@ export function createMember(params: {
   onboardingCompleted?: boolean;
   currentStatus?: { message: string; createdAt: Date };
   avatarUrl?: string;
+  roles?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }): Member {
@@ -72,6 +74,7 @@ export function createMember(params: {
         )
       : undefined,
     avatarUrl: params.avatarUrl,
+    roles: Object.freeze(params.roles ?? []),
     createdAt: params.createdAt ?? new Date(),
     updatedAt: params.updatedAt ?? new Date(),
   };

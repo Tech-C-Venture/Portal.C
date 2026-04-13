@@ -29,6 +29,7 @@ export class MemberMapper {
           }
         : undefined,
       avatarUrl: member.avatarUrl,
+      isAdmin: member.roles.includes('admin'),
       grade: calculateGrade(member),
       createdAt: member.createdAt.toISOString(),
       updatedAt: member.updatedAt.toISOString(),

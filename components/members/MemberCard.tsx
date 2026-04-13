@@ -6,7 +6,7 @@
 'use client';
 
 import { MemberDTO } from '@/application/dtos';
-import { FiMessageCircle } from 'react-icons/fi';
+import { FiMessageCircle, FiShield } from 'react-icons/fi';
 import { MemberAvatar } from './MemberAvatar';
 
 interface MemberCardProps {
@@ -23,7 +23,15 @@ export function MemberCard({ member }: MemberCardProps) {
       <div className="flex items-center mb-4">
         <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} className="mr-4" />
         <div>
-          <h2 className="text-lg font-semibold">{member.name}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">{member.name}</h2>
+            {member.isAdmin && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                <FiShield className="h-3 w-3" aria-hidden />
+                運営
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500">
             {member.grade}年生 / {member.department}
           </p>
