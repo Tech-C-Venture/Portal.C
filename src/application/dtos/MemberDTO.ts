@@ -22,6 +22,7 @@ export interface MemberDTO {
     expiresAt: string; // ISO string
   };
   avatarUrl?: string;
+  isAdmin: boolean;
   grade: number; // 計算済みの学年
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
