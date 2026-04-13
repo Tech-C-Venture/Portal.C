@@ -133,27 +133,6 @@ body {
   pointer-events: none;
 }
 
-/* ─── Logo Loading Animation ─── */
-@keyframes logo-line-wave {
-  0%, 100% {
-    color: #1f1f1f;
-    text-shadow: none;
-  }
-  50% {
-    color: #9ca3af;
-    text-shadow: 0 0 10px rgba(42, 97, 179, 0.25);
-  }
-}
-.logo-wave-line {
-  animation: logo-line-wave 2s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .logo-wave-line {
-    animation: none !important;
-    color: #1f1f1f;
-  }
-}
-
 /* 使い回し用：ふわっと動く背景（prefers-reduced-motion対応は各コンポーネント側で止めます） */
 @keyframes float-slow {
   0% {

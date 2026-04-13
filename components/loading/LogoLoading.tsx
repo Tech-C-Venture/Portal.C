@@ -33,6 +33,12 @@ interface LogoLoadingProps {
 export function LogoLoading({ message = '読み込み中...' }: LogoLoadingProps) {
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center gap-6">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes llw {
+          0%, 100% { color: #1f1f1f; text-shadow: none; }
+          50% { color: #9ca3af; text-shadow: 0 0 10px rgba(42,97,179,0.25); }
+        }
+      `}} />
       <div role="img" aria-label="Portal.C ロゴ">
         <pre
           className="select-none text-center font-mono text-[10px] leading-[1.2] sm:text-xs sm:leading-[1.25]"
@@ -41,11 +47,10 @@ export function LogoLoading({ message = '読み込み中...' }: LogoLoadingProps
           {LOGO_LINES.map((line, i) => (
             <span
               key={i}
-              className="block"
               style={{
-                animation: 'logo-line-wave 2s ease-in-out infinite',
-                animationDelay: `${i * 0.1}s`,
+                display: 'block',
                 color: '#1f1f1f',
+                animation: `llw 2s ${i * 0.1}s ease-in-out infinite`,
               }}
             >
               {line}
