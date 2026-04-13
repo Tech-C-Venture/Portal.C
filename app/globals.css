@@ -134,40 +134,23 @@ body {
 }
 
 /* ─── Logo Loading Animation ─── */
-@keyframes logo-shine {
-  0% {
-    transform: translateX(-100%) translateY(-100%);
+@keyframes logo-line-wave {
+  0%, 100% {
+    color: #1f1f1f;
+    text-shadow: none;
   }
-  100% {
-    transform: translateX(100%) translateY(100%);
+  50% {
+    color: #9ca3af;
+    text-shadow: 0 0 10px rgba(42, 97, 179, 0.25);
   }
 }
-.logo-wave {
-  position: relative;
-  overflow: hidden;
-  color: #1a1a1a;
-}
-.logo-wave::after {
-  content: '';
-  position: absolute;
-  inset: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    135deg,
-    transparent 0%,
-    transparent 40%,
-    rgba(255, 255, 255, 0.5) 50%,
-    transparent 60%,
-    transparent 100%
-  );
-  animation: logo-shine 2s ease-in-out infinite;
-  pointer-events: none;
+.logo-wave-line {
+  animation: logo-line-wave 2s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .logo-wave::after {
+  .logo-wave-line {
     animation: none !important;
-    display: none;
+    color: #1f1f1f;
   }
 }
 
