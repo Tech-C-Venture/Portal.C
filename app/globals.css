@@ -134,22 +134,35 @@ body {
 }
 
 /* ─── Logo Loading Animation ─── */
-@keyframes logo-pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
+@keyframes logo-wave-sweep {
+  0% {
+    background-position: 100% 100%;
   }
-  50% {
-    opacity: 0.6;
-    transform: scale(0.97);
+  100% {
+    background-position: 0% 0%;
   }
 }
-.logo-loading-pulse {
-  animation: logo-pulse 2s ease-in-out infinite;
+.logo-wave {
+  background: linear-gradient(
+    135deg,
+    #1a1a1a 0%,
+    #1a1a1a 35%,
+    #666 50%,
+    #1a1a1a 65%,
+    #1a1a1a 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: logo-wave-sweep 2s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .logo-loading-pulse {
+  .logo-wave {
     animation: none !important;
+    background: none;
+    -webkit-text-fill-color: #1a1a1a;
+    color: #1a1a1a;
   }
 }
 
