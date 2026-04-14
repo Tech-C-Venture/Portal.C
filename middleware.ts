@@ -100,5 +100,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|favicon.ico).*)"],
+  // Exclude API routes, Next.js internals, and static asset files
+  // (e.g. /icons/*.png, /manifest.webmanifest) so PWA resources stay publicly accessible.
+  matcher: ["/((?!api|_next|.*\\..*).*)"],
 }
