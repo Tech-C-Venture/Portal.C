@@ -65,6 +65,13 @@ function normalizeTimeValue(value: string | null): string {
     return value.length >= 5 ? value.slice(0, 5) : value;
 }
 
+// JST(Asia/Tokyo)基準の曜日(0=日〜6=土)を返す。
+// サーバーのタイムゾーンに依存せず、JSTの0:00で曜日が切り替わるようにする。
+function getJstDayOfWeek(date: Date): number {
+    const jstMs = date.getTime() + 9 * 60 * 60 * 1000;
+    return new Date(jstMs).getUTCDay();
+}
+
 async function getTimeSlotMap(): Promise<Map<number, string>> {
     try {
         const db = getDb();
@@ -97,8 +104,8 @@ async function getTimeSlotMap(): Promise<Map<number, string>> {
 async function getTodayTimetableRows(params: { major: string; grade: number; baseDate: Date }) {
     const { major, grade, baseDate } = params;
 
-    // 日曜(0)/土曜(6)は基本表示なし
-    const dayOfWeek = baseDate.getDay();
+    // 日曜(0)/土曜(6)は基本表示なし（JST基準）
+    const dayOfWeek = getJstDayOfWeek(baseDate);
     if (dayOfWeek === 0 || dayOfWeek === 6) return [];
 
     try {
@@ -137,6 +144,7 @@ export default async function Home() {
     const now = new Date();
 
     const timetableDateLabel = now.toLocaleDateString("ja-JP", {
+        timeZone: "Asia/Tokyo",
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
