@@ -267,6 +267,20 @@ export type EventParticipationStat = {
   availableSpots: number | null;
 };
 
+function resolveEventCapacity(data: {
+  capacity?: number | null;
+  slots?: Array<{ capacity?: number | null }> | null;
+}): number | null {
+  const slots = data.slots;
+  if (Array.isArray(slots) && slots.length > 0) {
+    if (slots.some((slot) => slot.capacity == null)) {
+      return null;
+    }
+    return slots.reduce((sum, slot) => sum + (slot.capacity ?? 0), 0);
+  }
+  return data.capacity ?? null;
+}
+
 export async function getEventParticipationStats(): Promise<
   EventParticipationStat[]
 > {
@@ -295,7 +309,7 @@ export async function getEventParticipationStats(): Promise<
   return eventsSnap.docs.map((doc) => {
     const data = doc.data();
     const stats = participantsByEvent.get(doc.id) ?? { registered: 0, participated: 0 };
-    const capacity = data.capacity ?? null;
+    const capacity = resolveEventCapacity(data);
     return {
       eventId: doc.id,
       title: data.title,
