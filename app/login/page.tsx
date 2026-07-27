@@ -1,6 +1,8 @@
-import { getServerSession } from "next-auth";
-  import { redirect } from "next/navigation";
-  import { getAuthOptions } from "@/lib/auth-options";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+import { redirect } from "next/navigation";
+  import { getSession } from "@/lib/auth";
   import { LoginPageClient } from "./LoginPageClient";
 
   type LoginPageProps = {
@@ -8,7 +10,7 @@ import { getServerSession } from "next-auth";
   };
 
   export default async function LoginPage({ searchParams }: LoginPageProps) {
-    const session = await getServerSession(getAuthOptions());
+    const session = await getSession();
     if (session) {
       const resolvedSearchParams = searchParams ? await searchParams :
   undefined;

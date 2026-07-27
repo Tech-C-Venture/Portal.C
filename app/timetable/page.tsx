@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /* eslint-disable no-restricted-imports */
 import { getDb } from "@/lib/firebase/admin";
 import { PublicTimetableTable } from "@/components/timetable/PublicTimetableTable";

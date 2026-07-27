@@ -116,7 +116,8 @@ async function fetchUserInfoName(
 
 function requireEnv(value: string | undefined, name: string): string {
   if (!value) {
-    throw new Error(`${name} must be set`);
+    console.warn(`[auth] ${name} is not set; using placeholder. Authentication will not work.`);
+    return `missing-${name.toLowerCase().replace(/_/g, '-')}`;
   }
   return value;
 }

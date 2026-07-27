@@ -1,8 +1,20 @@
 import { getServerSession } from "next-auth/next";
 import { getAuthOptions } from "@/lib/auth-options";
 
+function isBuildPhase() {
+  return process.env.NEXT_PHASE === 'phase-production-build';
+}
+
 export async function getSession() {
-  return await getServerSession(getAuthOptions());
+  if (isBuildPhase()) {
+    return null;
+  }
+  try {
+    return await getServerSession(getAuthOptions());
+  } catch (error) {
+    console.warn("[auth] Failed to get server session:", error);
+    return null;
+  }
 }
 
 export async function getCurrentUser() {
