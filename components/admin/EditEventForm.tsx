@@ -151,7 +151,7 @@ export function EditEventForm({
         <input
           type="number"
           name="capacity"
-          defaultValue={capacity ?? ''}
+          defaultValue={slots.length > 0 ? '' : capacity ?? ''}
           disabled={slots.length > 0}
           className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             slots.length > 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''

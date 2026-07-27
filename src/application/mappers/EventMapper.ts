@@ -5,13 +5,16 @@
 
 import {
   Event,
-  getRemainingCapacity,
   isEventFull,
   isSlotFull,
   getSlotRemainingCapacity,
   getSlotParticipantsCount,
 } from '@/domain/entities/Event';
 import { EventDTO, EventSlotDTO } from '../dtos/EventDTO';
+
+function formatCapacityValue(value: number): number | 'unlimited' {
+  return value >= Number.MAX_SAFE_INTEGER ? 'unlimited' : value;
+}
 
 function mapSlotToDTO(event: Event, slot: Event['slots'][number]): EventSlotDTO {
   const count = getSlotParticipantsCount(event, slot.id);
@@ -23,29 +26,42 @@ function mapSlotToDTO(event: Event, slot: Event['slots'][number]): EventSlotDTO 
     capacity: slot.capacity.isUnlimited() ? 'unlimited' : slot.capacity.value,
     participantCount: count,
     remainingCapacity:
-      remaining === Number.MAX_SAFE_INTEGER ? 'unlimited' : remaining,
+      remaining >= Number.MAX_SAFE_INTEGER ? 'unlimited' : remaining,
     isFull: isSlotFull(event, slot.id),
   };
 }
 
-function formatCapacityValue(value: number): number | 'unlimited' {
-  return value === Number.MAX_SAFE_INTEGER ? 'unlimited' : value;
+function getEventSlotTotalCapacity(event: Event): number | 'unlimited' {
+  if (event.slots.some((slot) => slot.capacity.isUnlimited())) {
+    return 'unlimited';
+  }
+  return event.slots.reduce((sum, slot) => sum + slot.capacity.value, 0);
 }
 
-function getSlotTotalCapacity(event: Event): number {
-  return event.slots.reduce((sum, slot) => sum + slot.capacity.value, 0);
+function getEventSlotRemainingCapacity(event: Event): number | 'unlimited' {
+  if (event.slots.some((slot) => slot.capacity.isUnlimited())) {
+    return 'unlimited';
+  }
+  return event.slots.reduce(
+    (sum, slot) =>
+      sum + slot.capacity.remainingSlots(getSlotParticipantsCount(event, slot.id)),
+    0
+  );
 }
 
 export class EventMapper {
   static toDTO(event: Event): EventDTO {
     const hasSlots = event.slots.length > 0;
-    const remainingCapacity = getRemainingCapacity(event);
 
     const capacity: number | 'unlimited' = hasSlots
-      ? formatCapacityValue(getSlotTotalCapacity(event))
+      ? getEventSlotTotalCapacity(event)
       : event.capacity.isUnlimited()
         ? 'unlimited'
         : event.capacity.value;
+
+    const remainingCapacity: number | 'unlimited' = hasSlots
+      ? getEventSlotRemainingCapacity(event)
+      : formatCapacityValue(event.capacity.remainingSlots(event.participantCount));
 
     return {
       id: event.id,
@@ -59,7 +75,7 @@ export class EventMapper {
       capacity,
       slots: event.slots.map((slot) => mapSlotToDTO(event, slot)),
       participantCount: event.participantCount,
-      remainingCapacity: formatCapacityValue(remainingCapacity),
+      remainingCapacity,
       isFull: isEventFull(event),
       createdBy: event.createdBy,
       createdAt: event.createdAt.toISOString(),
