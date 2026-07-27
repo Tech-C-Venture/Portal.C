@@ -83,7 +83,7 @@ export function EventRegisterButton({
           {slots.map((slot) => (
             <label
               key={slot.id}
-              className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
+              className={`flex flex-wrap items-start justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${
                 selectedSlotId === slot.id
                   ? 'border-blue-500 bg-blue-50'
                   : slot.isFull
@@ -91,7 +91,7 @@ export function EventRegisterButton({
                     : 'border-gray-200 bg-white cursor-pointer hover:bg-gray-50'
               }`}
             >
-              <span className="flex items-center gap-2">
+              <span className="flex min-w-0 flex-1 items-center gap-2">
                 <input
                   type="radio"
                   name="slotId"
@@ -99,11 +99,11 @@ export function EventRegisterButton({
                   checked={selectedSlotId === slot.id}
                   onChange={() => setSelectedSlotId(slot.id)}
                   disabled={slot.isFull || disabled}
-                  className="h-4 w-4"
+                  className="h-4 w-4 shrink-0"
                 />
-                {slot.name}
+                <span className="break-words">{slot.name}</span>
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="min-w-0 text-xs text-gray-500">
                 {slot.participantCount} /{' '}
                 {slot.capacity === 'unlimited' ? '無制限' : slot.capacity}名
                 {slot.isFull && '（満員）'}
