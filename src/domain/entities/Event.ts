@@ -4,6 +4,12 @@
  */
 
 import { EventCapacity } from '../value-objects/EventCapacity';
+import { EventSlot, createEventSlot } from '../value-objects/EventSlot';
+
+export interface EventParticipant {
+  readonly memberId: string;
+  readonly slotId?: string;
+}
 
 export interface Event {
   readonly id: string;
@@ -15,8 +21,10 @@ export interface Event {
   readonly onlineUrl?: string;
   readonly onlinePassword?: string;
   readonly capacity: EventCapacity;
-  readonly participantCount: number;
+  readonly slots: readonly EventSlot[];
+  readonly participants: readonly EventParticipant[];
   readonly participantIds: readonly string[];
+  readonly participantCount: number;
   readonly createdBy: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -35,7 +43,9 @@ export function createEvent(params: {
   onlineUrl?: string | null;
   onlinePassword?: string | null;
   capacity?: number;
+  slots?: Array<{ id: string; name: string; capacity?: number | null }>;
   participantIds?: string[];
+  participants?: Array<{ memberId: string; slotId?: string }>;
   createdBy: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -49,7 +59,19 @@ export function createEvent(params: {
     ? EventCapacity.create(params.capacity)
     : EventCapacity.unlimited();
 
-  const participantIds = Object.freeze(params.participantIds ?? []);
+  const slots = params.slots
+    ? Object.freeze(params.slots.map((slot) => createEventSlot(slot)))
+    : Object.freeze([]);
+
+  const participants = Object.freeze(
+    params.participants
+      ? params.participants.map((p) => ({ memberId: p.memberId, slotId: p.slotId }))
+      : (params.participantIds ?? []).map((memberId) => ({ memberId }))
+  );
+
+  const participantIds = Object.freeze(
+    participants.map((p) => p.memberId)
+  );
 
   return {
     id: params.id,
@@ -61,18 +83,57 @@ export function createEvent(params: {
     onlineUrl: params.onlineUrl ?? undefined,
     onlinePassword: params.onlinePassword ?? undefined,
     capacity,
-    participantCount: participantIds.length,
+    slots,
+    participants,
     participantIds,
+    participantCount: participants.length,
     createdBy: params.createdBy,
     createdAt: params.createdAt ?? new Date(),
     updatedAt: params.updatedAt ?? new Date(),
   };
 }
 
+function getSlotParticipantCount(event: Event, slotId: string): number {
+  return event.participants.filter((p) => p.slotId === slotId).length;
+}
+
+/**
+ * 指定した枠の参加者数を取得
+ */
+export function getSlotParticipantsCount(event: Event, slotId: string): number {
+  return getSlotParticipantCount(event, slotId);
+}
+
+/**
+ * 指定した枠の残り定員数を取得
+ */
+export function getSlotRemainingCapacity(
+  event: Event,
+  slotId: string
+): number {
+  const slot = event.slots.find((s) => s.id === slotId);
+  if (!slot) return 0;
+  return slot.capacity.remainingSlots(getSlotParticipantCount(event, slotId));
+}
+
+/**
+ * 指定した枠が満員かをチェック
+ */
+export function isSlotFull(event: Event, slotId: string): boolean {
+  const slot = event.slots.find((s) => s.id === slotId);
+  if (!slot) return true;
+  return slot.capacity.isFull(getSlotParticipantCount(event, slotId));
+}
+
 /**
  * イベントが定員に達しているかをチェック
  */
 export function isEventFull(event: Event): boolean {
+  if (event.slots.length > 0) {
+    return event.slots.every((slot) =>
+      slot.capacity.isFull(getSlotParticipantCount(event, slot.id))
+    );
+  }
   return event.capacity.isFull(event.participantCount);
 }
 
@@ -80,6 +141,12 @@ export function isEventFull(event: Event): boolean {
  * イベントの残り定員数を取得
  */
 export function getRemainingCapacity(event: Event): number {
+  if (event.slots.length > 0) {
+    return event.slots.reduce(
+      (sum, slot) => sum + slot.capacity.remainingSlots(getSlotParticipantCount(event, slot.id)),
+      0
+    );
+  }
   return event.capacity.remainingSlots(event.participantCount);
 }
 
@@ -91,23 +158,48 @@ export function isMemberRegistered(event: Event, memberId: string): boolean {
 }
 
 /**
+ * メンバーが参加している枠IDを取得
+ */
+export function getMemberSlotId(event: Event, memberId: string): string | undefined {
+  return event.participants.find((p) => p.memberId === memberId)?.slotId;
+}
+
+/**
  * イベントに参加者を追加する（イミュータブル更新）
  */
-export function addParticipant(event: Event, memberId: string): Event {
+export function addParticipant(
+  event: Event,
+  memberId: string,
+  slotId?: string
+): Event {
   if (isMemberRegistered(event, memberId)) {
     throw new Error('Member is already registered for this event');
   }
 
-  if (isEventFull(event)) {
+  if (event.slots.length > 0) {
+    if (!slotId) {
+      throw new Error('Slot is required for this event');
+    }
+    if (!event.slots.some((s) => s.id === slotId)) {
+      throw new Error('Slot not found');
+    }
+    if (isSlotFull(event, slotId)) {
+      throw new Error('Selected slot is full');
+    }
+  } else if (isEventFull(event)) {
     throw new Error('Event is full');
   }
 
-  const newParticipantIds = Object.freeze([...event.participantIds, memberId]);
+  const newParticipants = Object.freeze([
+    ...event.participants,
+    { memberId, slotId },
+  ]);
 
   return {
     ...event,
-    participantIds: newParticipantIds,
-    participantCount: newParticipantIds.length,
+    participants: newParticipants,
+    participantIds: Object.freeze(newParticipants.map((p) => p.memberId)),
+    participantCount: newParticipants.length,
     updatedAt: new Date(),
   };
 }
@@ -120,14 +212,15 @@ export function removeParticipant(event: Event, memberId: string): Event {
     throw new Error('Member is not registered for this event');
   }
 
-  const newParticipantIds = Object.freeze(
-    event.participantIds.filter((id) => id !== memberId)
+  const newParticipants = Object.freeze(
+    event.participants.filter((p) => p.memberId !== memberId)
   );
 
   return {
     ...event,
-    participantIds: newParticipantIds,
-    participantCount: newParticipantIds.length,
+    participants: newParticipants,
+    participantIds: Object.freeze(newParticipants.map((p) => p.memberId)),
+    participantCount: newParticipants.length,
     updatedAt: new Date(),
   };
 }

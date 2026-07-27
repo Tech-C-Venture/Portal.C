@@ -119,6 +119,11 @@ export default async function AdminEventParticipantsDetailPage({
                       <div className="text-xs text-gray-500">
                         {member.department} / {member.grade}年
                       </div>
+                      {member.slotName && (
+                        <div className="mt-1 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                          {member.slotName}
+                        </div>
+                      )}
                     </div>
                     <Link
                       href={`/admin/hr/${member.id}`}

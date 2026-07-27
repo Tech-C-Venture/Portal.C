@@ -15,7 +15,11 @@ export interface IEventRepository {
   delete(id: string): Promise<Result<void>>;
 
   // イベント参加管理
-  registerMember(eventId: string, memberId: string): Promise<Result<void>>;
+  registerMember(
+    eventId: string,
+    memberId: string,
+    slotId?: string
+  ): Promise<Result<void>>;
   unregisterMember(eventId: string, memberId: string): Promise<Result<void>>;
   getParticipants(eventId: string): Promise<Result<Member[]>>;
 }

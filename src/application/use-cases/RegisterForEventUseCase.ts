@@ -4,12 +4,21 @@
  */
 
 import { IEventRepository } from '../ports/IEventRepository';
+import {
+  isMemberRegistered,
+  isEventFull,
+  isSlotFull,
+} from '@/domain/entities/Event';
 import { Result, success, failure } from '../common/Result';
 
 export class RegisterForEventUseCase {
   constructor(private eventRepository: IEventRepository) {}
 
-  async execute(eventId: string, memberId: string): Promise<Result<void, string>> {
+  async execute(
+    eventId: string,
+    memberId: string,
+    slotId?: string
+  ): Promise<Result<void, string>> {
     // イベント存在確認
     const eventResult = await this.eventRepository.findById(eventId);
     if (!eventResult.success) {
@@ -23,16 +32,30 @@ export class RegisterForEventUseCase {
     const event = eventResult.value;
 
     // ビジネスルール検証
-    if (event.participantIds.includes(memberId)) {
+    if (isMemberRegistered(event, memberId)) {
       return failure('Already registered for this event');
     }
 
-    if (event.capacity.isFull(event.participantCount)) {
+    if (event.slots.length > 0) {
+      if (!slotId) {
+        return failure('Slot is required for this event');
+      }
+      if (!event.slots.some((slot) => slot.id === slotId)) {
+        return failure('Slot not found');
+      }
+      if (isSlotFull(event, slotId)) {
+        return failure('Selected slot is full');
+      }
+    } else if (isEventFull(event)) {
       return failure('Event is full');
     }
 
-    // 参加登録（PostgreSQL関数経由でトランザクション処理）
-    const registerResult = await this.eventRepository.registerMember(eventId, memberId);
+    // 参加登録（Firestore経由でトランザクション処理）
+    const registerResult = await this.eventRepository.registerMember(
+      eventId,
+      memberId,
+      slotId
+    );
 
     if (!registerResult.success) {
       return failure(`Failed to register: ${registerResult.error.message}`);

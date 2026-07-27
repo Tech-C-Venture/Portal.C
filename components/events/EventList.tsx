@@ -49,6 +49,22 @@ export function EventList({ events }: EventListProps) {
               {event.participantCount} /{' '}
               {event.capacity === 'unlimited' ? '無制限' : event.capacity}名
             </p>
+            {event.slots.length > 0 && (
+              <div className="pl-6 space-y-1">
+                {event.slots.map((slot) => (
+                  <p
+                    key={slot.id}
+                    className={`text-xs ${
+                      slot.isFull ? 'text-rose-600' : 'text-gray-500'
+                    }`}
+                  >
+                    {slot.name}: {slot.participantCount} /{' '}
+                    {slot.capacity === 'unlimited' ? '無制限' : slot.capacity}名
+                    {slot.isFull && '（満員）'}
+                  </p>
+                ))}
+              </div>
+            )}
             {event.isFull && <p className="text-red-600 font-semibold">満員</p>}
           </div>
           <div className="mt-4 w-full">

@@ -19,6 +19,7 @@ interface EventDoc {
   online_url: string | null;
   online_password: string | null;
   capacity: number | null;
+  slots: Array<{ id: string; name: string; capacity: number | null }> | null;
   created_by: string | null;
   created_at: Timestamp;
   updated_at: Timestamp;
@@ -27,6 +28,7 @@ interface EventDoc {
 interface EventParticipantDoc {
   event_id: string;
   member_id: string;
+  slot_id: string | null;
   registered_at: Timestamp;
   participated: boolean;
 }
@@ -49,7 +51,11 @@ export class FirestoreEventRepository implements IEventRepository {
   /**
    * Firestoreドキュメント→ドメインエンティティ変換
    */
-  private toDomain(id: string, doc: EventDoc, participantIds: string[] = []): Event {
+  private toDomain(
+    id: string,
+    doc: EventDoc,
+    participants: Array<{ memberId: string; slotId?: string }> = []
+  ): Event {
     const startDate = doc.event_date.toDate();
     const defaultDurationMs = 60 * 60 * 1000;
     const endDate = new Date(startDate.getTime() + defaultDurationMs);
@@ -63,7 +69,14 @@ export class FirestoreEventRepository implements IEventRepository {
       onlineUrl: doc.online_url ?? undefined,
       onlinePassword: doc.online_password ?? undefined,
       capacity: doc.capacity ?? undefined,
-      participantIds,
+      slots: doc.slots
+        ? doc.slots.map((slot) => ({
+            id: slot.id,
+            name: slot.name,
+            capacity: slot.capacity ?? null,
+          }))
+        : undefined,
+      participants,
       createdBy: doc.created_by ?? 'system',
       createdAt: doc.created_at?.toDate() ?? new Date(),
       updatedAt: doc.updated_at?.toDate() ?? new Date(),
@@ -82,6 +95,14 @@ export class FirestoreEventRepository implements IEventRepository {
       online_url: event.onlineUrl ?? null,
       online_password: event.onlinePassword ?? null,
       capacity: event.capacity.isUnlimited() ? null : event.capacity.value,
+      slots:
+        event.slots.length > 0
+          ? event.slots.map((slot) => ({
+              id: slot.id,
+              name: slot.name,
+              capacity: slot.capacity.isUnlimited() ? null : slot.capacity.value,
+            }))
+          : null,
       created_by: event.createdBy,
       created_at: Timestamp.fromDate(event.createdAt),
       updated_at: Timestamp.fromDate(event.updatedAt),
@@ -89,15 +110,23 @@ export class FirestoreEventRepository implements IEventRepository {
   }
 
   /**
-   * イベントの参加者IDリストを取得
+   * イベントの参加者データを取得
    */
-  private async getParticipantIds(eventId: string): Promise<string[]> {
+  private async getParticipantsData(
+    eventId: string
+  ): Promise<Array<{ memberId: string; slotId?: string }>> {
     try {
       const snap = await this.participantsCollection()
         .where('event_id', '==', eventId)
         .get();
 
-      return snap.docs.map((doc) => (doc.data() as EventParticipantDoc).member_id);
+      return snap.docs.map((doc) => {
+        const data = doc.data() as EventParticipantDoc;
+        return {
+          memberId: data.member_id,
+          slotId: data.slot_id ?? undefined,
+        };
+      });
     } catch {
       return [];
     }
@@ -111,8 +140,8 @@ export class FirestoreEventRepository implements IEventRepository {
         return success(null);
       }
 
-      const participantIds = await this.getParticipantIds(id);
-      return success(this.toDomain(snap.id, snap.data() as EventDoc, participantIds));
+      const participants = await this.getParticipantsData(id);
+      return success(this.toDomain(snap.id, snap.data() as EventDoc, participants));
     } catch (error) {
       return failure(error as Error);
     }
@@ -126,8 +155,8 @@ export class FirestoreEventRepository implements IEventRepository {
 
       const events = await Promise.all(
         snap.docs.map(async (doc) => {
-          const participantIds = await this.getParticipantIds(doc.id);
-          return this.toDomain(doc.id, doc.data() as EventDoc, participantIds);
+          const participants = await this.getParticipantsData(doc.id);
+          return this.toDomain(doc.id, doc.data() as EventDoc, participants);
         })
       );
 
@@ -151,8 +180,8 @@ export class FirestoreEventRepository implements IEventRepository {
     try {
       const doc = this.toDoc(event);
       await this.collection().doc(event.id).set(doc, { merge: true });
-      const participantIds = await this.getParticipantIds(event.id);
-      return success(this.toDomain(event.id, doc, participantIds));
+      const participants = await this.getParticipantsData(event.id);
+      return success(this.toDomain(event.id, doc, participants));
     } catch (error) {
       return failure(error as Error);
     }
@@ -180,12 +209,17 @@ export class FirestoreEventRepository implements IEventRepository {
   /**
    * イベントに参加登録
    */
-  async registerMember(eventId: string, memberId: string): Promise<Result<void>> {
+  async registerMember(
+    eventId: string,
+    memberId: string,
+    slotId?: string
+  ): Promise<Result<void>> {
     try {
       const docId = `${eventId}_${memberId}`;
       await this.participantsCollection().doc(docId).set({
         event_id: eventId,
         member_id: memberId,
+        slot_id: slotId ?? null,
         registered_at: FieldValue.serverTimestamp(),
         participated: false,
       });
@@ -213,10 +247,10 @@ export class FirestoreEventRepository implements IEventRepository {
    */
   async getParticipants(eventId: string): Promise<Result<Member[]>> {
     try {
-      const participantIds = await this.getParticipantIds(eventId);
+      const participants = await this.getParticipantsData(eventId);
       const members: Member[] = [];
 
-      for (const memberId of participantIds) {
+      for (const { memberId } of participants) {
         const result = await this.memberRepository.findById(memberId);
         if (result.success && result.value) {
           members.push(result.value);

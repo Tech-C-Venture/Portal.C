@@ -6,3 +6,4 @@ export * from './Email';
 export * from './StudentId';
 export * from './CurrentStatus';
 export * from './EventCapacity';
+export * from './EventSlot';

@@ -16,6 +16,7 @@ interface CreateEventInput {
   endDate: Date;
   location: string;
   capacity?: number;
+  slots?: Array<{ id: string; name: string; capacity?: number | null }>;
   createdBy: string;
 }
 
@@ -33,6 +34,7 @@ export class CreateEventUseCase {
         endDate: input.endDate,
         location: input.location,
         capacity: input.capacity,
+        slots: input.slots,
         createdBy: input.createdBy,
       });
 

@@ -64,17 +64,42 @@ export async function getEventById(eventId: string): Promise<EventDTO | null> {
   return EventMapper.toDTO(result.value);
 }
 
+export type MemberDTOWithSlot = MemberDTO & {
+  slotId?: string;
+  slotName?: string;
+};
+
 export async function getEventParticipantsByEventId(
   eventId: string
-): Promise<MemberDTO[]> {
+): Promise<MemberDTOWithSlot[]> {
   const eventRepository = container.resolve<IEventRepository>(
     REPOSITORY_KEYS.EVENT
   );
-  const participantsResult = await eventRepository.getParticipants(eventId);
+  const [participantsResult, event] = await Promise.all([
+    eventRepository.getParticipants(eventId),
+    getEventById(eventId),
+  ]);
   if (!participantsResult.success) {
     return [];
   }
-  return MemberMapper.toDTOList(participantsResult.value);
+
+  const db = getDb();
+  const participantSnap = await db
+    .collection('event_participants')
+    .where('event_id', '==', eventId)
+    .get();
+
+  const slotAssignments = new Map<string, string | undefined>();
+  for (const doc of participantSnap.docs) {
+    const data = doc.data();
+    slotAssignments.set(data.member_id as string, (data.slot_id as string | null) ?? undefined);
+  }
+
+  return MemberMapper.toDTOList(participantsResult.value).map((member) => {
+    const slotId = slotAssignments.get(member.id);
+    const slotName = event?.slots?.find((slot) => slot.id === slotId)?.name;
+    return { ...member, slotId, slotName };
+  });
 }
 
 export async function getTimetableSummaries(): Promise<TimetableSummary[]> {

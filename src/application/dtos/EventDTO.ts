@@ -3,6 +3,15 @@
  * Server ComponentsとClient Components間のデータ転送用
  */
 
+export interface EventSlotDTO {
+  id: string;
+  name: string;
+  capacity: number | 'unlimited';
+  participantCount: number;
+  remainingCapacity: number | 'unlimited';
+  isFull: boolean;
+}
+
 export interface EventDTO {
   id: string;
   title: string;
@@ -13,6 +22,7 @@ export interface EventDTO {
   onlineUrl?: string;
   onlinePassword?: string;
   capacity: number | 'unlimited';
+  slots: EventSlotDTO[];
   participantCount: number;
   remainingCapacity: number | 'unlimited';
   isFull: boolean;

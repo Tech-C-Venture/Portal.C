@@ -77,7 +77,7 @@ describe('Application use cases', () => {
       const useCase = new RegisterForEventUseCase(repo);
       const result = await useCase.execute('event-1', 'member-1');
       expect(result.success).toBe(true);
-      expect(repo.registerMember).toHaveBeenCalledWith('event-1', 'member-1');
+      expect(repo.registerMember).toHaveBeenCalledWith('event-1', 'member-1', undefined);
     });
 
     test('fails when event is full', async () => {

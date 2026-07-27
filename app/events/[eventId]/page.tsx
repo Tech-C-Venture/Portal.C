@@ -14,6 +14,7 @@ import type { IMemberRepository } from '@/application/ports/IMemberRepository';
 import { getCurrentUser } from '@/lib/auth';
 import { EventRegisterButton } from '@/components/events/EventRegisterButton';
 import { RichTextContent } from '@/components/editor/RichTextContent';
+import { isMemberRegistered, getMemberSlotId } from '@/domain/entities/Event';
 import { SiGooglemeet } from 'react-icons/si';
 import { TbBrandZoom } from 'react-icons/tb';
 
@@ -75,9 +76,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const { EventMapper } = await import('@/application/mappers/EventMapper');
   const eventDto = EventMapper.toDTO(result.value);
   const memberId = await getCurrentMemberId();
-  const isRegistered = memberId
-    ? result.value.participantIds.includes(memberId)
-    : false;
+  const isRegistered = memberId ? isMemberRegistered(result.value, memberId) : false;
+  const registeredSlotId = memberId ? getMemberSlotId(result.value, memberId) : undefined;
   const onlineUrl = eventDto.onlineUrl;
   const onlinePassword = eventDto.onlinePassword;
   const isZoom =
@@ -136,7 +136,9 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               ) : (
                 <EventRegisterButton
                   eventId={eventDto.id}
+                  slots={eventDto.slots}
                   isRegistered={isRegistered}
+                  registeredSlotId={registeredSlotId}
                   disabled={eventDto.isFull && !isRegistered}
                 />
               )}

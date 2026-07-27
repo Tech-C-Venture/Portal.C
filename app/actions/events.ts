@@ -31,6 +31,49 @@ export interface UpdateEventFormState {
   success: string | null;
 }
 
+interface SlotInput {
+  id: string;
+  name: string;
+  capacity: number | null;
+}
+
+function parseSlots(formData: FormData): SlotInput[] {
+  const raw = (formData.get('slots') as string | null)?.trim() ?? '[]';
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (item): item is { id?: unknown; name?: unknown; capacity?: unknown } =>
+          typeof item === 'object' && item !== null
+      )
+      .map((item) => {
+        const id = String(item.id ?? '');
+        const name = String(item.name ?? '').trim();
+        const capacityValue = item.capacity;
+        const capacity =
+          capacityValue === '' || capacityValue === null || capacityValue === undefined
+            ? null
+            : Number(capacityValue);
+        return { id, name, capacity };
+      })
+      .filter((slot) => slot.name && slot.id);
+  } catch {
+    return [];
+  }
+}
+
+function validateSlotCapacity(capacity: number | null): string | null {
+  if (capacity === null) return null;
+  if (!Number.isInteger(capacity) || Number.isNaN(capacity)) {
+    return '定員は整数で入力してください。';
+  }
+  if (capacity < 1) {
+    return '定員は1以上で入力してください。';
+  }
+  return null;
+}
+
 export async function createEventAction(
   _prevState: CreateEventFormState,
   formData: FormData
@@ -47,6 +90,7 @@ export async function createEventAction(
   const capacityRaw = (formData.get('capacity') as string | null)?.trim();
   const onlineUrlRaw = (formData.get('onlineUrl') as string | null)?.trim();
   const onlinePasswordRaw = (formData.get('onlinePassword') as string | null)?.trim();
+  const slotsInput = parseSlots(formData);
 
   if (!title) {
     return { error: 'イベント名を入力してください。', success: null };
@@ -63,6 +107,13 @@ export async function createEventAction(
   const capacity = capacityRaw ? Number(capacityRaw) : undefined;
   if (capacityRaw && Number.isNaN(capacity)) {
     return { error: '定員は数字で入力してください。', success: null };
+  }
+
+  for (const slot of slotsInput) {
+    const error = validateSlotCapacity(slot.capacity);
+    if (error) {
+      return { error: `「${slot.name}」${error}`, success: null };
+    }
   }
 
   const user = await getCurrentUser();
@@ -97,6 +148,7 @@ export async function createEventAction(
       onlineUrl,
       onlinePassword,
       capacity,
+      slots: slotsInput,
       createdBy,
     });
     eventId = event.id;
@@ -112,6 +164,14 @@ export async function createEventAction(
       event_date: Timestamp.fromDate(startDate),
       location: location || null,
       capacity: capacity ?? null,
+      slots:
+        slotsInput.length > 0
+          ? slotsInput.map((slot) => ({
+              id: slot.id,
+              name: slot.name,
+              capacity: slot.capacity,
+            }))
+          : null,
       online_url: onlineUrl ?? null,
       online_password: onlinePassword ?? null,
       created_by: createdBy,
@@ -133,6 +193,7 @@ export async function registerForEventAction(
   formData: FormData
 ): Promise<RegisterEventFormState> {
   const eventId = (formData.get('eventId') as string | null)?.trim();
+  const slotId = (formData.get('slotId') as string | null)?.trim();
   if (!eventId) {
     return { error: 'イベントIDが取得できませんでした。', success: null };
   }
@@ -159,8 +220,38 @@ export async function registerForEventAction(
     return { error: 'イベントが見つかりませんでした。', success: null };
   }
   const eventData = eventSnap.data()!;
+  const slots: Array<{ id: string; capacity: number | null }> = Array.isArray(
+    eventData.slots
+  )
+    ? eventData.slots
+    : [];
 
-  if (eventData.capacity !== null && eventData.capacity !== undefined) {
+  // 重複チェック
+  const docId = `${eventId}_${memberId}`;
+  const existingSnap = await db.collection('event_participants').doc(docId).get();
+  if (existingSnap.exists) {
+    return { error: 'すでに参加登録済みです。', success: null };
+  }
+
+  if (slots.length > 0) {
+    if (!slotId) {
+      return { error: '参加枠を選択してください。', success: null };
+    }
+    const selectedSlot = slots.find((s) => s.id === slotId);
+    if (!selectedSlot) {
+      return { error: '選択した参加枠が見つかりません。', success: null };
+    }
+    if (selectedSlot.capacity !== null && selectedSlot.capacity !== undefined) {
+      const slotParticipantsSnap = await db
+        .collection('event_participants')
+        .where('event_id', '==', eventId)
+        .where('slot_id', '==', slotId)
+        .get();
+      if (slotParticipantsSnap.size >= selectedSlot.capacity) {
+        return { error: '選択した参加枠は満員です。', success: null };
+      }
+    }
+  } else if (eventData.capacity !== null && eventData.capacity !== undefined) {
     const participantsSnap = await db
       .collection('event_participants')
       .where('event_id', '==', eventId)
@@ -170,16 +261,10 @@ export async function registerForEventAction(
     }
   }
 
-  // 重複チェック
-  const docId = `${eventId}_${memberId}`;
-  const existingSnap = await db.collection('event_participants').doc(docId).get();
-  if (existingSnap.exists) {
-    return { error: 'すでに参加登録済みです。', success: null };
-  }
-
   await db.collection('event_participants').doc(docId).set({
     event_id: eventId,
     member_id: memberId,
+    slot_id: slotId ?? null,
     registered_at: FieldValue.serverTimestamp(),
     participated: false,
   });
@@ -246,6 +331,7 @@ export async function updateEventAction(
   const capacityRaw = (formData.get('capacity') as string | null)?.trim();
   const onlineUrlRaw = (formData.get('onlineUrl') as string | null)?.trim();
   const onlinePasswordRaw = (formData.get('onlinePassword') as string | null)?.trim();
+  const slotsInput = parseSlots(formData);
 
   if (!eventId) {
     return { error: 'イベントIDが取得できませんでした。', success: null };
@@ -267,6 +353,13 @@ export async function updateEventAction(
     return { error: '定員は数字で入力してください。', success: null };
   }
 
+  for (const slot of slotsInput) {
+    const error = validateSlotCapacity(slot.capacity);
+    if (error) {
+      return { error: `「${slot.name}」${error}`, success: null };
+    }
+  }
+
   const defaultDurationMs = 60 * 60 * 1000;
   const endDate = new Date(startDate.getTime() + defaultDurationMs);
   const onlineUrl = onlineUrlRaw || undefined;
@@ -283,6 +376,7 @@ export async function updateEventAction(
       onlineUrl,
       onlinePassword,
       capacity,
+      slots: slotsInput,
       createdBy: 'system',
     });
   } catch (error) {
@@ -297,6 +391,14 @@ export async function updateEventAction(
       event_date: Timestamp.fromDate(startDate),
       location: location || null,
       capacity: capacity ?? null,
+      slots:
+        slotsInput.length > 0
+          ? slotsInput.map((slot) => ({
+              id: slot.id,
+              name: slot.name,
+              capacity: slot.capacity,
+            }))
+          : null,
       online_url: onlineUrl ?? null,
       online_password: onlinePassword ?? null,
       updated_at: FieldValue.serverTimestamp(),
