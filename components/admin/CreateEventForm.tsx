@@ -145,12 +145,17 @@ export function CreateEventForm() {
         <input
           type="number"
           name="capacity"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={slots.length > 0}
+          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            slots.length > 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+          }`}
           placeholder="30（空欄で無制限）"
           min={0}
         />
         <p className="mt-1 text-xs text-gray-500">
-          参加枠を設定する場合は、全体定員ではなく各枠の定員を使って制限されます。
+          {slots.length > 0
+            ? '参加枠を設定中のため、全体定員は無効です。'
+            : '参加枠を設定する場合は、全体定員ではなく各枠の定員を使って制限されます。'}
         </p>
       </div>
 
