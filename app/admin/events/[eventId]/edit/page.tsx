@@ -48,6 +48,7 @@ export default async function AdminEventEditPage({
           startDateLocal={formatDateTimeLocal(event.startDate)}
           location={event.location}
           capacity={event.capacity === 'unlimited' ? null : event.capacity}
+          slots={event.slots}
           onlineUrl={event.onlineUrl ?? null}
           onlinePassword={event.onlinePassword ?? null}
         />

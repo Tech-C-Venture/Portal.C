@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@openameba/spindle-ui';
 import '@openameba/spindle-ui/Button/Button.css';
@@ -9,17 +9,13 @@ import {
   type UpdateEventFormState,
 } from '@/app/actions/events';
 import { RichTextEditor } from '@/components/editor/RichTextEditor';
+import type { EventSlotDTO } from '@/application/dtos/EventDTO';
 
-type EditEventFormProps = {
-  eventId: string;
-  title: string;
-  description: string;
-  startDateLocal: string;
-  location: string;
-  capacity: number | null;
-  onlineUrl?: string | null;
-  onlinePassword?: string | null;
-};
+interface SlotFormValue {
+  id: string;
+  name: string;
+  capacity: string;
+}
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -30,6 +26,35 @@ function SubmitButton() {
   );
 }
 
+function slotDtoToFormValue(slot: EventSlotDTO): SlotFormValue {
+  return {
+    id: slot.id,
+    name: slot.name,
+    capacity: slot.capacity === 'unlimited' ? '' : String(slot.capacity),
+  };
+}
+
+function serializeSlots(slots: SlotFormValue[]): string {
+  const payload = slots.map((slot) => ({
+    id: slot.id,
+    name: slot.name,
+    capacity: slot.capacity === '' ? null : Number(slot.capacity),
+  }));
+  return JSON.stringify(payload);
+}
+
+type EditEventFormProps = {
+  eventId: string;
+  title: string;
+  description: string;
+  startDateLocal: string;
+  location: string;
+  capacity: number | null;
+  slots: EventSlotDTO[];
+  onlineUrl?: string | null;
+  onlinePassword?: string | null;
+};
+
 export function EditEventForm({
   eventId,
   title,
@@ -37,6 +62,7 @@ export function EditEventForm({
   startDateLocal,
   location,
   capacity,
+  slots: initialSlots,
   onlineUrl,
   onlinePassword,
 }: EditEventFormProps) {
@@ -48,9 +74,31 @@ export function EditEventForm({
     }
   );
 
+  const [slots, setSlots] = useState<SlotFormValue[]>(
+    initialSlots.map(slotDtoToFormValue)
+  );
+
+  const addSlot = () => {
+    setSlots((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name: '', capacity: '' },
+    ]);
+  };
+
+  const removeSlot = (id: string) => {
+    setSlots((prev) => prev.filter((slot) => slot.id !== id));
+  };
+
+  const updateSlot = (id: string, updates: Partial<SlotFormValue>) => {
+    setSlots((prev) =>
+      prev.map((slot) => (slot.id === id ? { ...slot, ...updates } : slot))
+    );
+  };
+
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="eventId" value={eventId} />
+      <input type="hidden" name="slots" value={serializeSlots(slots)} />
 
       {state.error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -99,7 +147,7 @@ export function EditEventForm({
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-2">定員</label>
+        <label className="block text-sm font-medium mb-2">定員（全体）</label>
         <input
           type="number"
           name="capacity"
@@ -108,7 +156,75 @@ export function EditEventForm({
           placeholder="空欄で無制限"
           min={0}
         />
+        <p className="mt-1 text-xs text-gray-500">
+          参加枠を設定する場合は、全体定員ではなく各枠の定員を使って制限されます。
+        </p>
       </div>
+
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium">参加枠</label>
+          <Button
+            type="button"
+            size="small"
+            variant="outlined"
+            onClick={addSlot}
+          >
+            枠を追加
+          </Button>
+        </div>
+        {slots.length === 0 && (
+          <p className="text-xs text-gray-500">
+            参加枠が未設定の場合は、全体定員で受け付けます。
+          </p>
+        )}
+        {slots.map((slot, index) => (
+          <div
+            key={slot.id}
+            className="grid gap-3 md:grid-cols-[1fr,120px,auto] items-end rounded-lg border border-gray-200 bg-white p-3"
+          >
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                枠名 {index + 1}
+              </label>
+              <input
+                type="text"
+                value={slot.name}
+                onChange={(e) =>
+                  updateSlot(slot.id, { name: e.target.value })
+                }
+                placeholder="例：LT枠"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                定員
+              </label>
+              <input
+                type="number"
+                value={slot.capacity}
+                onChange={(e) =>
+                  updateSlot(slot.id, { capacity: e.target.value })
+                }
+                placeholder="空欄で無制限"
+                min={1}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <Button
+              type="button"
+              size="small"
+              variant="outlined"
+              onClick={() => removeSlot(slot.id)}
+            >
+              削除
+            </Button>
+          </div>
+        ))}
+      </div>
+
       <div>
         <label className="block text-sm font-medium mb-2">
           オンラインURL（Meet/Zoom）
