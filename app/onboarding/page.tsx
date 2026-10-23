@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { getCurrentMemberProfileAction } from "@/app/actions/members";
 import { MemberProfileForm } from "@/components/members/MemberProfileForm";
 import { getDepartmentNames } from "@/app/admin/_data";

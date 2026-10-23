@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { isAdmin } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { InviteUserForm } from "@/components/admin/InviteUserForm";

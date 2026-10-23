@@ -23,7 +23,7 @@ export function MemberCard({ member }: MemberCardProps) {
       <div className="flex items-center mb-4">
         <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} className="mr-4" />
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold">{member.name}</h2>
             {member.isAdmin && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
@@ -39,9 +39,9 @@ export function MemberCard({ member }: MemberCardProps) {
       </div>
 
       {member.currentStatus && isStatusValid && (
-        <div className="mb-3 flex items-center gap-2 rounded bg-blue-50 p-2 text-sm text-blue-700">
-          <FiMessageCircle className="h-4 w-4" aria-hidden />
-          {member.currentStatus.message}
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded bg-blue-50 p-2 text-sm text-blue-700">
+          <FiMessageCircle className="h-4 w-4 shrink-0" aria-hidden />
+          <span className="break-words">{member.currentStatus.message}</span>
         </div>
       )}
 
